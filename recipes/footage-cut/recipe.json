@@ -1,0 +1,87 @@
+{
+  "id": "footage-cut",
+  "abi": "8",
+  "name": "实拍快切",
+  "keywords": [
+    "实拍",
+    "素材",
+    "航拍",
+    "城市",
+    "压屏字",
+    "纪录片"
+  ],
+  "when": "用真实素材铺满画面、只压一两行硬短句，靠镜头切换而不是手绘讲事实时",
+  "blocks": [
+    "scene.footage"
+  ],
+  "style": {
+    "fonts": {
+      "display": "sans-900",
+      "body": "sans-400",
+      "num": "latin-700"
+    },
+    "colors": {
+      "bg": "#0E0C0A",
+      "ink": "#F0ECE4",
+      "muted": "#9A8F80",
+      "accent": "#C0392B",
+      "line": "#2A241D"
+    },
+    "backgrounds": {
+      "night": "#0E0C0A"
+    }
+  },
+  "rules": {
+    "safeMargin": 0.055,
+    "scale": {
+      "title": 1,
+      "label": 0.8,
+      "note": 0.6
+    },
+    "stroke": [
+      1,
+      2
+    ],
+    "forbid": [
+      "把实拍素材缩成卡片；必须 rect=[0,0,1,1] 满幅 cover",
+      "在实拍上再叠一层字幕；压屏字即正文，字幕必须为 none",
+      "自动折行；分行只能由 title 里的 \n 决定",
+      "用素材名或 Pexels id 当题材枚举；keywords 只描述检索意图",
+      "断网或检索失败时静默留空画面；必须明确降级到内置素材"
+    ]
+  },
+  "captions": {
+    "style": "none"
+  },
+  "audio": {
+    "mood": "soft",
+    "volume": 0.1,
+    "fadeIn": 2,
+    "fadeOut": 2.6,
+    "duck": {
+      "level": 0.04,
+      "edge": 0.22
+    }
+  },
+  "verify": [
+    {
+      "at": 0.15,
+      "assert": "ink.insideSafe",
+      "args": {
+        "margin": 0.055
+      }
+    },
+    {
+      "at": 0.9,
+      "assert": "element.count.gte",
+      "args": {
+        "n": 1
+      }
+    },
+    {
+      "at": 0.9,
+      "assert": "caption.noOverlapSubject",
+      "args": {}
+    }
+  ]
+}

@@ -1,0 +1,62 @@
+{
+  "id": "scene.pen-demo",
+  "group": "scene",
+  "inkless": true,
+  "when": "公共笔库对照：同一组线、圆、对勾逐笔生长，用于选择 marker/pencil/brush/inkbrush/chalk/fineliner。",
+  "energy": {
+    "level": "mid",
+    "why": "三笔连续落笔，集中展示笔迹与笔具差异"
+  },
+  "slots": [
+    "full"
+  ],
+  "defaultSlot": "full",
+  "params": {
+    "pen": {
+      "enum": [
+        "marker",
+        "pencil",
+        "brush",
+        "inkbrush",
+        "chalk",
+        "fineliner"
+      ],
+      "default": "marker"
+    }
+  },
+  "defaultDuration": 1.5,
+  "defaultSfx": null,
+  "needs": {
+    "font": [
+      "body"
+    ],
+    "three": false,
+    "video": false,
+    "cache": false
+  },
+  "pitfalls": [
+    "必须显式使用 rect=[0,0,1,1]，演示路径按全幅 1920×1080 布置",
+    "这是公共 TT.pen 的对照样片；不得复制其路径后再手写一套笔迹或笔具"
+  ],
+  "layout": {
+    "full": [
+      0,
+      0,
+      1,
+      1
+    ]
+  },
+  "motion": {
+    "enter": 0.5,
+    "exitRatio": 0.5,
+    "stagger": 0,
+    "rise": 0,
+    "hold": {
+      "min": 0.8,
+      "perChar": 0.024
+    }
+  },
+  "sizes": {
+    "default": 60
+  }
+}

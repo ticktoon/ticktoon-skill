@@ -1,0 +1,6 @@
+{
+  "block": "scene.pen-demo",
+  "slot": "full",
+  "rect": [0, 0, 1, 1],
+  "pen": "marker"
+}

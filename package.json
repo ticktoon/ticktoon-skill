@@ -1,0 +1,20 @@
+{
+  "name": "ticktoon-skill",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "description": "Ticktoon Agent 创作入口：storyboard → composition 编译、只读预览与普通 MP4 直出",
+  "scripts": {
+    "tt": "node platform/cli.mjs",
+    "render": "node scripts/render.mjs",
+    "preview": "node scripts/preview.mjs",
+    "doctor": "node scripts/doctor.mjs",
+    "snapshot": "node scripts/snapshot.mjs",
+    "pack": "node scripts/tools/pack-skill.mjs"
+  },
+  "dependencies": {
+    "msedge-tts": "^2.1.1",
+    "playwright": "^1.49.0",
+    "ws": "^8.22.0"
+  }
+}

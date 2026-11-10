@@ -1,0 +1,94 @@
+{
+  "id": "crayon-guide",
+  "abi": "8",
+  "name": "蜡笔图解",
+  "keywords": [
+    "蜡笔",
+    "手账",
+    "图解",
+    "步骤",
+    "绘本",
+    "亲子"
+  ],
+  "when": "用暖米纸与蜡笔斜纹把步骤、清单或小知识画成手账时",
+  "blocks": [
+    "scene.crayon"
+  ],
+  "style": {
+    "fonts": {
+      "display": "ZTZiYouTi",
+      "body": "sans-400",
+      "hand": "ZTZiYouTi",
+      "num": "latin-700",
+      "caption": "sans-900"
+    },
+    "colors": {
+      "bg": "#F6EEE0",
+      "ink": "#3A352D",
+      "muted": "#6C6255",
+      "accent": "#D2694E",
+      "line": "#D8CBB6"
+    },
+    "backgrounds": {
+      "paper": "#F6EEE0"
+    }
+  },
+  "rules": {
+    "safeMargin": 0.06,
+    "scale": {
+      "title": 1,
+      "label": 0.8,
+      "note": 0.6
+    },
+    "stroke": [
+      2,
+      4.6
+    ],
+    "forbid": [
+      "整幅场景与卡片块混排",
+      "scene.crayon 缩成卡片（必须 rect=[0,0,1,1] 满幅）",
+      "steps 与 times 数量不一致",
+      "字幕压住步骤卡或右下角手写注"
+    ]
+  },
+  "captions": {
+    "style": "handnote",
+    "font": "hand",
+    "baseSize": 42,
+    "lineHeight": 1.34,
+    "top": 0.8,
+    "at": "auto",
+    "maxWidth": 0.5
+  },
+  "audio": {
+    "mood": "soft",
+    "volume": 0.08,
+    "fadeIn": 1.5,
+    "fadeOut": 2.2,
+    "duck": {
+      "level": 0.04,
+      "edge": 0.22
+    }
+  },
+  "verify": [
+    {
+      "at": 0.15,
+      "assert": "ink.insideSafe",
+      "args": {
+        "margin": 0.06
+      }
+    },
+    {
+      "at": 0.9,
+      "assert": "element.count.gte",
+      "args": {
+        "n": 1
+      }
+    },
+    {
+      "at": 0.9,
+      "assert": "caption.noOverlapSubject",
+      "args": {}
+    }
+  ]
+}

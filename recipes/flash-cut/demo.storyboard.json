@@ -1,0 +1,198 @@
+{
+  "recipe": "flash-cut",
+  "format": {
+    "w": 1920,
+    "h": 1080,
+    "fps": 30
+  },
+  "meta": {
+    "title": "快闪卡点·退潮"
+  },
+  "scenes": [
+    {
+      "id": "s01",
+      "bg": "night",
+      "narration": "潮水退了，",
+      "transitionIn": {
+        "type": "fade-in",
+        "dur": 0.22
+      },
+      "transitionOut": {
+        "type": "wipe",
+        "dur": 0.2,
+        "dir": "r",
+        "color": "bg"
+      },
+      "code": [
+        "// 快闪 · 第 1/5 场：大字直接给结论，不铺陈。",
+        "const T = api.t;",
+        "const clamp01 = TT.clamp01;",
+        "const ease = TT.ease;",
+        "const SCALE = RULES.scale || { title: 1.6, label: 0.7, note: 0.45 };",
+        "const STROKE = Array.isArray(RULES.stroke) ? RULES.stroke : [2, 7];",
+        "const light = '#F5F2EA';",
+        "const accent = '#D9A441';",
+        "const muted = '#8E8878';",
+        "const alpha = TT.env.fade(T, api.d, 0.12, 0.12);",
+        "const k = ease.outCubic(clamp01(T / 0.26));",
+        "ctx.save();",
+        "ctx.globalAlpha = alpha * k;",
+        "TT.text(ctx, '潮退了', W * 0.5, H * 0.46, 260 * SCALE.title / 1.6, { color: light, align: 'center', role: 'body', baseline: 'middle' });",
+        "ctx.globalAlpha = alpha * clamp01((T - 0.1) / 0.2);",
+        "TT.text(ctx, '01 / 05', W * 0.06, 110, 34, { color: muted, align: 'left', role: 'body' });",
+        "const strokes = [{ pts: [[W * 0.1, H * 0.68], [W * 0.9, H * 0.68]], at: 0.05, dur: 0.34, pen: 'marker', color: accent, width: STROKE[1], dash: [], seed: 0 }];",
+        "// 快闪卡点：金色横线是版式分隔，不是「笔法」——只落线不画笔身（penBody:false）。",
+        "TT.pen.track(ctx, strokes, T, { sceneScale: 1, penBody: false });",
+        "ctx.restore();"
+      ]
+    },
+    {
+      "id": "s02",
+      "bg": "smoke",
+      "narration": "风从北边来，",
+      "transitionIn": {
+        "type": "zoom-punch",
+        "dur": 0.24
+      },
+      "transitionOut": {
+        "type": "dip-to-color",
+        "dur": 0.24,
+        "color": "bg"
+      },
+      "code": [
+        "// 快闪 · 第 2/5 场：字号骤降，靠留白制造落差。",
+        "const T = api.t;",
+        "const clamp01 = TT.clamp01;",
+        "const ease = TT.ease;",
+        "const SCALE = RULES.scale || { title: 1.6, label: 0.7, note: 0.45 };",
+        "const STROKE = Array.isArray(RULES.stroke) ? RULES.stroke : [2, 7];",
+        "const light = '#F5F2EA';",
+        "const accent = '#D9A441';",
+        "const muted = '#8E8878';",
+        "const alpha = TT.env.fade(T, api.d, 0.12, 0.12);",
+        "const k = ease.outCubic(clamp01(T / 0.26));",
+        "ctx.save();",
+        "ctx.globalAlpha = alpha * k;",
+        "TT.text(ctx, '北风', W * 0.5, H * 0.46, 110 * SCALE.title / 1.6, { color: light, align: 'center', role: 'body', baseline: 'middle' });",
+        "ctx.globalAlpha = alpha * clamp01((T - 0.1) / 0.2);",
+        "TT.text(ctx, '02 / 05', W * 0.06, 110, 34, { color: muted, align: 'left', role: 'body' });",
+        "const strokes = [{ pts: [[W * 0.36, H * 0.56], [W * 0.64, H * 0.56]], at: 0.05, dur: 0.3, pen: 'marker', color: accent, width: STROKE[0], dash: [], seed: 0 }];",
+        "// 快闪卡点：金色横线是版式分隔，不是「笔法」——只落线不画笔身（penBody:false）。",
+        "TT.pen.track(ctx, strokes, T, { sceneScale: 1, penBody: false });",
+        "ctx.restore();"
+      ]
+    },
+    {
+      "id": "s03",
+      "bg": "night",
+      "narration": "灯一盏盏灭了，",
+      "transitionIn": {
+        "type": "fade-in",
+        "dur": 0.24
+      },
+      "transitionOut": {
+        "type": "glitch",
+        "dur": 0.2,
+        "color": "bg"
+      },
+      "code": [
+        "// 快闪 · 第 3/5 场：承接 dip 从同色揭开，一次强转折。",
+        "const T = api.t;",
+        "const clamp01 = TT.clamp01;",
+        "const ease = TT.ease;",
+        "const SCALE = RULES.scale || { title: 1.6, label: 0.7, note: 0.45 };",
+        "const STROKE = Array.isArray(RULES.stroke) ? RULES.stroke : [2, 7];",
+        "const light = '#F5F2EA';",
+        "const accent = '#D9A441';",
+        "const muted = '#8E8878';",
+        "const alpha = TT.env.fade(T, api.d, 0.12, 0.12);",
+        "const k = ease.outCubic(clamp01(T / 0.26));",
+        "ctx.save();",
+        "ctx.globalAlpha = alpha * k;",
+        "TT.text(ctx, '熄灯', W * 0.5, H * 0.46, 220 * SCALE.title / 1.6, { color: light, align: 'center', role: 'body', baseline: 'middle' });",
+        "ctx.globalAlpha = alpha * clamp01((T - 0.1) / 0.2);",
+        "TT.text(ctx, '03 / 05', W * 0.06, 110, 34, { color: muted, align: 'left', role: 'body' });",
+        "const strokes = [{ pts: [[W * 0.12, H * 0.66], [W * 0.88, H * 0.66]], at: 0.05, dur: 0.32, pen: 'marker', color: accent, width: STROKE[1], dash: [26, 18], seed: 0 }];",
+        "// 快闪卡点：金色横线是版式分隔，不是「笔法」——只落线不画笔身（penBody:false）。",
+        "TT.pen.track(ctx, strokes, T, { sceneScale: 1, penBody: false });",
+        "ctx.restore();"
+      ]
+    },
+    {
+      "id": "s04",
+      "bg": "charcoal",
+      "narration": "只剩潮声，",
+      "transitionIn": {
+        "type": "iris",
+        "dur": 0.25,
+        "at": [
+          0.5,
+          0.46
+        ]
+      },
+      "transitionOut": {
+        "type": "push",
+        "dur": 0.2,
+        "dir": "r",
+        "color": "bg"
+      },
+      "code": [
+        "// 快闪 · 第 4/5 场：最小字号 + 最长短句，节奏故意慢半拍。",
+        "const T = api.t;",
+        "const clamp01 = TT.clamp01;",
+        "const ease = TT.ease;",
+        "const SCALE = RULES.scale || { title: 1.6, label: 0.7, note: 0.45 };",
+        "const STROKE = Array.isArray(RULES.stroke) ? RULES.stroke : [2, 7];",
+        "const light = '#F5F2EA';",
+        "const accent = '#D9A441';",
+        "const muted = '#8E8878';",
+        "const alpha = TT.env.fade(T, api.d, 0.12, 0.12);",
+        "const k = ease.outCubic(clamp01(T / 0.26));",
+        "ctx.save();",
+        "ctx.globalAlpha = alpha * k;",
+        "TT.text(ctx, '只剩潮声', W * 0.5, H * 0.46, 96 * SCALE.title / 1.6, { color: light, align: 'center', role: 'body', baseline: 'middle' });",
+        "ctx.globalAlpha = alpha * clamp01((T - 0.1) / 0.2);",
+        "TT.text(ctx, '04 / 05', W * 0.06, 110, 34, { color: muted, align: 'left', role: 'body' });",
+        "const strokes = [{ pts: [[W * 0.28, H * 0.56], [W * 0.72, H * 0.56]], at: 0.05, dur: 0.3, pen: 'marker', color: accent, width: STROKE[0], dash: [], seed: 0 }];",
+        "// 快闪卡点：金色横线是版式分隔，不是「笔法」——只落线不画笔身（penBody:false）。",
+        "TT.pen.track(ctx, strokes, T, { sceneScale: 1, penBody: false });",
+        "ctx.restore();"
+      ]
+    },
+    {
+      "id": "s05",
+      "bg": "night",
+      "narration": "天亮了。",
+      "transitionIn": {
+        "type": "cut"
+      },
+      "transitionOut": {
+        "type": "zoom-out",
+        "dur": 0.3,
+        "color": "bg"
+      },
+      "code": [
+        "// 快闪 · 第 5/5 场：全片最大字号收束，末段不再落笔。",
+        "const T = api.t;",
+        "const clamp01 = TT.clamp01;",
+        "const ease = TT.ease;",
+        "const SCALE = RULES.scale || { title: 1.6, label: 0.7, note: 0.45 };",
+        "const STROKE = Array.isArray(RULES.stroke) ? RULES.stroke : [2, 7];",
+        "const light = '#F5F2EA';",
+        "const accent = '#D9A441';",
+        "const muted = '#8E8878';",
+        "const alpha = TT.env.fade(T, api.d, 0.12, 0.12);",
+        "const k = ease.outCubic(clamp01(T / 0.22));",
+        "ctx.save();",
+        "ctx.globalAlpha = alpha * k;",
+        "TT.text(ctx, '天亮', W * 0.5, H * 0.46, 300 * SCALE.title / 1.6, { color: light, align: 'center', role: 'body', baseline: 'middle' });",
+        "ctx.globalAlpha = alpha * clamp01((T - 0.08) / 0.18);",
+        "TT.text(ctx, '05 / 05', W * 0.06, 110, 34, { color: muted, align: 'left', role: 'body' });",
+        "const strokes = [{ pts: [[W * 0.1, H * 0.7], [W * 0.9, H * 0.7]], at: 0.04, dur: 0.28, pen: 'marker', color: accent, width: STROKE[1], dash: [], seed: 0 }];",
+        "// 快闪卡点：金色横线是版式分隔，不是「笔法」——只落线不画笔身（penBody:false）。",
+        "TT.pen.track(ctx, strokes, T, { sceneScale: 1, penBody: false });",
+        "ctx.restore();"
+      ]
+    }
+  ]
+}

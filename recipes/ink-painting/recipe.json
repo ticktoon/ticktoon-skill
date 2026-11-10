@@ -1,0 +1,104 @@
+{
+  "id": "ink-painting",
+  "abi": "8",
+  "name": "水墨写意",
+  "keywords": [
+    "水墨",
+    "国风",
+    "宣纸",
+    "毛笔",
+    "写意",
+    "留白",
+    "墨线"
+  ],
+  "when": "需要一笔浓淡分明的墨线慢慢长出来、大片留白让观众自己补完画面时",
+  "blocks": [
+    "scene.code"
+  ],
+  "style": {
+    "fonts": {
+      "display": "sans-900",
+      "body": "sans-400",
+      "num": "latin-700",
+      "caption": "sans-900"
+    },
+    "colors": {
+      "bg": "#101010",
+      "ink": "#F2F2F2",
+      "muted": "#8A8A8A",
+      "accent": "#FFFFFF",
+      "line": "#2E2E2E"
+    },
+    "backgrounds": {
+      "paper": "#101010"
+    }
+  },
+  "rules": {
+    "safeMargin": 0.09,
+    "scale": {
+      "title": 1,
+      "label": 0.75,
+      "note": 0.55
+    },
+    "stroke": [
+      3,
+      12
+    ],
+    "pen": {
+      "mode": "fixed",
+      "value": "inkbrush"
+    },
+    "board": {
+      "mode": "fixed",
+      "value": "wash"
+    },
+    "forbid": [
+      "把画面内容写成 block 的题材枚举参数（例如用 scene 选项挑画哪一幅）",
+      "在同一帧叠两种纸：宣纸只能来自 TT.board.wash，不许再铺一层底色",
+      "用规则几何图形或纯色色块代替墨线；浓淡必须靠笔锋提按与叠笔产生",
+      "墨迹或文字越出 safeMargin；印章压到主体墨线",
+      "把整段旁白原样抄进 code；code 只写画与题款"
+    ]
+  },
+  "captions": {
+    "style": "plain",
+    "font": "caption",
+    "baseSize": 46,
+    "lineHeight": 1.22,
+    "top": 0.78,
+    "at": "bottom",
+    "size": 0.8,
+    "maxWidth": 0.5
+  },
+  "audio": {
+    "mood": "cut",
+    "volume": 0.1,
+    "fadeIn": 0.8,
+    "fadeOut": 1.6,
+    "duck": {
+      "level": 0.045,
+      "edge": 0.12
+    }
+  },
+  "verify": [
+    {
+      "at": 0.15,
+      "assert": "ink.insideSafe",
+      "args": {
+        "margin": 0.09
+      }
+    },
+    {
+      "at": 0.9,
+      "assert": "element.count.gte",
+      "args": {
+        "n": 1
+      }
+    },
+    {
+      "at": 0.9,
+      "assert": "caption.noOverlapSubject",
+      "args": {}
+    }
+  ]
+}

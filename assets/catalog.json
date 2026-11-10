@@ -1,0 +1,81 @@
+{
+  "note": "零 key 演示素材包。assets.mjs 按 topic/keywords 匹配 tag；文件均为 1920×1080 横屏短片段。 origin 字段为素材库原始 key（originally Pexels，授权已确认（2026-10-28 用户确认））；fetch-demo-assets.mjs 已随素材入库退役。",
+  "items": [
+    {
+      "file": "demo/finance.mp4",
+      "topic": "金融数据",
+      "keywords": [
+        "金融",
+        "股市",
+        "数据",
+        "经济",
+        "财经"
+      ],
+      "duration": 11,
+      "source": "自建素材库（originally Pexels，授权已确认）",
+      "origin": "dh/video_assets/economy/e202b48cfbbd40cca78c465e159c0ff8.mp4"
+    },
+    {
+      "file": "demo/city.mp4",
+      "topic": "城市",
+      "keywords": [
+        "城市",
+        "建筑",
+        "地产",
+        "楼市"
+      ],
+      "duration": 10.41,
+      "source": "自建素材库（originally Pexels，授权已确认）",
+      "origin": "dh/video_assets/real_estate/dcad320ef4654eef94dfc54770fdbc41.mp4"
+    },
+    {
+      "file": "demo/tech.mp4",
+      "topic": "科技",
+      "keywords": [
+        "科技",
+        "AI",
+        "芯片",
+        "计算",
+        "数字"
+      ],
+      "duration": 7,
+      "source": "自建素材库（originally Pexels，授权已确认）",
+      "origin": "dh/video_assets/digital_tech/c782da9a8bef4e81a6cb87e19944a36a.mp4"
+    },
+    {
+      "file": "demo/nature.mp4",
+      "topic": "自然",
+      "keywords": [
+        "自然",
+        "风景",
+        "旅游",
+        "生态"
+      ],
+      "duration": 9,
+      "source": "自建素材库（originally Pexels，授权已确认）",
+      "origin": "dh/video_assets/nature_landscape/39a84aa58906465b8b6e8d2268c501e7.mp4"
+    },
+    {
+      "file": "demo/office.mp4",
+      "topic": "办公",
+      "keywords": [
+        "办公",
+        "工作",
+        "商务",
+        "会议"
+      ],
+      "duration": 11.68,
+      "source": "自建素材库（originally Pexels，授权已确认）",
+      "origin": "dh/video_assets/economy/c8d48c1e40c245c4ae1ad0760cce8359.mp4"
+    }
+  ],
+  "bgm": {
+    "fast-cut.mp3": {
+      "bpm": 129.2,
+      "beatOffset": 0.372,
+      "duration": 76.72,
+      "note": "2026-10-29 离线能量包络自相关分析测得候选 86.1/129.2/89.1（主峰 86.1，129.2 为 1.5 倍频），取 129.2；如节奏感不对可改 86.1。新增内置 BGM 时按同结构补一条元数据（bpm+beatOffset 必填，offset 缺了网格会漂）",
+      "detectedAt": "2026-10-29"
+    }
+  }
+}

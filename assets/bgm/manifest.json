@@ -1,0 +1,7 @@
+{
+  "note": "情绪 → BGM 文件。recipe.audio.mood 是唯一入口，storyboard 不直接点名文件。",
+  "urgent": { "src": "skill:assets/bgm/突发打击乐.mp3", "volume": 0.12, "desc": "打击乐，突发/警示" },
+  "tense":  { "src": "skill:assets/bgm/紧张脉冲弦乐.mp3", "volume": 0.12, "desc": "脉冲弦乐，紧张但可持续" },
+  "soft":   { "src": "skill:assets/bgm/柔和垫乐.mp3", "volume": 0.10, "desc": "垫乐，说明/科普" },
+  "cut":    { "src": "skill:assets/bgm/fast-cut.mp3", "volume": 0.12, "desc": "切点密集，快节奏混剪" }
+}

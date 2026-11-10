@@ -1,0 +1,51 @@
+{
+  "note": "字体角色或真实 family → 文件。name 同时是引擎 FontFace 族名；recipe.style.fonts 的值必须与 manifest 键逐字相同。",
+  "sans-900": {
+    "src": "skill:assets/fonts/DingTalk-JinBuTi.woff2",
+    "family": "DingTalk JinBuTi",
+    "weight": 900,
+    "desc": "钉钉进步体；字幕默认主字体，标题黑，字形紧、有压迫感"
+  },
+  "sans-400": {
+    "src": "skill:assets/fonts/WenYuanSansSC-Medium.woff2",
+    "family": "WenYuan Sans SC",
+    "weight": 400,
+    "desc": "正文黑，字面干净、长句可读"
+  },
+  "latin-700": {
+    "src": "skill:assets/fonts/WenYuanSansSC-Bold.woff2",
+    "family": "WenYuan Sans SC",
+    "weight": 700,
+    "desc": "数字与西文加粗"
+  },
+  "MaokenAssortedSans": {
+    "src": "skill:assets/fonts/MKSJH.woff2",
+    "family": "MaokenAssortedSans",
+    "weight": 400,
+    "desc": "猫啃什锦黑；不规则字面适合剪报与拼贴"
+  },
+  "ZTYueDongHei": {
+    "src": "skill:assets/fonts/ZTYDH.woff2",
+    "family": "ZT YueDongHei",
+    "weight": 400,
+    "desc": "ZT YueDongHei；悦动黑，适合海报型强调字幕"
+  },
+  "ZTZiYouTi": {
+    "src": "skill:assets/fonts/ZTZYT.woff2",
+    "family": "ZT ZiYouTi",
+    "weight": 400,
+    "desc": "ZT ZiYouTi；自由手写风，handnote 默认字体"
+  },
+  "WenYuanSerifSC-Bold": {
+    "src": "skill:assets/fonts/WYST_BOLD.woff2",
+    "family": "WenYuan Serif SC",
+    "weight": 700,
+    "desc": "文源宋体 Bold；vertical 与国风字幕默认字体"
+  },
+  "JiangChengYuanTi": {
+    "src": "skill:assets/fonts/江城圆体.woff2",
+    "family": "JiangChengYuanTi",
+    "weight": 400,
+    "desc": "江城圆体 400W；友好、柔和的圆体"
+  }
+}

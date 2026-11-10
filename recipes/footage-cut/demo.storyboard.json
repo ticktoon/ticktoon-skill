@@ -1,0 +1,67 @@
+{
+  "recipe": "footage-cut",
+  "format": {
+    "w": 1920,
+    "h": 1080,
+    "fps": 30
+  },
+  "meta": {
+    "title": "实拍快切·城市清晨"
+  },
+  "scenes": [
+    {
+      "id": "s01",
+      "bg": "night",
+      "narration": "天还没全亮，街上已经有第一班车。",
+      "elements": [
+        {
+          "block": "scene.footage",
+          "slot": "full",
+          "rect": [
+            0,
+            0,
+            1,
+            1
+          ],
+          "src": "skill:assets/demo/city.mp4",
+          "start": 0,
+          "title": "第一班车\n比太阳更早",
+          "kicker": "城市清晨 · 06:12",
+          "keywords": [
+            "街道",
+            "清晨",
+            "车流"
+          ],
+          "credit": "内置素材"
+        }
+      ]
+    },
+    {
+      "id": "s02",
+      "bg": "night",
+      "narration": "窗户一扇扇亮起来，一天就这么开始。",
+      "elements": [
+        {
+          "block": "scene.footage",
+          "slot": "full",
+          "rect": [
+            0,
+            0,
+            1,
+            1
+          ],
+          "src": "skill:assets/demo/office.mp4",
+          "start": 1.5,
+          "title": "灯亮了\n人就到了",
+          "kicker": "办公楼 · 08:40",
+          "keywords": [
+            "办公",
+            "窗",
+            "人群"
+          ],
+          "credit": "内置素材"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,65 @@
+{
+  "id": "scene.caption-demo",
+  "group": "scene",
+  "inkless": true,
+  "when": "字幕 kit 的同文本对照背景；角落标注样式名，不承载正式 recipe 内容。",
+  "energy": {
+    "level": "low",
+    "why": "背景保持稳定，让字幕版式与逐字动效成为唯一变量"
+  },
+  "slots": [
+    "full"
+  ],
+  "defaultSlot": "full",
+  "params": {
+    "label": {
+      "type": "string",
+      "required": true,
+      "maxChars": 24
+    },
+    "note": {
+      "type": "string",
+      "default": "",
+      "maxChars": 40
+    },
+    "index": {
+      "type": "number",
+      "default": 0
+    }
+  },
+  "defaultDuration": 2,
+  "defaultSfx": null,
+  "needs": {
+    "font": [
+      "display",
+      "body"
+    ],
+    "three": false,
+    "video": false,
+    "cache": false
+  },
+  "pitfalls": [
+    "仅用于 caption-kit 对照；必须显式 rect=[0,0,1,1]"
+  ],
+  "layout": {
+    "full": [
+      0,
+      0,
+      1,
+      1
+    ]
+  },
+  "motion": {
+    "enter": 0.5,
+    "exitRatio": 0.5,
+    "stagger": 0,
+    "rise": 0,
+    "hold": {
+      "min": 0.8,
+      "perChar": 0.024
+    }
+  },
+  "sizes": {
+    "default": 60
+  }
+}

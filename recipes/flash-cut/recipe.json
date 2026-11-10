@@ -1,0 +1,90 @@
+{
+  "id": "flash-cut",
+  "abi": "8",
+  "name": "快闪卡点",
+  "keywords": [
+    "快闪",
+    "卡点",
+    "快切",
+    "短句",
+    "节奏",
+    "冲击",
+    "大字"
+  ],
+  "when": "需要三到五个短句用硬切与大字连打、不铺陈只给结论时",
+  "blocks": [
+    "scene.code"
+  ],
+  "style": {
+    "fonts": {
+      "display": "sans-900",
+      "body": "sans-400",
+      "num": "latin-700"
+    },
+    "colors": {
+      "bg": "#0A0A0C",
+      "ink": "#F5F2EA",
+      "muted": "#8E8878",
+      "accent": "#D9A441",
+      "line": "#26262C"
+    },
+    "backgrounds": {
+      "night": "#0A0A0C",
+      "smoke": "#17181C",
+      "charcoal": "#17181C"
+    }
+  },
+  "rules": {
+    "safeMargin": 0.05,
+    "scale": {
+      "title": 1.6,
+      "label": 0.7,
+      "note": 0.45
+    },
+    "stroke": [
+      2,
+      7
+    ],
+    "forbid": [
+      "把短句写进 block 的题材枚举参数；每句来自 storyboard 的 narration 与 code",
+      "在快闪里再叠一层字幕；画面文字即正文，字幕必须 none",
+      "单场超过 2.4s；超过就不是快切而是讲解",
+      "同一场出现两种字号相近的标题；阶梯必须拉开",
+      "连续两场用 dip-to-color 假装叠化；同色 dip 只能成对用一次"
+    ]
+  },
+  "captions": {
+    "style": "none"
+  },
+  "audio": {
+    "mood": "cut",
+    "volume": 0.11,
+    "fadeIn": 1,
+    "fadeOut": 1.8,
+    "duck": {
+      "level": 0.05,
+      "edge": 0.12
+    }
+  },
+  "verify": [
+    {
+      "at": 0.15,
+      "assert": "ink.insideSafe",
+      "args": {
+        "margin": 0.05
+      }
+    },
+    {
+      "at": 0.9,
+      "assert": "element.count.gte",
+      "args": {
+        "n": 1
+      }
+    },
+    {
+      "at": 0.9,
+      "assert": "caption.noOverlapSubject",
+      "args": {}
+    }
+  ]
+}

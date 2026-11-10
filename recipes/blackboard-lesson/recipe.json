@@ -1,0 +1,105 @@
+{
+  "id": "blackboard-lesson",
+  "abi": "8",
+  "name": "黑板教学",
+  "keywords": [
+    "黑板",
+    "粉笔",
+    "教学",
+    "推导",
+    "板书",
+    "公式"
+  ],
+  "when": "需要把一堂课的推导过程按书写节拍逐笔写在黑板上时",
+  "blocks": [
+    "scene.code"
+  ],
+  "style": {
+    "fonts": {
+      "display": "sans-400",
+      "body": "sans-400",
+      "num": "latin-700",
+      "caption": "sans-900",
+      "hand": "ZTZiYouTi",
+      "serif": "WenYuanSerifSC-Bold"
+    },
+    "colors": {
+      "bg": "#FAF7F0",
+      "ink": "#33312C",
+      "muted": "#8B8578",
+      "accent": "#E2574C",
+      "line": "#D8D2C4"
+    },
+    "backgrounds": {
+      "paper": "#FAF7F0"
+    }
+  },
+  "rules": {
+    "safeMargin": 0.06,
+    "scale": {
+      "title": 1,
+      "label": 0.8,
+      "note": 0.6
+    },
+    "stroke": [
+      3,
+      6
+    ],
+    "pen": {
+      "mode": "fixed",
+      "value": "chalk"
+    },
+    "board": {
+      "mode": "fixed",
+      "value": "blackboard"
+    },
+    "forbid": [
+      "把讲课内容写成 block 的题材枚举参数（例如用课题选项选择讲哪一课）",
+      "在 code 里用 Math.random、Date 等墙钟随机，板书必须确定性",
+      "黑板与卡片块混排，或同一幕出现两种字幕样式",
+      "墨迹或文字越出 safeMargin",
+      "把整段旁白原样抄进 code 当板书；code 只写推导与标注"
+    ]
+  },
+  "captions": {
+    "style": "plain",
+    "font": "caption",
+    "baseSize": 44,
+    "lineHeight": 1.34,
+    "top": 0.8,
+    "at": "top",
+    "size": 0.92,
+    "maxWidth": 0.62
+  },
+  "audio": {
+    "mood": "soft",
+    "volume": 0.1,
+    "fadeIn": 1.6,
+    "fadeOut": 2.4,
+    "duck": {
+      "level": 0.04,
+      "edge": 0.22
+    }
+  },
+  "verify": [
+    {
+      "at": 0.15,
+      "assert": "ink.insideSafe",
+      "args": {
+        "margin": 0.06
+      }
+    },
+    {
+      "at": 0.9,
+      "assert": "element.count.gte",
+      "args": {
+        "n": 1
+      }
+    },
+    {
+      "at": 0.9,
+      "assert": "caption.noOverlapSubject",
+      "args": {}
+    }
+  ]
+}

@@ -1,0 +1,111 @@
+{
+  "id": "whiteboard-explainer",
+  "abi": "8",
+  "name": "白板手写",
+  "keywords": [
+    "白板",
+    "手写",
+    "手绘",
+    "板书",
+    "画出来",
+    "讲解"
+  ],
+  "when": "需要让整幅画面逐笔长出来、观众看着答案被画出来时",
+  "blocks": [
+    "scene.code"
+  ],
+  "style": {
+    "fonts": {
+      "display": "sans-400",
+      "body": "sans-400",
+      "num": "latin-700",
+      "caption": "sans-900",
+      "hand": "ZTZiYouTi",
+      "serif": "WenYuanSerifSC-Bold"
+    },
+    "colors": {
+      "bg": "#FAF7F0",
+      "ink": "#33312C",
+      "muted": "#8B8578",
+      "accent": "#E2574C",
+      "line": "#D8D2C4"
+    },
+    "backgrounds": {
+      "paper": "#FAF7F0"
+    }
+  },
+  "rules": {
+    "safeMargin": 0.06,
+    "scale": {
+      "title": 1,
+      "label": 0.8,
+      "note": 0.6
+    },
+    "stroke": [
+      2.4,
+      4.5
+    ],
+    "pen": {
+      "mode": "enum",
+      "choices": [
+        "marker",
+        "pencil"
+      ],
+      "default": "marker"
+    },
+    "board": {
+      "mode": "enum",
+      "choices": [
+        "paper",
+        "blackboard"
+      ],
+      "default": "paper"
+    },
+    "forbid": [
+      "整幅场景与卡片块混排",
+      "同一幕出现两种字幕样式",
+      "元素墨迹越出 safeMargin",
+      "把讲解内容塞进 lesson 参数（叙事写在 storyboard 里）"
+    ]
+  },
+  "captions": {
+    "style": "band",
+    "font": "caption",
+    "baseSize": 44,
+    "lineHeight": 1.34,
+    "top": 0.8,
+    "at": "bottom",
+    "band": true
+  },
+  "audio": {
+    "mood": "soft",
+    "volume": 0.1,
+    "fadeIn": 1.6,
+    "fadeOut": 2.4,
+    "duck": {
+      "level": 0.04,
+      "edge": 0.22
+    }
+  },
+  "verify": [
+    {
+      "at": 0.15,
+      "assert": "ink.insideSafe",
+      "args": {
+        "margin": 0.06
+      }
+    },
+    {
+      "at": 0.9,
+      "assert": "element.count.gte",
+      "args": {
+        "n": 1
+      }
+    },
+    {
+      "at": 0.9,
+      "assert": "caption.noOverlapSubject",
+      "args": {}
+    }
+  ]
+}

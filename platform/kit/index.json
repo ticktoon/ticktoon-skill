@@ -1,0 +1,13 @@
+{
+  "ease":   { "file": "ease.js",   "provides": ["ease"] },
+  "num":    { "file": "num.js",    "provides": ["clamp01", "num", "env", "rng"] },
+  "text":   { "file": "text.js",   "provides": ["text"], "requires": ["style"] },
+  "style":  { "file": "style.js",  "provides": ["color", "font"] },
+  "chart":  { "file": "chart.js",  "provides": ["chart"] },
+  "pen":    { "file": "pen.js",    "provides": ["pen"] },
+  "mark":   { "file": "mark.js",   "provides": ["mark"], "requires": ["pen", "text"] },
+  "transition": { "file": "transition.js", "provides": ["transition"], "requires": ["style"] },
+  "board":  { "file": "board.js",  "provides": ["board"] },
+  "newsbg": { "file": "newsbg.js", "provides": ["newsBg"], "requires": ["num"] },
+  "geom":   { "file": "geom.js",   "provides": ["geom"], "requires": ["ease", "num"] }
+}
