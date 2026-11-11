@@ -1,13 +1,14 @@
 /** scene.footage —— 实拍铺满画布，暗渐层与短句只在底部让出阅读区。 */
 (() => {
-  const { font, color, clamp01 } = TT;
+  const { font, clamp01 } = TT;
 
   BLOCKS['scene.footage'] = (g, p) => {
-    const { ctx, W, H, style } = g;
+    const { ctx, W, H, fonts } = g;
     const rect = g.rect;
     const frame = g.api.video(p.src);
-    const accent = color(style, 'accent');
-    const ink = color(style, 'ink');
+    // 实拍卡的调色板属于 block 本身：暗底、米白字、暗红强调。
+    const accent = '#C0392B';
+    const ink = '#F0ECE4';
     const muted = '#c5cbd4';
 
     ctx.save();
@@ -47,7 +48,7 @@
     const lineW = Math.max(6, Math.round(W * 0.0042));
     const lineRight = gutterX + lineW;
     const enter = clamp01(g.reveal * 1.25);
-    const body = font(style, Math.round(W * 0.014), 'body');
+    const body = font(fonts, Math.round(W * 0.014), 'body');
     ctx.font = body.css;
     ctx.textBaseline = 'alphabetic';
     ctx.textAlign = 'left';
@@ -64,11 +65,11 @@
     const paragraphs = String(p.title || '').split('\n');
     const minSize = 44;
     let size = Math.round(W * 0.046);
-    let display = font(style, size, 'display');
+    let display = font(fonts, size, 'display');
     let lines = paragraphs;
     let textX = 0;
     for (;;) {
-      display = font(style, size, 'display');
+      display = font(fonts, size, 'display');
       ctx.font = display.css;
       textX = lineRight + display.size * 0.6;
       const availW = W - margin - textX;
@@ -76,7 +77,7 @@
       if (lines.length <= 3 || size <= minSize) break;
       size = Math.max(minSize, size - 4);
     }
-    display = font(style, size, 'display');
+    display = font(fonts, size, 'display');
     ctx.font = display.css;
     textX = lineRight + display.size * 0.6;
     const top = H * (lines.length > 1 ? 0.465 : 0.565);

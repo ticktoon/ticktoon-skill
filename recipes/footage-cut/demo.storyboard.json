@@ -11,7 +11,6 @@
   "scenes": [
     {
       "id": "s01",
-      "bg": "night",
       "narration": "天还没全亮，街上已经有第一班车。",
       "elements": [
         {
@@ -38,7 +37,6 @@
     },
     {
       "id": "s02",
-      "bg": "night",
       "narration": "窗户一扇扇亮起来，一天就这么开始。",
       "elements": [
         {

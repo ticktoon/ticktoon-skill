@@ -78,15 +78,15 @@ export async function buildProject({ root, dir, file = null, tts = null, write =
 
   const catalog = loadCatalog(root);
   const normalized = normalizeStoryboard(raw, catalog, captionOverride);
-  const { storyboard, bag: schemaBag, recipe, style, caption } = normalized;
+  const { storyboard, bag: schemaBag, recipe, fonts, caption } = normalized;
   bag.errors.push(...schemaBag.errors);
   bag.warnings.push(...schemaBag.warnings);
 
-  if (!bag.ok || !style) {
+  if (!bag.ok || !fonts) {
     return finish({ ok: false, bag, outDir, write, report: { ok: false, status: 'failed', errors: bag.errors, warnings: bag.warnings } });
   }
 
-  const resolved = await resolveStoryboard({ storyboard, style, recipe, catalog, tts });
+  const resolved = await resolveStoryboard({ storyboard, fonts, recipe, catalog, tts });
   bag.warnings.push(...resolved.warnings);
 
   const planned = planStoryboard({
@@ -100,7 +100,7 @@ export async function buildProject({ root, dir, file = null, tts = null, write =
   const { kitIndex, kitDir } = readKitIndex(root);
   const emitted = planned.scenes.map((scene) => emitScene({
     scene,
-    style,
+    fonts,
     format: storyboard.format,
     catalog,
     kitIndex,
@@ -110,7 +110,7 @@ export async function buildProject({ root, dir, file = null, tts = null, write =
     rules: recipe?.rules || null,
   }));
 
-  check({ scenes: planned.scenes, style, format: storyboard.format, bag, catalog, caption, recipe });
+  check({ scenes: planned.scenes, fonts, format: storyboard.format, bag, catalog, caption, recipe });
 
   const { composition, events } = assemble({
     scenes: emitted.map((scene, i) => ({
@@ -154,7 +154,7 @@ export async function buildProject({ root, dir, file = null, tts = null, write =
     receipts: [],
   };
 
-  const context = { style, recipe, storyboard, caption, captionName: caption?.name || null, catalog };
+  const context = { fonts, recipe, storyboard, caption, captionName: caption?.name || null, catalog };
   if (!bag.ok) return { ...finish({ ok: false, bag, outDir, write, report, composition, events, planned }), ...context };
   return { ...finish({ ok: true, bag, outDir, write, report, composition, events, planned }), ...context };
 }

@@ -2,14 +2,15 @@
  * recipe v8 —— 视觉规范包的校验、注入与 forbid 检查。
  *
  * v8 配方只装"LLM 推不出来、不统一就会散、能机器验收"的视觉规范：
- *   style  跨子系统共用的机器契约：字体角色 + 颜色 token + 背景名
+ *   fonts  字体角色（资源 / 授权契约）
  *   rules  数值区间 / 维度默认值 / 禁止清单
  *   captions / audio  字幕与声音的配方级默认值
  *   verify 可执行断言（由 tt qa 跑）
  *   blocks 本视觉实际提供的 block
  *
- * style 是封闭白名单：只有 fonts / colors / backgrounds。字号、行高、版位、
- * 动效、图表参数都属于 block 本地，不能借 style 重新长成一套 theme。
+ * fonts 直接写在 recipe 顶层，没有 style 包装。颜色由 kit 自带默认值或
+ * scene.code 直接写，背景由 scene.code / block 自己铺满；recipe 不再承载
+ * 每一片的用色决策。
  */
 import { isPlainObject } from './diag.mjs';
 
@@ -17,11 +18,8 @@ const DIMENSION_MODES = new Set(['fixed', 'enum', 'auto', 'random']);
 const NUMERIC_RULE_KEYS = new Set(['safeMargin', 'scale', 'stroke', 'forbid']);
 const RULE_KEYS = new Set(['safeMargin', 'scale', 'stroke', 'pen', 'board', 'forbid']);
 const NUMERIC_RULES = ['safeMargin', 'scale', 'stroke'];
-const STYLE_KEYS = new Set(['fonts', 'colors', 'backgrounds']);
-const COLOR_KEYS = new Set(['bg', 'ink', 'muted', 'accent', 'line']);
 const FONT_ROLES = new Set(['display', 'body', 'num', 'hand', 'caption', 'brand', 'serif', 'round', 'poster', 'cutout']);
-const RECIPE_KEYS = new Set(['id', 'abi', 'name', 'keywords', 'when', 'blocks', 'style', 'rules', 'captions', 'audio', 'verify', 'signature']);
-const HEX_COLOR = /^#(?:[0-9a-f]{3}|[0-9a-f]{4}|[0-9a-f]{6}|[0-9a-f]{8})$/i;
+const RECIPE_KEYS = new Set(['id', 'abi', 'name', 'keywords', 'when', 'blocks', 'fonts', 'rules', 'captions', 'audio', 'verify', 'signature']);
 const CAPTION_STYLE_KEYS = new Set([
   'style', 'font', 'baseSize', 'lineHeight', 'top', 'at', 'band', 'size', 'color',
   'background', 'accent', 'highlight', 'palette', 'avoid', 'maxWidth', 'maxHeight',
@@ -33,98 +31,55 @@ const DUCK_KEYS = new Set(['level', 'edge']);
 const isFiniteNumber = (value) => typeof value === 'number' && Number.isFinite(value);
 
 /** 返回 [{ code, path, msg }]；msg 里始终带 recipe id 与字段路径。 */
-export function validateRecipeV8(recipe, blocks, fonts) {
+export function validateRecipeV8(recipe, blocks, manifest) {
   const errors = [];
   const id = recipe?.id ?? '<unknown>';
   const fail = (code, path, msg) => errors.push({ code, path, msg: `recipe ${id}: ${path} — ${msg}` });
 
   if (recipe?.abi !== '8') {
     fail('RECIPE_ABI_UNSUPPORTED', 'abi',
-      `只支持 abi "8"；旧配方请把 theme 拆成 style / captions / audio，把 rules.caption、rules.bgm 移到对应字段（收到 ${JSON.stringify(recipe?.abi)}）`);
+      `只支持 abi "8"；旧配方请把 theme 拆成 fonts / captions / audio，把 rules.caption、rules.bgm 移到对应字段（收到 ${JSON.stringify(recipe?.abi)}）`);
     return errors;
   }
 
   for (const key of Object.keys(recipe)) {
     if (RECIPE_KEYS.has(key)) continue;
-    const hint = key === 'theme' || key === 'uses' || key === 'pacing'
-      ? '（v8 已移除 theme / uses / pacing：style 直接写在 recipe 顶层）'
-      : '';
+    const hint = key === 'style'
+      ? '（v8 已移除 style 包装：字体角色直接写在 recipe 顶层 fonts）'
+      : key === 'theme' || key === 'uses' || key === 'pacing'
+        ? '（v8 已移除 theme / uses / pacing：字体直接写在 recipe 顶层 fonts）'
+        : '';
     fail('RECIPE_UNKNOWN_KEY', key, `v8 配方不认识字段 "${key}"${hint}`);
   }
 
-  validateStyle(recipe.style, fonts, fail);
+  validateFonts(recipe.fonts, manifest, fail);
   validateRules(recipe.rules, fail);
-  validateCaptions(recipe.captions, recipe.style, fail);
+  validateCaptions(recipe.captions, recipe.fonts, fail);
   validateAudio(recipe.audio, fail);
   validateBlocks(recipe, blocks, fail);
   validateVerify(recipe.verify, fail);
   return errors;
 }
 
-function validateStyle(style, fonts, fail) {
-  if (!isPlainObject(style)) {
-    fail('RECIPE_STYLE_MISSING', 'style', 'v8 配方必须有 style 对象');
+function validateFonts(fontMap, manifest, fail) {
+  if (!isPlainObject(fontMap)) {
+    fail('RECIPE_FONTS_MISSING', 'fonts', 'v8 配方必须有顶层 fonts 对象（角色 → manifest 键）');
     return;
   }
-  for (const key of Object.keys(style)) {
-    if (STYLE_KEYS.has(key)) continue;
-    fail('RECIPE_STYLE_UNKNOWN_KEY', `style.${key}`,
-      `style 是封闭契约，只允许 fonts / colors / backgrounds；字号、版位、动效请放进 block 本地`);
+  for (const role of ['display', 'body']) {
+    if (!fontMap[role]) fail('RECIPE_FONTS_ROLE_MISSING', `fonts.${role}`, `必须声明 ${role} 字体角色`);
   }
-
-  const fontMap = isPlainObject(style.fonts) ? style.fonts : null;
-  if (!fontMap) {
-    fail('RECIPE_STYLE_FONTS_INVALID', 'style.fonts', 'style.fonts 必须是 { 角色: manifest 键 } 对象');
-  } else {
-    for (const role of ['display', 'body']) {
-      if (!fontMap[role]) fail('RECIPE_STYLE_FONT_ROLE_MISSING', `style.fonts.${role}`, `必须声明 ${role} 字体角色`);
+  for (const [role, name] of Object.entries(fontMap)) {
+    if (!FONT_ROLES.has(role)) {
+      fail('RECIPE_FONTS_ROLE_UNKNOWN', `fonts.${role}`,
+        `未知字体角色 "${role}"；可用：${[...FONT_ROLES].join(' / ')}`);
+      continue;
     }
-    for (const [role, name] of Object.entries(fontMap)) {
-      if (!FONT_ROLES.has(role)) {
-        fail('RECIPE_STYLE_FONT_ROLE_UNKNOWN', `style.fonts.${role}`,
-          `未知字体角色 "${role}"；可用：${[...FONT_ROLES].join(' / ')}`);
-        continue;
-      }
-      if (typeof name !== 'string' || !name.trim()) {
-        fail('RECIPE_STYLE_FONT_NAME_INVALID', `style.fonts.${role}`, '字体值必须是非空 manifest 键');
-      } else if (!isPlainObject(fonts) || !fonts[name]) {
-        fail('RECIPE_STYLE_FONT_UNKNOWN', `style.fonts.${role}`,
-          `字体 "${name}" 不在 assets/fonts/manifest.json 里`);
-      }
-    }
-  }
-
-  const colors = style.colors;
-  if (!isPlainObject(colors)) {
-    fail('RECIPE_STYLE_COLORS_INVALID', 'style.colors', 'style.colors 必须是颜色 token 对象');
-  } else {
-    for (const key of COLOR_KEYS) {
-      const value = colors[key];
-      if (value === undefined) {
-        fail('RECIPE_STYLE_COLOR_MISSING', `style.colors.${key}`, `缺少颜色 token "${key}"`);
-      } else if (typeof value !== 'string' || !HEX_COLOR.test(value)) {
-        fail('RECIPE_STYLE_COLOR_INVALID', `style.colors.${key}`,
-          `颜色必须是 #rgb / #rrggbb / #rrggbbaa，收到 ${JSON.stringify(value)}`);
-      }
-    }
-    for (const key of Object.keys(colors)) {
-      if (COLOR_KEYS.has(key)) continue;
-      fail('RECIPE_STYLE_COLOR_UNKNOWN', `style.colors.${key}`,
-        `style.colors 只允许 ${[...COLOR_KEYS].join(' / ')}；强调色之外的本地颜色放进 block 或 captions`);
-    }
-  }
-
-  if (style.backgrounds !== undefined) {
-    if (!isPlainObject(style.backgrounds)) {
-      fail('RECIPE_STYLE_BACKGROUNDS_INVALID', 'style.backgrounds', 'backgrounds 必须是 { 名字: 颜色 } 对象');
-    } else {
-      for (const [name, value] of Object.entries(style.backgrounds)) {
-        if (!name.trim()) fail('RECIPE_STYLE_BACKGROUND_NAME', 'style.backgrounds', '背景名不能为空');
-        if (typeof value !== 'string' || !HEX_COLOR.test(value)) {
-          fail('RECIPE_STYLE_BACKGROUND_INVALID', `style.backgrounds.${name}`,
-            `背景颜色必须是 #rgb / #rrggbb / #rrggbbaa，收到 ${JSON.stringify(value)}`);
-        }
-      }
+    if (typeof name !== 'string' || !name.trim()) {
+      fail('RECIPE_FONTS_NAME_INVALID', `fonts.${role}`, '字体值必须是非空 manifest 键');
+    } else if (!isPlainObject(manifest) || !manifest[name]) {
+      fail('RECIPE_FONTS_UNKNOWN', `fonts.${role}`,
+        `字体 "${name}" 不在 assets/fonts/manifest.json 里`);
     }
   }
 }
@@ -212,7 +167,7 @@ function validateDimension(spec, path, fail) {
   }
 }
 
-function validateCaptions(captions, style, fail) {
+function validateCaptions(captions, fontMap, fail) {
   if (captions === undefined) return;
   if (!isPlainObject(captions)) {
     fail('RECIPE_CAPTIONS_INVALID', 'captions', 'captions 必须是 { style, ... } 对象');
@@ -241,9 +196,9 @@ function validateCaptions(captions, style, fail) {
     fail('RECIPE_CAPTION_TOP_RANGE', 'captions.top', 'top 必须是 0–1 的画面高度比例');
   }
   if (captions.style === 'none') return;
-  if (typeof captions.font === 'string' && isPlainObject(style?.fonts) && !style.fonts[captions.font]) {
+  if (typeof captions.font === 'string' && isPlainObject(fontMap) && !fontMap[captions.font]) {
     fail('RECIPE_CAPTION_FONT_UNKNOWN', 'captions.font',
-      `字幕字体角色 "${captions.font}" 不在 style.fonts 里；字幕不能绕过 style 自带字体`);
+      `字幕字体角色 "${captions.font}" 不在 recipe 顶层 fonts 里；字幕不能绕过 recipe 自带字体`);
   }
   if (captions.font !== undefined && typeof captions.font !== 'string') {
     fail('RECIPE_CAPTION_FONT_TYPE', 'captions.font', 'captions.font 必须是字体角色字符串');
@@ -304,9 +259,9 @@ function validateBlocks(recipe, blocks, fail) {
     for (const role of blocks.get(blockId).needs?.font || []) requiredRoles.add(role);
   });
   for (const role of requiredRoles) {
-    if (!recipe.style?.fonts?.[role]) {
-      fail('RECIPE_BLOCK_FONT_ROLE_MISSING', `style.fonts.${role}`,
-        `block 需要字体角色 "${role}"，但 style.fonts 没有声明`);
+    if (!recipe.fonts?.[role]) {
+      fail('RECIPE_BLOCK_FONT_ROLE_MISSING', `fonts.${role}`,
+        `block 需要字体角色 "${role}"，但 recipe 顶层 fonts 没有声明`);
     }
   }
 }

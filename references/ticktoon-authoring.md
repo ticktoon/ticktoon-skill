@@ -16,7 +16,7 @@
 
 禁止使用墙钟、`Math.random()`、异步绘制、帧间可变历史和 Canvas 像素回读。数学助手使用下方 `TT`，不要假设 `api` 提供 `ease`、`lerp`、`clamp`、`cover` 或 `contain`。
 
-`platform/compile/emit.mjs` 在 scene 前拼接 `TT`、`BLOCKS`、`CAPTIONS` 三层，都按 IIFE 挂到全局，只注入本次用到的成员（`new Function('ctx','api', code)` 没有 import）。可用的 `TT` 成员：`TT.ease.*`（缓动）、`TT.clamp01` / `TT.num.fmt` / `TT.env.fade|reveal` / `TT.rng`（数值与包络）、`TT.text`（中文优先断行 + 量测 + 墨迹框）、`TT.color` / `TT.font`（recipe `style` 查询，`font().css` 的族名恒等于 `resources[].name`），以及场景 kit `TT.chart` / `TT.pen` / `TT.mark` / `TT.transition` / `TT.board` / `TT.geom`。code 场额外注入 `STYLE` 与 `RULES`；block 场只读 `g.style` / `g.motion` / `g.sizes` / `g.rect`。block 可以用 `SETUP['<id>'](g, el, api)` 做一次性预处理，逐帧只跑 `draw.js` 导出的函数体。
+`platform/compile/emit.mjs` 在 scene 前拼接 `TT`、`BLOCKS`、`CAPTIONS` 三层，都按 IIFE 挂到全局，只注入本次用到的成员（`new Function('ctx','api', code)` 没有 import）。可用的 `TT` 成员：`TT.ease.*`（缓动）、`TT.clamp01` / `TT.num.fmt` / `TT.env.fade|reveal` / `TT.rng`（数值与包络）、`TT.text`（中文优先断行 + 量测 + 墨迹框）、`TT.font`（recipe 顶层 `fonts` 查询，`font().css` 的族名恒等于 `resources[].name`），以及场景 kit `TT.chart` / `TT.pen` / `TT.mark` / `TT.transition` / `TT.board` / `TT.geom` / `TT.flash`。code 场额外注入 `FONTS` 与 `RULES`；block 场只读 `g.fonts` / `g.motion` / `g.sizes` / `g.rect`。block 可以用 `SETUP['<id>'](g, el, api)` 做一次性预处理，逐帧只跑 `draw.js` 导出的函数体。
 
 ## Three layers
 

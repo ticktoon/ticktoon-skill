@@ -24,7 +24,7 @@
 
 ## 视觉与数值依据
 
-- `style`：深棕夜底（`bg #191008`）、暖黄剪影（`ink #F2DCA8`）、琥珀强调（`accent #E8A33D`）。
+- 调色板固定在 block 内：深棕夜底（`#191008`）、暖黄剪影（`#F2DCA8`）、琥珀强调（`#E8A33D`）；recipe 不再声明颜色。
 - `rules.safeMargin: 0.06`；`rules.scale: title 1 / label 0.8 / note 0.6`。
 - `rules.stroke: [3, 6]`：关节轮廓与操纵杆用粗档，铆钉与细线用细档。
 - `captions.style: "none"`；`audio.mood: "tense"`，音量 0.11，淡入 1.4s / 淡出 2.2s。

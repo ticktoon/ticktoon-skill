@@ -153,17 +153,17 @@
     strokePts(ctx, [[x, y + h + 1], [x - 2, y - 1]], stroke, width, seed + 4, alpha, 1.2);
   };
 
-  const setFont = (ctx, style, size, role) => {
-    ctx.font = font(style, size, role).css;
+  const setFont = (ctx, fonts, size, role) => {
+    ctx.font = font(fonts, size, role).css;
   };
 
   /** 手写字：逐字偏移与轻转，只用字序哈希，不随帧闪烁。 */
-  const handText = (ctx, style, text, x, y, size, role, color, seed, opts = {}) => {
+  const handText = (ctx, fonts, text, x, y, size, role, color, seed, opts = {}) => {
     const align = opts.align || 'left';
     const alpha = opts.alpha == null ? 1 : opts.alpha;
     const jitter = opts.jitter == null ? 1.2 : opts.jitter;
     const rot = opts.rot == null ? 0.012 : opts.rot;
-    setFont(ctx, style, size, role);
+    setFont(ctx, fonts, size, role);
     const chars = [...String(text)];
     const widths = chars.map((ch) => ctx.measureText(ch).width);
     const total = widths.reduce((a, b) => a + b, 0);
@@ -189,21 +189,21 @@
   };
 
   /** 数字标签：数字用拉丁粗体、单位用手写，基线对齐。 */
-  const numberText = (ctx, style, value, unit, cx, y, size, color, seed, alpha = 1) => {
-    setFont(ctx, style, size, 'num');
+  const numberText = (ctx, fonts, value, unit, cx, y, size, color, seed, alpha = 1) => {
+    setFont(ctx, fonts, size, 'num');
     const wValue = ctx.measureText(value).width;
-    setFont(ctx, style, Math.round(size * 0.52), 'hand');
+    setFont(ctx, fonts, Math.round(size * 0.52), 'hand');
     const wUnit = unit ? ctx.measureText(unit).width + size * 0.12 : 0;
     const left = cx - (wValue + wUnit) / 2;
     ctx.save();
     ctx.globalAlpha *= alpha;
-    setFont(ctx, style, size, 'num');
+    setFont(ctx, fonts, size, 'num');
     ctx.fillStyle = color;
     ctx.textAlign = 'left';
     ctx.textBaseline = 'alphabetic';
     ctx.fillText(value, left, y);
     if (unit) {
-      setFont(ctx, style, Math.round(size * 0.52), 'hand');
+      setFont(ctx, fonts, Math.round(size * 0.52), 'hand');
       ctx.fillStyle = SOFT;
       ctx.fillText(unit, left + wValue + size * 0.12, y);
     }
@@ -340,7 +340,7 @@
   };
   const ITEM_KINDS = Object.keys(ICONS);
 
-  const drawIngredient = (ctx, item, index, cx, cy, t, at, seed, style) => {
+  const drawIngredient = (ctx, item, index, cx, cy, t, at, seed, fonts) => {
     const label = item.label || '';
     const k = pop(t, at, 0.55);
     if (k <= 0) return;
@@ -354,7 +354,7 @@
 
     const lk = prog(t, at + 0.42, 0.45);
     if (lk <= 0) return;
-    setFont(ctx, style, 26, 'hand');
+    setFont(ctx, fonts, 26, 'hand');
     const w = Math.min(180, ctx.measureText(label).width + 34);
     const x = cx - w / 2;
     const y = 466;
@@ -367,12 +367,12 @@
     sketchBox(ctx, x, y, w, 42, seed + 61, {
       stroke: SOFT, width: 1.8, fill: 'rgba(252,246,233,0.8)', alpha: lk,
     });
-    handText(ctx, style, label, cx, y + 30, 26, 'hand', INK, seed + 62, { align: 'center', alpha: lk, jitter: 1 });
+    handText(ctx, fonts, label, cx, y + 30, 26, 'hand', INK, seed + 62, { align: 'center', alpha: lk, jitter: 1 });
   };
 
   // ---- 主场景 ----
   BLOCKS['scene.crayon'] = (g, p) => {
-    const { ctx, W, H, style } = g;
+    const { ctx, W, H, fonts } = g;
     const t = g.sceneT;
     ctx.save();
     ctx.globalAlpha = g.a;
@@ -426,8 +426,8 @@
       ring(65, 58, 2, 702);
       const textK = prog(t, 0.8, 0.5);
       if (textK > 0) {
-        handText(ctx, style, big, cx, cy + 6, 50, 'display', RED, 703, { align: 'center', alpha: textK, jitter: 1.8, rot: 0.02 });
-        if (sub) handText(ctx, style, sub, cx, cy + 42, 20, 'hand', RED, 704, { align: 'center', alpha: textK, jitter: 1, rot: 0.015 });
+        handText(ctx, fonts, big, cx, cy + 6, 50, 'display', RED, 703, { align: 'center', alpha: textK, jitter: 1.8, rot: 0.02 });
+        if (sub) handText(ctx, fonts, sub, cx, cy + 42, 20, 'hand', RED, 704, { align: 'center', alpha: textK, jitter: 1, rot: 0.015 });
       }
       ctx.restore();
     }
@@ -436,9 +436,9 @@
     const titleK = prog(t, 0.3, 0.9);
     if (titleK > 0) {
       const rise = (1 - titleK) * 18;
-      handText(ctx, style, p.title, 312, 148 + rise, 82, 'display', INK, 710, { alpha: titleK, jitter: 2.4, rot: 0.014 });
+      handText(ctx, fonts, p.title, 312, 148 + rise, 82, 'display', INK, 710, { alpha: titleK, jitter: 2.4, rot: 0.014 });
       if (p.subtitle) {
-        handText(ctx, style, p.subtitle, 314, 216 + rise, 26, 'hand', SOFT, 711, { alpha: titleK, jitter: 1 });
+        handText(ctx, fonts, p.subtitle, 314, 216 + rise, 26, 'hand', SOFT, 711, { alpha: titleK, jitter: 1 });
       }
       const uK = prog(t, 0.95, 0.8);
       if (uK > 0) {
@@ -477,7 +477,7 @@
       }
       const textK = prog(t, 1.55, 0.55);
       if (p.bubble && textK > 0) {
-        handText(ctx, style, p.bubble, cx, cy + 12, 31, 'hand', INK, 805, { align: 'center', alpha: textK, jitter: 1.2 });
+        handText(ctx, fonts, p.bubble, cx, cy + 12, 31, 'hand', INK, 805, { align: 'center', alpha: textK, jitter: 1.2 });
       }
     }
 
@@ -489,12 +489,12 @@
     if (items.length) {
       const secK = prog(t, 1.5, 0.6);
       if (secK > 0) {
-        handText(ctx, style, `材料 · ${items.length} 样`, 120, 292, 31, 'hand', SOFT, 820, { alpha: secK, jitter: 1.2 });
+        handText(ctx, fonts, `材料 · ${items.length} 样`, 120, 292, 31, 'hand', SOFT, 820, { alpha: secK, jitter: 1.2 });
         strokePts(ctx, [[122, 306], [212, 304], [298, 308]], ORANGE, 3.6, 821, secK * 0.6, 1.4);
       }
       const cxs = [200, 395, 590, 785];
       items.forEach((item, i) => {
-        drawIngredient(ctx, item, i, cxs[i], 380, t, 1.9 + i * 0.52, 850 + i * 17, style);
+        drawIngredient(ctx, item, i, cxs[i], 380, t, 1.9 + i * 0.52, 850 + i * 17, fonts);
       });
     }
 
@@ -578,7 +578,7 @@
         ctx.restore();
         crayonFill(ctx, cap, { x: -31, y: -31, w: 62, h: 62 }, color, seed + 30, { gap: 6, alpha: 0.42, grain: 0.5 });
         strokePts(ctx, ellipsePts(0, 0, 28, 28, seed + 31, 48, 0.02), INK, 2.2, seed + 31, 0.9, 1);
-        handText(ctx, style, String(i + 1), 0, 11, 32, 'display', INK, seed + 32, { align: 'center', jitter: 0.8, rot: 0.01 });
+        handText(ctx, fonts, String(i + 1), 0, 11, 32, 'display', INK, seed + 32, { align: 'center', jitter: 0.8, rot: 0.01 });
         ctx.restore();
       }
 
@@ -586,13 +586,13 @@
       if (times[i]) {
         const timeK = prog(t, at + 0.82, 0.45);
         const parts = /^([\d.]+)\s*(.*)$/.exec(String(times[i])) || [null, String(times[i]), ''];
-        numberText(ctx, style, parts[1], parts[2], cx, topY - 46, 42, color, seed + 33, timeK);
+        numberText(ctx, fonts, parts[1], parts[2], cx, topY - 46, 42, color, seed + 33, timeK);
       }
 
       // 步骤标签框 + 引线
       const tagK = prog(t, at + 0.9, 0.5);
       if (tagK > 0) {
-        setFont(ctx, style, 27, 'hand');
+        setFont(ctx, fonts, 27, 'hand');
         const tw = ctx.measureText(step).width + 34;
         let tx = cx + barW / 2 + 18;
         if (tx + tw > 1800) tx = cx - barW / 2 - 18 - tw;
@@ -601,7 +601,7 @@
         sketchBox(ctx, tx, ty, tw, 46, seed + 41, {
           stroke: INK, width: 2, fill: 'rgba(251,245,233,0.88)', alpha: tagK,
         });
-        handText(ctx, style, step, tx + 17, ty + 33, 27, 'hand', INK, seed + 42, { alpha: tagK, jitter: 1 });
+        handText(ctx, fonts, step, tx + 17, ty + 33, 27, 'hand', INK, seed + 42, { alpha: tagK, jitter: 1 });
       }
     });
 
@@ -623,14 +623,14 @@
     if (steps.length) {
       const totalK = prog(t, 6.9, 0.7);
       if (totalK > 0) {
-        handText(ctx, style, `合计 ${total} 分钟`, 1500, 312, 32, 'hand', ORANGE, 1000, { align: 'center', alpha: totalK, jitter: 1.5 });
+        handText(ctx, fonts, `合计 ${total} 分钟`, 1500, 312, 32, 'hand', ORANGE, 1000, { align: 'center', alpha: totalK, jitter: 1.5 });
         strokePts(ctx, [[1392, 324], [1450, 320], [1560, 326], [1612, 322]], ORANGE, 3.6, 1001, totalK * 0.55, 1.8);
       }
     }
     if (p.note) {
       const noteK = prog(t, 7.35, 0.6);
       if (noteK > 0) {
-        handText(ctx, style, p.note, 1798, 944, 21, 'hand', SOFT, 1002, { align: 'right', alpha: noteK, jitter: 0.9 });
+        handText(ctx, fonts, p.note, 1798, 944, 21, 'hand', SOFT, 1002, { align: 'right', alpha: noteK, jitter: 0.9 });
         strokePts(ctx, [[1640, 936], [1660, 926], [1700, 922]], 'rgba(108,98,85,0.45)', 1.3, 1003, noteK * 0.6, 1.2);
       }
     }

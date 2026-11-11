@@ -14,22 +14,10 @@
   "blocks": [
     "scene.shadow"
   ],
-  "style": {
-    "fonts": {
-      "display": "sans-900",
-      "body": "sans-400",
-      "num": "latin-700"
-    },
-    "colors": {
-      "bg": "#191008",
-      "ink": "#F2DCA8",
-      "muted": "#A08663",
-      "accent": "#E8A33D",
-      "line": "#3A2412"
-    },
-    "backgrounds": {
-      "night": "#191008"
-    }
+  "fonts": {
+    "display": "sans-900",
+    "body": "sans-400",
+    "num": "latin-700"
   },
   "rules": {
     "safeMargin": 0.06,

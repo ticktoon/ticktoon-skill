@@ -47,17 +47,8 @@
     }
     return null;
   };
-  const colorAt = (key, fallback) => {
-    try {
-      if (typeof STYLE !== 'undefined' && STYLE && typeof TT.color === 'function') {
-        const value = TT.color(STYLE, key);
-        if (typeof value === 'string' && value) return value;
-      }
-    } catch {
-      // style 没有这个色名时退回硬编码，标注不能因为缺色就整条消失。
-    }
-    return fallback;
-  };
+  // 标注的默认色属于 kit：铅笔灰与陶土红。调用方传 color 即可换品牌色。
+  const colorAt = (_key, fallback) => fallback;
   const inkColor = () => colorAt('ink', '#353b3c');
   const accentColor = () => colorAt('accent', colorAt('ink', '#c66b57'));
   const colorOf = (o, kind) => {
@@ -279,7 +270,7 @@
     ctx.save();
     for (; px >= 6; px -= 1) {
       try {
-        font = TT.font(STYLE, px, 'display');
+        font = TT.font(FONTS, px, 'display');
       } catch {
         font = null;
         break;

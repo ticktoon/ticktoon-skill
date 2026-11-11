@@ -7,7 +7,7 @@ description: 用 Ticktoon 生成整幅场景化短视频。recipe 给一类成�
 
 唯一产物是 protocol v1.0 `composition.json`（`scenes[]` + `audio[]`）。
 
-下文 `SKILL_DIR` 指本文件所在目录。脚本用绝对路径调用，cwd 保持在用户工程目录。首次使用或环境异常先运行 `node "$SKILL_DIR/scripts/doctor.mjs"`。
+下文 `SKILL_DIR` 指本文件所在目录。脚本用绝对路径调用，cwd 保持在用户工程目录。首次使用或环境异常先运行 `node "$SKILL_DIR/scripts/doctor.mjs"`；若 `deps` 报缺包，先在 `$SKILL_DIR` 执行 `npm install`（只装 npm 包；Playwright 直接驱动本机 Chrome，无需下载浏览器），再重跑 doctor。
 
 ## 结构
 
@@ -15,8 +15,8 @@ description: 用 Ticktoon 生成整幅场景化短视频。recipe 给一类成�
 
 ## 读取顺序（只读需要的）
 
-1. 先用 `tt recipe list` 选 recipe：它的输出（id / 名称 / 关键词 / 适用时机）就是当前货架，本文件不复制清单。需要看规则时用 `tt recipe show <id>`，它给出 `blocks / style / rules / captions / audio / verify`。
-2. 选定后只读该 recipe 的 `brief.md` 与 `demo.storyboard.json`；`recipe.json` 只用于核对 `style / rules / captions / audio / verify`。不要预读其他 recipe。
+1. 先用 `tt recipe list` 选 recipe：它的输出（id / 名称 / 关键词 / 适用时机）就是当前货架，本文件不复制清单。需要看规则时用 `tt recipe show <id>`，它给出 `blocks / fonts / rules / captions / audio / verify`。
+2. 选定后只读该 recipe 的 `brief.md` 与 `demo.storyboard.json`；`recipe.json` 只用于核对 `fonts / rules / captions / audio / verify`。不要预读其他 recipe。
 3. 动手写 storyboard 前读 `references/storyboard.md`。
 4. 写 `scene.code` 时才读 `references/authoring-code.md`，再读该 recipe 目录里的 `visual.md` 与一个 `examples/` 范例；没有 `visual.md` 的 recipe 直接照 `demo.storyboard.json` 的写法。
 5. 用到任一 kit 能力（字幕、笔迹、标注、舞台、转场、新闻背景等）时，只读对应 `references/<kit>.md` 一篇；不要一次读完整个 `references/`。
@@ -69,7 +69,7 @@ node "$SKILL_DIR/platform/cli.mjs" det --twice --dir <dir>    # 编译指纹，�
 
 ## recipe 契约
 
-recipe 是一类成片的创作单位：它决定本片可用哪些 `blocks`，并固定 `style`、`rules`、`captions`、`audio` 与 `verify`。`style` 只是编译与 QA 共用的机器字段（字体角色、颜色 token、可选命名背景色），字号、行高、版式、动效由 code 场或 block 本地决定。不同片型对应不同 recipe，由 `tt recipe list` 选择；所有取值静态可追踪。
+recipe 是一类成片的创作单位：它决定本片可用哪些 `blocks`，并固定 `fonts`、`rules`、`captions`、`audio` 与 `verify`。`fonts` 直接写在 recipe 顶层，只固定字体角色；颜色由 kit 自带默认值或 code 场直接写 hex，背景由 code 场 / block 自己铺满。字号、行高、版式、动效由 code 场或 block 本地决定。不同片型对应不同 recipe，由 `tt recipe list` 选择；所有取值静态可追踪。
 
 ## 公共 kit
 

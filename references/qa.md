@@ -3,12 +3,12 @@
 ## 命令
 
 ```bash
-node "$SKILL_DIR/platform/cli.mjs" qa --dir <dir>             # 全片质量：must 必须 0，同时产出 12 格联系表
+node "$SKILL_DIR/platform/cli.mjs" qa --dir <dir>             # 轻校验：must 必须 0，同时产出 12 格联系表
 node "$SKILL_DIR/platform/cli.mjs" det --twice --dir <dir>    # 编译指纹，两次必须一致
 ```
 
 - `det` 比对的是规范化 `composition.json` 的 SHA-256，不是像素或 MP4 字节；带 `--tts` 时第一次会接 TTS、第二次强制不接，只有不带 `--tts` 才是严格同输入链。CI 内部两次都不接 TTS。
-- `qa` 一次 build + 一次浏览器会话采样约 24–30 帧；像素/几何、recipe verify/forbid、时间维检查共用同一批 receipts。`must` 阻断，`should` 需读但不阻断。
+- `qa` 一次 build + 一次浏览器会话采样约 24–30 帧，只判四类硬问题：渲染异常、空墨迹、recipe verify/forbid。安全框、碰撞、文字互压、字幕带、对比度、停留、时间维都**不自动判定**，直接看联系表。
 - 拿不准成片什么样：看 `review/qa-sheet.png` 的 12 格联系表（`tt qa` 自动生成），不要另跑抽帧命令。
 
 ## 12 格联系表怎么读（不打分）
@@ -21,6 +21,6 @@ node "$SKILL_DIR/platform/cli.mjs" det --twice --dir <dir>    # 编译指纹，�
 2. **收尾**：末格（约 94% 处）是否收住？不该还留着半句话、半幅图或一支笔尖。
 3. **可读性**：每格的主体是否一眼能认出；文字是否能在正常观看距离读清。哪一格需要眯眼，就回 storyboard 减字或放大层级。
 4. **推进**：相邻格之间有没有变化（主体增加、视角变化、停顿）。连续三格几乎一样，就要问这一场是否没有信息增量。
-5. **稳定**：字幕/注记是否总落在同一块区域。某格突然跳到别处或被画框截断，先查 `qa` 的 `TEMPORAL_CAPTION_JUMP` 或字幕样式。
+5. **稳定**：字幕/注记是否总落在同一块区域。某格突然跳到别处或被画框截断，先查字幕样式和这一场的 `TT.text` / `TT.captionKit` 参数。
 
 联系表只是视觉证据，不是评分卡，也不能替代完整预览。发现问题回到 storyboard 改，改完重跑 `tt qa` 看新图。

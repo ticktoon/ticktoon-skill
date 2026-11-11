@@ -6,192 +6,305 @@
     "fps": 30
   },
   "meta": {
-    "title": "快闪卡点·退潮"
+    "title": "快闪卡点·万物皆动"
   },
   "scenes": [
     {
       "id": "s01",
-      "bg": "night",
-      "narration": "潮水退了，",
-      "transitionIn": {
-        "type": "fade-in",
-        "dur": 0.22
-      },
-      "transitionOut": {
-        "type": "wipe",
-        "dur": 0.2,
-        "dir": "r",
-        "color": "bg"
-      },
-      "code": [
-        "// 快闪 · 第 1/5 场：大字直接给结论，不铺陈。",
-        "const T = api.t;",
-        "const clamp01 = TT.clamp01;",
-        "const ease = TT.ease;",
-        "const SCALE = RULES.scale || { title: 1.6, label: 0.7, note: 0.45 };",
-        "const STROKE = Array.isArray(RULES.stroke) ? RULES.stroke : [2, 7];",
-        "const light = '#F5F2EA';",
-        "const accent = '#D9A441';",
-        "const muted = '#8E8878';",
-        "const alpha = TT.env.fade(T, api.d, 0.12, 0.12);",
-        "const k = ease.outCubic(clamp01(T / 0.26));",
-        "ctx.save();",
-        "ctx.globalAlpha = alpha * k;",
-        "TT.text(ctx, '潮退了', W * 0.5, H * 0.46, 260 * SCALE.title / 1.6, { color: light, align: 'center', role: 'body', baseline: 'middle' });",
-        "ctx.globalAlpha = alpha * clamp01((T - 0.1) / 0.2);",
-        "TT.text(ctx, '01 / 05', W * 0.06, 110, 34, { color: muted, align: 'left', role: 'body' });",
-        "const strokes = [{ pts: [[W * 0.1, H * 0.68], [W * 0.9, H * 0.68]], at: 0.05, dur: 0.34, pen: 'marker', color: accent, width: STROKE[1], dash: [], seed: 0 }];",
-        "// 快闪卡点：金色横线是版式分隔，不是「笔法」——只落线不画笔身（penBody:false）。",
-        "TT.pen.track(ctx, strokes, T, { sceneScale: 1, penBody: false });",
-        "ctx.restore();"
-      ]
-    },
-    {
-      "id": "s02",
-      "bg": "smoke",
-      "narration": "风从北边来，",
-      "transitionIn": {
-        "type": "zoom-punch",
-        "dur": 0.24
-      },
-      "transitionOut": {
-        "type": "dip-to-color",
-        "dur": 0.24,
-        "color": "bg"
-      },
-      "code": [
-        "// 快闪 · 第 2/5 场：字号骤降，靠留白制造落差。",
-        "const T = api.t;",
-        "const clamp01 = TT.clamp01;",
-        "const ease = TT.ease;",
-        "const SCALE = RULES.scale || { title: 1.6, label: 0.7, note: 0.45 };",
-        "const STROKE = Array.isArray(RULES.stroke) ? RULES.stroke : [2, 7];",
-        "const light = '#F5F2EA';",
-        "const accent = '#D9A441';",
-        "const muted = '#8E8878';",
-        "const alpha = TT.env.fade(T, api.d, 0.12, 0.12);",
-        "const k = ease.outCubic(clamp01(T / 0.26));",
-        "ctx.save();",
-        "ctx.globalAlpha = alpha * k;",
-        "TT.text(ctx, '北风', W * 0.5, H * 0.46, 110 * SCALE.title / 1.6, { color: light, align: 'center', role: 'body', baseline: 'middle' });",
-        "ctx.globalAlpha = alpha * clamp01((T - 0.1) / 0.2);",
-        "TT.text(ctx, '02 / 05', W * 0.06, 110, 34, { color: muted, align: 'left', role: 'body' });",
-        "const strokes = [{ pts: [[W * 0.36, H * 0.56], [W * 0.64, H * 0.56]], at: 0.05, dur: 0.3, pen: 'marker', color: accent, width: STROKE[0], dash: [], seed: 0 }];",
-        "// 快闪卡点：金色横线是版式分隔，不是「笔法」——只落线不画笔身（penBody:false）。",
-        "TT.pen.track(ctx, strokes, T, { sceneScale: 1, penBody: false });",
-        "ctx.restore();"
-      ]
-    },
-    {
-      "id": "s03",
-      "bg": "night",
-      "narration": "灯一盏盏灭了，",
-      "transitionIn": {
-        "type": "fade-in",
-        "dur": 0.24
-      },
-      "transitionOut": {
-        "type": "glitch",
-        "dur": 0.2,
-        "color": "bg"
-      },
-      "code": [
-        "// 快闪 · 第 3/5 场：承接 dip 从同色揭开，一次强转折。",
-        "const T = api.t;",
-        "const clamp01 = TT.clamp01;",
-        "const ease = TT.ease;",
-        "const SCALE = RULES.scale || { title: 1.6, label: 0.7, note: 0.45 };",
-        "const STROKE = Array.isArray(RULES.stroke) ? RULES.stroke : [2, 7];",
-        "const light = '#F5F2EA';",
-        "const accent = '#D9A441';",
-        "const muted = '#8E8878';",
-        "const alpha = TT.env.fade(T, api.d, 0.12, 0.12);",
-        "const k = ease.outCubic(clamp01(T / 0.26));",
-        "ctx.save();",
-        "ctx.globalAlpha = alpha * k;",
-        "TT.text(ctx, '熄灯', W * 0.5, H * 0.46, 220 * SCALE.title / 1.6, { color: light, align: 'center', role: 'body', baseline: 'middle' });",
-        "ctx.globalAlpha = alpha * clamp01((T - 0.1) / 0.2);",
-        "TT.text(ctx, '03 / 05', W * 0.06, 110, 34, { color: muted, align: 'left', role: 'body' });",
-        "const strokes = [{ pts: [[W * 0.12, H * 0.66], [W * 0.88, H * 0.66]], at: 0.05, dur: 0.32, pen: 'marker', color: accent, width: STROKE[1], dash: [26, 18], seed: 0 }];",
-        "// 快闪卡点：金色横线是版式分隔，不是「笔法」——只落线不画笔身（penBody:false）。",
-        "TT.pen.track(ctx, strokes, T, { sceneScale: 1, penBody: false });",
-        "ctx.restore();"
-      ]
-    },
-    {
-      "id": "s04",
-      "bg": "charcoal",
-      "narration": "只剩潮声，",
-      "transitionIn": {
-        "type": "iris",
-        "dur": 0.25,
-        "at": [
-          0.5,
-          0.46
-        ]
-      },
-      "transitionOut": {
-        "type": "push",
-        "dur": 0.2,
-        "dir": "r",
-        "color": "bg"
-      },
-      "code": [
-        "// 快闪 · 第 4/5 场：最小字号 + 最长短句，节奏故意慢半拍。",
-        "const T = api.t;",
-        "const clamp01 = TT.clamp01;",
-        "const ease = TT.ease;",
-        "const SCALE = RULES.scale || { title: 1.6, label: 0.7, note: 0.45 };",
-        "const STROKE = Array.isArray(RULES.stroke) ? RULES.stroke : [2, 7];",
-        "const light = '#F5F2EA';",
-        "const accent = '#D9A441';",
-        "const muted = '#8E8878';",
-        "const alpha = TT.env.fade(T, api.d, 0.12, 0.12);",
-        "const k = ease.outCubic(clamp01(T / 0.26));",
-        "ctx.save();",
-        "ctx.globalAlpha = alpha * k;",
-        "TT.text(ctx, '只剩潮声', W * 0.5, H * 0.46, 96 * SCALE.title / 1.6, { color: light, align: 'center', role: 'body', baseline: 'middle' });",
-        "ctx.globalAlpha = alpha * clamp01((T - 0.1) / 0.2);",
-        "TT.text(ctx, '04 / 05', W * 0.06, 110, 34, { color: muted, align: 'left', role: 'body' });",
-        "const strokes = [{ pts: [[W * 0.28, H * 0.56], [W * 0.72, H * 0.56]], at: 0.05, dur: 0.3, pen: 'marker', color: accent, width: STROKE[0], dash: [], seed: 0 }];",
-        "// 快闪卡点：金色横线是版式分隔，不是「笔法」——只落线不画笔身（penBody:false）。",
-        "TT.pen.track(ctx, strokes, T, { sceneScale: 1, penBody: false });",
-        "ctx.restore();"
-      ]
-    },
-    {
-      "id": "s05",
-      "bg": "night",
-      "narration": "天亮了。",
+      "duration": 1.8576,
       "transitionIn": {
         "type": "cut"
       },
       "transitionOut": {
-        "type": "zoom-out",
-        "dur": 0.3,
-        "color": "bg"
+        "type": "cut"
       },
       "code": [
-        "// 快闪 · 第 5/5 场：全片最大字号收束，末段不再落笔。",
+        "// 01 / 09 · 4 拍：逐字砸入，字占画面。",
         "const T = api.t;",
-        "const clamp01 = TT.clamp01;",
-        "const ease = TT.ease;",
-        "const SCALE = RULES.scale || { title: 1.6, label: 0.7, note: 0.45 };",
-        "const STROKE = Array.isArray(RULES.stroke) ? RULES.stroke : [2, 7];",
-        "const light = '#F5F2EA';",
-        "const accent = '#D9A441';",
-        "const muted = '#8E8878';",
-        "const alpha = TT.env.fade(T, api.d, 0.12, 0.12);",
-        "const k = ease.outCubic(clamp01(T / 0.22));",
-        "ctx.save();",
-        "ctx.globalAlpha = alpha * k;",
-        "TT.text(ctx, '天亮', W * 0.5, H * 0.46, 300 * SCALE.title / 1.6, { color: light, align: 'center', role: 'body', baseline: 'middle' });",
-        "ctx.globalAlpha = alpha * clamp01((T - 0.08) / 0.18);",
-        "TT.text(ctx, '05 / 05', W * 0.06, 110, 34, { color: muted, align: 'left', role: 'body' });",
-        "const strokes = [{ pts: [[W * 0.1, H * 0.7], [W * 0.9, H * 0.7]], at: 0.04, dur: 0.28, pen: 'marker', color: accent, width: STROKE[1], dash: [], seed: 0 }];",
-        "// 快闪卡点：金色横线是版式分隔，不是「笔法」——只落线不画笔身（penBody:false）。",
-        "TT.pen.track(ctx, strokes, T, { sceneScale: 1, penBody: false });",
-        "ctx.restore();"
+        "const W = api.W;",
+        "const H = api.H;",
+        "ctx.fillStyle = '#0A0A0A'; ctx.fillRect(0, 0, W, H);",
+        "const S = '#FFFFFF';",
+        "const A = '#FF4D00';",
+        "const L = '#12305C';",
+        "const M = '#8A8A8A';",
+        "const B = '#0A0A0A';",
+        "TT.flash.pattern(ctx, { kind: 'halftone', rect: { x: W * 0.62, y: 0, w: W * 0.38, h: H }, colorA: A, colorB: B, dotGap: 20, dot: 7, alpha: 0.16, seed: 1 });",
+        "const size = TT.flash.fit(ctx, '万物皆动', W * 0.88, { maxPx: 380, role: 'display' });",
+        "TT.flash.stagger(ctx, api, { text: '万物皆动', x: W * 0.5, y: H * 0.5, size, t: T, dur: 0.34, stagger: 0.09, direction: 'scale', fromScale: 2.1, ease: 'back', colors: [S, S, A, S] });",
+        "TT.flash.micro(ctx, { text: '01 / 09', x: W * 0.04, y: H * 0.08, size: 22, color: M });",
+        "TT.flash.micro(ctx, { text: 'EVERY = 1 FOOTNOTE = 1/5', x: W * 0.96, y: H * 0.08, size: 18, color: M, align: 'right' });",
+        "TT.flash.micro(ctx, { text: '129.2 BPM', x: W * 0.04, y: H * 0.94, size: 18, color: L, bar: { x: W * 0.04, y: H * 0.955, w: W * 0.18, h: 4, value: 0.2, color: A } });",
+        "TT.flash.viewfinder(ctx, { rect: { x: W * 0.025, y: H * 0.025, w: W * 0.95, h: H * 0.95 }, color: M, length: 26, width: 1, alpha: 0.7 });"
+      ]
+    },
+    {
+      "id": "s02",
+      "duration": 1.3932,
+      "transitionIn": {
+        "type": "cut"
+      },
+      "transitionOut": {
+        "type": "cut"
+      },
+      "resources": [
+        {
+          "type": "video",
+          "name": "tech",
+          "src": "skill:assets/demo/tech.mp4"
+        },
+        {
+          "type": "video",
+          "name": "nature",
+          "src": "skill:assets/demo/nature.mp4"
+        }
+      ],
+      "code": [
+        "// 02 / 09 · 3 拍：字是窗口，里面是实拍。",
+        "const T = api.t;",
+        "const W = api.W;",
+        "const H = api.H;",
+        "const S = '#FFFFFF';",
+        "const B = '#0A0A0A';",
+        "const A = '#FF4D00';",
+        "const M = '#8A8A8A';",
+        "const frame = api.video('tech');",
+        "const bg = TT.flash.contrastColor(api, frame, { light: '#F2F0E8', dark: B });",
+        "ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);",
+        "const fg = bg === B ? S : B;",
+        "const size = TT.flash.fit(ctx, 'MOVE', W * 0.82, { maxPx: 540, role: 'display' });",
+        "TT.flash.mask(ctx, api, { text: 'MOVE', x: W * 0.5, y: H * 0.5, size, fill: 'image', image: frame, fit: 'cover', focus: [0.52, 0.38], zoom: 1.12, t: T, dur: 0.28, reveal: TT.clamp01((T - 0.04) / 0.3), revealDir: 'l' });",
+        "TT.flash.micro(ctx, { text: '02 / 09 — EVERY', x: W * 0.04, y: H * 0.165, size: 18, color: fg });",
+        "TT.flash.micro(ctx, { text: 'BRAND FILM / 4:5', x: W * 0.96, y: H * 0.165, size: 16, color: fg, align: 'right' });",
+        "TT.flash.micro(ctx, { text: 'EVERY = 1 FOOTNOTE = 1/5', x: W * 0.04, y: H * 0.835, size: 16, color: fg });",
+        "TT.flash.micro(ctx, { text: 'MOVE / 02', x: W * 0.96, y: H * 0.835, size: 16, color: fg, align: 'right' });"
+      ]
+    },
+    {
+      "id": "s03",
+      "duration": 0.4644,
+      "transitionIn": {
+        "type": "cut"
+      },
+      "transitionOut": {
+        "type": "cut"
+      },
+      "code": [
+        "// 03 / 09 · 1 拍：数字刺点。",
+        "const T = api.t;",
+        "const W = api.W;",
+        "const H = api.H;",
+        "ctx.fillStyle = '#FFFFFF'; ctx.fillRect(0, 0, W, H);",
+        "const B = '#0A0A0A';",
+        "const L = '#12305C';",
+        "const A = '#FF4D00';",
+        "const M = '#8A8A8A';",
+        "TT.flash.pattern(ctx, { kind: 'grid', rect: { x: 0, y: 0, w: W, h: H }, colorA: L, colorB: '#FFFFFF', cell: 96, alpha: 0.08 });",
+        "const size = TT.flash.fit(ctx, '09', W * 0.62, { maxPx: 760, role: 'display' });",
+        "TT.flash.stagger(ctx, api, { text: '09', x: W * 0.5, y: H * 0.48, size, t: T, dur: 0.16, stagger: 0.03, direction: 'scale', fromScale: 2.4, ease: 'back', color: B, colors: [B, A] });",
+        "TT.flash.micro(ctx, { text: '03 / 09 — SLAM', x: W * 0.04, y: H * 0.08, size: 20, color: M });",
+        "TT.flash.micro(ctx, { text: '02 / 03', x: W * 0.96, y: H * 0.08, size: 18, color: L, align: 'right' });",
+        "TT.flash.micro(ctx, { text: 'HIT / 0.46s', x: W * 0.04, y: H * 0.93, size: 18, color: M, bar: { x: W * 0.04, y: H * 0.945, w: W * 0.34, h: 5, value: 0.5, color: A } });"
+      ]
+    },
+    {
+      "id": "s04",
+      "duration": 1.8576,
+      "transitionIn": {
+        "type": "cut"
+      },
+      "transitionOut": {
+        "type": "cut"
+      },
+      "resources": [
+        {
+          "type": "video",
+          "name": "city",
+          "src": "skill:assets/demo/city.mp4"
+        },
+        {
+          "type": "video",
+          "name": "nature",
+          "src": "skill:assets/demo/nature.mp4"
+        },
+        {
+          "type": "video",
+          "name": "tech",
+          "src": "skill:assets/demo/tech.mp4"
+        }
+      ],
+      "code": [
+        "// 04 / 09 · 4 拍：三格斜墙，图本身当主角。",
+        "const T = api.t;",
+        "const W = api.W;",
+        "const H = api.H;",
+        "ctx.fillStyle = '#0A0A0A'; ctx.fillRect(0, 0, W, H);",
+        "const S = '#FFFFFF';",
+        "const A = '#FF4D00';",
+        "const L = '#12305C';",
+        "const M = '#8A8A8A';",
+        "TT.flash.micro(ctx, { text: '04 / 09 — WALL', x: W * 0.04, y: H * 0.08, size: 20, color: M });",
+        "TT.flash.panels(ctx, api, { rect: { x: W * 0.06, y: H * 0.14, w: W * 0.88, h: H * 0.7 }, cols: 3, gap: 20, radius: 20, slant: -0.055, t: T, dur: 0.4, stagger: 0.08, from: 'bottom', offset: 44, fromScale: 0.9, border: false, cells: [{ video: 'city', label: 'CITY / 01', labelColor: S, tint: A, tintAlpha: 0.16 }, { video: 'nature', label: 'NATURE / 02', labelColor: S }, { video: 'tech', label: 'TECH / 03', labelColor: S, tint: L, tintAlpha: 0.22 }] });",
+        "TT.flash.micro(ctx, { text: 'THREE CITIES / ONE BEAT', x: W * 0.04, y: H * 0.93, size: 18, color: S });",
+        "TT.flash.micro(ctx, { text: '4 BEATS / 1.86s', x: W * 0.96, y: H * 0.93, size: 16, color: A, align: 'right' });"
+      ]
+    },
+    {
+      "id": "s05",
+      "duration": 0.9288,
+      "transitionIn": {
+        "type": "cut"
+      },
+      "transitionOut": {
+        "type": "cut"
+      },
+      "code": [
+        "// 05 / 09 · 2 拍：拉伸字 + 速度线，末尾切一刀故障。",
+        "const T = api.t;",
+        "const W = api.W;",
+        "const H = api.H;",
+        "ctx.fillStyle = '#FFFFFF'; ctx.fillRect(0, 0, W, H);",
+        "const B = '#0A0A0A';",
+        "const A = '#FF4D00';",
+        "const L = '#12305C';",
+        "const M = '#8A8A8A';",
+        "TT.flash.pattern(ctx, { kind: 'stripes', rect: { x: 0, y: H * 0.62, w: W, h: H * 0.12 }, colorA: L, colorB: '#FFFFFF', gap: 34, width: 8, alpha: 0.14 });",
+        "const size = TT.flash.fit(ctx, 'NOISE', W * 0.76, { maxPx: 360, role: 'display' });",
+        "TT.flash.stretch(ctx, api, { text: 'NOISE', x: W * 0.5, y: H * 0.46, size, t: T, dur: 0.3, skew: -0.18, scaleY: 0.74, offset: -220, color: B, speed: 1, lineColor: A, lineCount: 18, seed: 7 });",
+        "TT.flash.micro(ctx, { text: '05 / 09 — CUT', x: W * 0.04, y: H * 0.08, size: 20, color: M });",
+        "TT.flash.micro(ctx, { text: 'NOISE = SIGNAL', x: W * 0.96, y: H * 0.08, size: 16, color: L, align: 'right' });",
+        "TT.flash.micro(ctx, { text: 'GLITCH / 02 FRAMES', x: W * 0.04, y: H * 0.93, size: 18, color: M, bar: { x: W * 0.04, y: H * 0.945, w: W * 0.34, h: 5, value: 0.66, color: A } });",
+        "const gl = T - 0.58;",
+        "if (gl >= 0 && gl < 0.16) TT.flash.glitch(ctx, api, { W, H, count: 9, shift: 34, seed: 11, color: A, colorAlpha: 0.08 });"
+      ]
+    },
+    {
+      "id": "s06",
+      "duration": 1.3932,
+      "transitionIn": {
+        "type": "cut"
+      },
+      "transitionOut": {
+        "type": "cut"
+      },
+      "code": [
+        "// 06 / 09 · 3 拍：波形 + 大字，后半拍换橙。",
+        "const T = api.t;",
+        "const W = api.W;",
+        "const H = api.H;",
+        "ctx.fillStyle = '#0A0A0A'; ctx.fillRect(0, 0, W, H);",
+        "const S = '#FFFFFF';",
+        "const A = '#FF4D00';",
+        "const M = '#8A8A8A';",
+        "TT.flash.wave(ctx, { rect: { x: W * 0.06, y: H * 0.58, w: W * 0.88, h: H * 0.24 }, count: 64, gap: W * 0.88 / 64, barW: 9, amplitude: H * 0.11, baseline: H * 0.7, color: S, seed: 5, t: T, speed: 1.4, mirror: true });",
+        "if (T > 0.7) TT.flash.wave(ctx, { rect: { x: W * 0.06, y: H * 0.58, w: W * 0.88, h: H * 0.24 }, count: 64, gap: W * 0.88 / 64, barW: 9, amplitude: H * 0.055, baseline: H * 0.7, color: A, seed: 5, t: T, speed: 1.8, mirror: true, alpha: 0.5 });",
+        "const size = TT.flash.fit(ctx, 'BASS', W * 0.66, { maxPx: 420, role: 'display' });",
+        "TT.flash.stagger(ctx, api, { text: 'BASS', x: W * 0.5, y: H * 0.36, size, t: T, dur: 0.22, stagger: 0.05, direction: 'up', fromScale: 1.8, ease: 'back', colors: [S, S, A, S] });",
+        "TT.flash.micro(ctx, { text: '06 / 09 — BASS', x: W * 0.04, y: H * 0.08, size: 20, color: M });",
+        "TT.flash.micro(ctx, { text: '129.2 BPM / 0.4644s', x: W * 0.96, y: H * 0.08, size: 16, color: A, align: 'right' });",
+        "TT.flash.micro(ctx, { text: 'LOW END', x: W * 0.04, y: H * 0.93, size: 16, color: S });"
+      ]
+    },
+    {
+      "id": "s07",
+      "duration": 0.4644,
+      "transitionIn": {
+        "type": "cut"
+      },
+      "transitionOut": {
+        "type": "cut"
+      },
+      "code": [
+        "// 07 / 09 · 1 拍：跨镜色块 + GO! 刺点。",
+        "const T = api.t;",
+        "const W = api.W;",
+        "const H = api.H;",
+        "ctx.fillStyle = '#12305C'; ctx.fillRect(0, 0, W, H);",
+        "const S = '#FFFFFF';",
+        "const A = '#FF4D00';",
+        "const B = '#0A0A0A';",
+        "const M = '#8A8A8A';",
+        "TT.flash.carry(ctx, { mode: 'out', color: A, progress: TT.clamp01(T / 0.22), origin: [0.5, 0.55], shape: 'circle' });",
+        "const size = TT.flash.fit(ctx, 'GO!', W * 0.52, { maxPx: 520, role: 'display' });",
+        "TT.flash.stagger(ctx, api, { text: 'GO!', x: W * 0.5, y: H * 0.5, size, t: T, dur: 0.14, stagger: 0.02, direction: 'scale', fromScale: 2.6, ease: 'back', color: S });",
+        "TT.flash.micro(ctx, { text: '07 / 09 — STINGER', x: W * 0.04, y: H * 0.08, size: 18, color: S });",
+        "TT.flash.viewfinder(ctx, { rect: { x: W * 0.025, y: H * 0.025, w: W * 0.95, h: H * 0.95 }, color: S, length: 30, width: 2, rec: true, recColor: A, alpha: 0.8 });",
+        "TT.flash.micro(ctx, { text: 'HALF BEAT / 0.2322s', x: W * 0.04, y: H * 0.94, size: 16, color: M });"
+      ]
+    },
+    {
+      "id": "s08",
+      "duration": 1.3932,
+      "transitionIn": {
+        "type": "cut"
+      },
+      "transitionOut": {
+        "type": "cut"
+      },
+      "resources": [
+        {
+          "type": "video",
+          "name": "city",
+          "src": "skill:assets/demo/city.mp4"
+        },
+        {
+          "type": "video",
+          "name": "nature",
+          "src": "skill:assets/demo/nature.mp4"
+        },
+        {
+          "type": "video",
+          "name": "tech",
+          "src": "skill:assets/demo/tech.mp4"
+        }
+      ],
+      "code": [
+        "// 08 / 09 · 3 拍：不等格拼贴，图 / 色块 / 短词混排。",
+        "const T = api.t;",
+        "const W = api.W;",
+        "const H = api.H;",
+        "ctx.fillStyle = '#0A0A0A'; ctx.fillRect(0, 0, W, H);",
+        "const S = '#FFFFFF';",
+        "const A = '#FF4D00';",
+        "const L = '#12305C';",
+        "const B = '#0A0A0A';",
+        "const M = '#8A8A8A';",
+        "TT.flash.micro(ctx, { text: '08 / 09 — FOUR CARDS', x: W * 0.04, y: H * 0.08, size: 20, color: M });",
+        "TT.flash.panels(ctx, api, { layout: 'quad', rect: { x: W * 0.06, y: H * 0.13, w: W * 0.88, h: H * 0.74 }, radius: 22, t: T, dur: 0.38, stagger: 0.08, from: 'bottom', offset: 36, fromScale: 0.9, border: false, cells: [",
+        "  { video: 'city', label: 'CITY / 01', labelColor: S },",
+        "  { color: S, text: 'RUN', textColor: B, textSize: 132, role: 'display', label: 'MOVE / 02', labelColor: B },",
+        "  { color: L, text: '01', textColor: S, textSize: 100, role: 'num' },",
+        "  { color: A, text: 'GO', textColor: S, textSize: 136, role: 'display', label: 'MOVE / 04', labelColor: S }",
+        "] });",
+        "TT.flash.viewfinder(ctx, { rect: { x: W * 0.025, y: H * 0.025, w: W * 0.95, h: H * 0.95 }, color: M, length: 22, width: 1, crosshair: true, alpha: 0.6 });",
+        "TT.flash.micro(ctx, { text: 'FOUR CARDS / ONE GRID', x: W * 0.04, y: H * 0.93, size: 16, color: S });",
+        "TT.flash.micro(ctx, { text: 'NO SAME SIZE TWICE', x: W * 0.96, y: H * 0.93, size: 14, color: M, align: 'right' });"
+      ]
+    },
+    {
+      "id": "s09",
+      "duration": 1.8576,
+      "transitionIn": {
+        "type": "cut"
+      },
+      "transitionOut": {
+        "type": "cut"
+      },
+      "code": [
+        "// 09 / 09 · 4 拍：故障收尾，字最大、信息最少。",
+        "const T = api.t;",
+        "const W = api.W;",
+        "const H = api.H;",
+        "ctx.fillStyle = '#0A0A0A'; ctx.fillRect(0, 0, W, H);",
+        "const S = '#FFFFFF';",
+        "const A = '#FF4D00';",
+        "const L = '#12305C';",
+        "const M = '#8A8A8A';",
+        "TT.flash.pattern(ctx, { kind: 'halftone', rect: { x: 0, y: H * 0.66, w: W, h: H * 0.34 }, colorA: A, colorB: '#0A0A0A', dotGap: 22, dot: 7, alpha: 0.12, seed: 9 });",
+        "const size = TT.flash.fit(ctx, 'DO IT.', W * 0.8, { maxPx: 360, role: 'display' });",
+        "TT.flash.glitchType(ctx, api, { text: 'DO IT.', x: W * 0.5, y: H * 0.5, size, t: T, dur: api.d, color: S, jumpColor: A, jumpRate: 4, count: 12, seed: 9, burstAt: [[0.28, 0.09], [0.66, 0.07]] });",
+        "TT.flash.viewfinder(ctx, { rect: { x: W * 0.025, y: H * 0.025, w: W * 0.95, h: H * 0.95 }, color: M, length: 28, width: 1, crosshair: false, alpha: 0.7, labels: [{ text: '09 / 09 — END', x: W * 0.04, y: H * 0.08, size: 20, color: S }, { text: 'EVERY = 1 FOOTNOTE = 1/5', x: W * 0.96, y: H * 0.08, size: 16, color: M, align: 'right' }], progress: { value: 1, color: A, track: M, rect: { x: W * 0.04, y: H * 0.93, w: W * 0.92, h: 4 } } });",
+        "TT.flash.micro(ctx, { text: 'DONE / 09', x: W * 0.04, y: H * 0.955, size: 16, color: M });"
       ]
     }
   ]

@@ -55,9 +55,9 @@
    * 在固定框内缩字号：宽度和高度同时满足，绝不自动折行。
    * `lineGap` 是旧模板的固定行间距（像素，已按画幅换算）。
    */
-  function fitBox(ctx, lines, role, desired, maxWidth, maxHeight, style, minSize, tracking, lineGap) {
+  function fitBox(ctx, lines, role, desired, maxWidth, maxHeight, fonts, minSize, tracking, lineGap) {
     let size = Math.max(minSize, Math.round(desired));
-    let f = font(style, size, role);
+    let f = font(fonts, size, role);
     ctx.font = f.css;
     for (let guard = 0; guard < 24; guard += 1) {
       const widest = Math.max(0, ...lines.map((line) => lineWidth(ctx, line, tracking)));
@@ -70,7 +70,7 @@
       const next = Math.max(minSize, Math.floor(size * scale));
       if (next === size) break;
       size = next;
-      f = font(style, size, role);
+      f = font(fonts, size, role);
       ctx.font = f.css;
     }
     return f;
@@ -115,7 +115,7 @@
   }
 
   BLOCKS['scene.news'] = (g, p) => {
-    const { ctx, W, H, style } = g;
+    const { ctx, W, H, fonts } = g;
     const t = g.t;
     const S = Math.min(W, H) / 1080;
     const titleBox = boxOf(BOX.title, W, H);
@@ -133,7 +133,7 @@
     const map = g.api.img('news-world-map');
 
     // 背景：固定公共 kit。地图未就绪时只少一层，不影响文字。
-    // 首帧直接满亮，避免开场露出 style 的深蓝底；场景末端仍随 g.a 淡出。
+    // 首帧直接满亮，避免开场露出画布黑底；场景末端仍随 g.a 淡出。
     const bgAlpha = t < ENTER_DUR ? 1 : g.a;
     ctx.save();
     TT.newsBg.paint(ctx, {
@@ -159,7 +159,7 @@
     let titleSpanH = 0;
     if (titleLines.length) {
       const title = fitBox(ctx, titleTexts, 'display', TITLE_SIZE * S,
-        titleBox.w, titleBox.h, style, 40, 0, lineGap);
+        titleBox.w, titleBox.h, fonts, 40, 0, lineGap);
       titleSpanH = (titleLines.length - 1) * (title.size + lineGap) + title.size;
       const progress = clamp01(t / ENTER_DUR);
       const scale = 0.84 + 0.16 * ease.outCubic(progress);
@@ -187,7 +187,7 @@
       const padY = 6 * S;
       const maxBadgeW = sourceBox.x + sourceBox.w - 0.055 * W;
       const sourceFont = fitBox(ctx, [sourceLabel], 'body', SOURCE_SIZE * S,
-        maxBadgeW - padX * 2, sourceBox.h - padY * 2, style, 16, 0, 0);
+        maxBadgeW - padX * 2, sourceBox.h - padY * 2, fonts, 16, 0, 0);
       const sourceTextW = lineWidth(ctx, sourceLabel);
       sourceBadge = {
         x: sourceBox.x + sourceBox.w - Math.max(sourceBox.w, sourceTextW + padX * 2),
@@ -213,7 +213,7 @@
     const fallback = fallbackTyping(bodyTexts);
     const typed = Array.isArray(p.__typing) ? p.__typing : fallback;
     const body = fitBox(ctx, bodyTexts, 'body', CONTENT_SIZE * S,
-      contentBox.w, contentBox.h, style, 30, tracking, lineGap);
+      contentBox.w, contentBox.h, fonts, 30, tracking, lineGap);
     const bodyLineH = body.size + lineGap;
     const bodySpanH = bodyLines.length
       ? (bodyLines.length - 1) * bodyLineH + body.size : 0;
@@ -286,7 +286,7 @@
     let brandSpanH = 0;
     if (brand) {
       const brandFont = fitBox(ctx, [brand], 'brand', BRAND_SIZE * S,
-        brandBox.w, brandBox.h, style, 18, 0, 0);
+        brandBox.w, brandBox.h, fonts, 18, 0, 0);
       brandSpanH = brandFont.size;
       const chars = [...brand];
       const widths = chars.map((ch) => ctx.measureText(ch).width);

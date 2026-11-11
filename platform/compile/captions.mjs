@@ -35,12 +35,12 @@ const DEFAULT_METRICS = { baseSize: 46, lineHeight: 1.24, top: 0.78, margin: 0.0
 /**
  * @param {object|string} raw      recipe.captions 或 CLI --captions
  * @param {object} catalog         静态目录（caption styles / fonts）
- * @param {object} style           recipe.style
+ * @param {object} fonts           recipe.fonts（角色 → manifest 键）
  * @param {object} bag             诊断收集器
  * @param {{ margin?: number }} options  recipe.rules.safeMargin
  * @returns {{ name, style, options, metrics, fontName, code } | null}
  */
-export function normalizeCaption(raw, catalog, style, bag, { margin = DEFAULT_METRICS.margin } = {}) {
+export function normalizeCaption(raw, catalog, fonts, bag, { margin = DEFAULT_METRICS.margin } = {}) {
   if (raw == null || raw === '') return null;
   const input = typeof raw === 'string' ? { style: raw } : raw;
   if (!input || Array.isArray(input) || typeof input !== 'object') {
@@ -123,18 +123,18 @@ export function normalizeCaption(raw, catalog, style, bag, { margin = DEFAULT_ME
   }
 
   const requestedRole = input.font || (CAPTION_STYLE_DEFAULTS[styleId] || {}).font || 'caption';
-  const fontRole = style?.fonts?.[requestedRole] ? requestedRole : null;
-  let fontName = fontRole ? style.fonts[fontRole] : null;
+  const fontRole = fonts?.[requestedRole] ? requestedRole : null;
+  let fontName = fontRole ? fonts[fontRole] : null;
   if (!fontName) {
     // 兼容旧 kit 角色：只有 manifest 里确实有这个字体时才允许，并给出明确修复路径。
     const mapped = CAPTION_FONT_ROLES[requestedRole];
     if (mapped && catalog.fonts?.[mapped]) {
       fontName = mapped;
       bag.warn('should', 'CAPTION_FONT_NOT_IN_STYLE', `captions.font.${requestedRole}`,
-        `字幕字体角色 "${requestedRole}" 不在 style.fonts；已用 manifest 字体 ${mapped}。请把该角色加入 recipe.style.fonts`);
+        `字幕字体角色 "${requestedRole}" 不在 recipe 顶层 fonts；已用 manifest 字体 ${mapped}。请把该角色加入 recipe.fonts`);
     } else {
       bag.error('CAPTION_FONT_UNKNOWN', 'captions.font',
-        `未知字体角色 "${requestedRole}"；style.fonts 可用：${Object.keys(style?.fonts || {}).join(' / ') || '（空）'}`);
+        `未知字体角色 "${requestedRole}"；recipe.fonts 可用：${Object.keys(fonts || {}).join(' / ') || '（空）'}`);
     }
   }
   if (fontName && !catalog.fonts?.[fontName]) {

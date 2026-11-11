@@ -24,7 +24,7 @@
   });
 
   BLOCKS['scene.pen-demo'] = (g, p) => {
-    const { ctx, W, H, style } = g;
+    const { ctx, W, H, fonts } = g;
     const chalk = p.pen === 'chalk';
     const spec = SPECS[p.pen] || SPECS.marker;
     const name = NAMES[p.pen] || NAMES.marker;
@@ -32,12 +32,12 @@
     // 对照片需要清楚硬切，不能让每个 1.5s 段落都被 recipe 的出入场淡化。
     ctx.fillStyle = chalk ? '#263d38' : '#f8f5ec';
     ctx.fillRect(0, 0, W, H);
-    ctx.font = font(style, 52, 'body').css;
+    ctx.font = font(fonts, 52, 'body').css;
     ctx.textAlign = 'left';
     ctx.textBaseline = 'alphabetic';
     ctx.fillStyle = chalk ? '#f5f0dc' : '#303b3e';
     ctx.fillText(name[0], 100, 118);
-    ctx.font = font(style, 30, 'body').css;
+    ctx.font = font(fonts, 30, 'body').css;
     ctx.fillStyle = chalk ? '#b9cbc2' : '#7a7d76';
     ctx.fillText(name[1], 102, 166);
     ctx.textAlign = 'right';

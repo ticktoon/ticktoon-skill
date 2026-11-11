@@ -5,7 +5,7 @@
  * 所有依赖都以**源码片段 + 注册表**的形式拼进同一个作用域。三条纪律：
  *
  *   1. 只注入本场用到的 kit 与 block。全量注入会让编译耗时和 code 体积随片长线性膨胀。
- *   2. `TT` / `BLOCKS` / `CAPTIONS` / `STYLE` 是固定名字。block 作者只认这几个。
+ *   2. `TT` / `BLOCKS` / `CAPTIONS` / `FONTS` 是固定名字。block 作者只认这几个。
  *   3. 每帧复用 `g` 与参数对象。31 个元素每秒新建上千个对象，是白给 GC 的压力。
  *
  * 唯一的代码形状是两段式：`return (ctx, api) => {...}`。setup 阶段的语句就写在 return 之前，
@@ -61,7 +61,7 @@ const indent = (text, pad) => text.split('\n').map((line) => (line ? pad + line 
 /**
  * @returns {{ id, duration, background, seed, code, cues, resources, needs, meta }}
  */
-export function emitScene({ scene, style, format, catalog, kitIndex, kitDir, caption = null, receipts, rules = null }) {
+export function emitScene({ scene, fonts, format, catalog, kitIndex, kitDir, caption = null, receipts, rules = null }) {
   const W = format.w;
   const H = format.h;
   const captionName = caption?.name || null;
@@ -103,7 +103,7 @@ export function emitScene({ scene, style, format, catalog, kitIndex, kitDir, cap
     // draw.js 直接用 g.api.img('块内声明的 name') 查询。
     for (const res of meta.resources || []) pushRes(res);
     for (const role of meta.needs?.font || []) {
-      const name = style?.fonts?.[role];
+      const name = fonts?.[role];
       const entry = name ? catalog.fonts[name] : null;
       if (entry) pushRes({ type: 'font', name, src: entry.src });
     }
@@ -112,10 +112,10 @@ export function emitScene({ scene, style, format, catalog, kitIndex, kitDir, cap
     const entry = catalog.fonts[captionFontName];
     if (entry) pushRes({ type: 'font', name: captionFontName, src: entry.src });
   }
-  // code 场景没有 block 的 needs.font 可供推导，TT.font 可能取到 style 的任一角色，
-  // 所以把 style.fonts 里声明的字体全部带进本场；引擎按 src 去重。
+  // code 场景没有 block 的 needs.font 可供推导，TT.font 可能取到 recipe.fonts 的任一角色，
+  // 所以把 fonts 里声明的字体全部带进本场；引擎按 src 去重。
   if (scene.code) {
-    for (const name of Object.values(style?.fonts || {})) {
+    for (const name of Object.values(fonts || {})) {
       const entry = name ? catalog.fonts[name] : null;
       if (entry) pushRes({ type: 'font', name, src: entry.src });
     }
@@ -131,9 +131,9 @@ export function emitScene({ scene, style, format, catalog, kitIndex, kitDir, cap
 
   // ---- 场景常量 ----
   const seed = hashSeed(scene.id, scene.index);
-  const background = (scene.bg
-    ? (style?.backgrounds?.[scene.bg] || style?.colors?.[scene.bg])
-    : null) || style?.colors?.bg || '#000000';
+  // 画布底色固定黑：整帧由 scene.code / block 自己铺满。recipe 不再声明背景，
+  // scene 也不再选背景名；这里只是给引擎一个确定的清屏色。
+  const background = '#000000';
 
   const lines = [];
   const push = (text) => lines.push(text);
@@ -160,7 +160,7 @@ export function emitScene({ scene, style, format, catalog, kitIndex, kitDir, cap
     push(captionCode.trim());
   }
 
-  push(`const STYLE = ${JSON.stringify(style || {})};`);
+  push(`const FONTS = ${JSON.stringify(fonts || {})};`);
   // RULES 只在 code 场注入：block 场用不到视觉规范，注进去只会让 code 体积白涨。
   if (scene.code) push(`const RULES = ${JSON.stringify(rules ?? {})};`);
 
@@ -198,7 +198,7 @@ export function emitScene({ scene, style, format, catalog, kitIndex, kitDir, cap
       params = { ...params, src: name };
     }
 
-    push(`const G${i} = { ctx: null, W: ${W}, H: ${H}, style: STYLE, motion: ${JSON.stringify(el.meta.motion || {})}, sizes: ${JSON.stringify(el.meta.sizes || {})}, t: 0, sceneT: 0, at: ${el.at}, abs: ${abs}, dur: ${el.dur}, a: 1, reveal: 1, cues: api.cues,captionActive: false,`);
+    push(`const G${i} = { ctx: null, W: ${W}, H: ${H}, fonts: FONTS, motion: ${JSON.stringify(el.meta.motion || {})}, sizes: ${JSON.stringify(el.meta.sizes || {})}, t: 0, sceneT: 0, at: ${el.at}, abs: ${abs}, dur: ${el.dur}, a: 1, reveal: 1, cues: api.cues,captionActive: false,`);
     push(`  rect: ${JSON.stringify(rounded)}, rng: () => TT.rng(${hashSeed(scene.id, el.id)}) };`);
     push(`const P${i} = ${JSON.stringify(params)};`);
     if (catalog.blocks.get(el.block).hasSetup) {
@@ -300,7 +300,7 @@ export function emitScene({ scene, style, format, catalog, kitIndex, kitDir, cap
     // 所以在调用字幕前按时间轴重新标记，captionAvoid / ink / rect 才会被真正计入。
     push('  for (const g of CAPTION_AVOID) { const local = T - g.at; g.captionActive = local >= 0 && local <= g.dur; }');
     push('  // 字幕永远最后画，且在 camera 变换之外');
-    const callCaption = `  CAPTIONS[${JSON.stringify(captionName)}]({ ctx, W, H, style: STYLE, metrics: ${JSON.stringify(captionMetrics)}, sceneT: T, cues: api.cues, options: CAPTION_OPTIONS, avoid: CAPTION_AVOID });`;
+    const callCaption = `  CAPTIONS[${JSON.stringify(captionName)}]({ ctx, W, H, fonts: FONTS, metrics: ${JSON.stringify(captionMetrics)}, sceneT: T, cues: api.cues, options: CAPTION_OPTIONS, avoid: CAPTION_AVOID });`;
     if (scene.code && receipts) {
       // code 场额外记一条字幕文字框：verify 用它判断"顶部/底部字幕带到底在哪"，
       // 不必从 recipe 的 caption 指标猜字幕高度。字幕文件本身不改（禁改清单）。
@@ -337,7 +337,7 @@ export function emitScene({ scene, style, format, catalog, kitIndex, kitDir, cap
   // 过渡永远在最后：它要盖住已经完成的画面（包括字幕），也只有在尾帧才拿得到
   // 完整的帧快照。入场先画、出场后画，两者同时存在时出场压住入场。
   if (hasTransitionIn || hasTransitionOut) {
-    push(`  const __TT_TRANS_G = { W, H, style: STYLE, bg: ${JSON.stringify(background)}, dur: ${Number(scene.duration)} };`);
+    push(`  const __TT_TRANS_G = { W, H, fonts: FONTS, bg: ${JSON.stringify(background)}, dur: ${Number(scene.duration)} };`);
     const transitionArgs = (tr) => `{ type: ${JSON.stringify(tr.type)}, dur: ${Number(tr.dur)}, `
       + `dir: ${JSON.stringify(tr.dir)}, color: ${JSON.stringify(tr.color)}, at: ${JSON.stringify(tr.at)}, t: T }`;
     if (hasTransitionIn) {
@@ -360,7 +360,6 @@ export function emitScene({ scene, style, format, catalog, kitIndex, kitDir, cap
     needs: [...needs],
     meta: {
       index: scene.index,
-      bg: scene.bg,
       camera: scene.camera,
       elements: scene.elements.map((el, elementIndex) => ({
         id: el.id,

@@ -133,7 +133,7 @@
     const o = c.options || {};
     const base = c.metrics?.baseSize ?? 46;
     const role = c.metrics?.fontRole || spec.font || o.font || 'caption';
-    const f = TT.font(c.style, Math.round(base * (o.size || 1) * (spec.fontScale || 1)), role, c.metrics?.fontFamily);
+    const f = TT.font(c.fonts, Math.round(base * (o.size || 1) * (spec.fontScale || 1)), role, c.metrics?.fontFamily);
     const ctx = c.ctx;
     ctx.save();
     ctx.font = f.css;

@@ -64,11 +64,11 @@ ticktoon tick(t)                 同一条同步渲染路径
 
 | 单位 | 位置 | 它负责 | 它不负责 |
 |---|---|---|---|
-| **recipe** | `recipes/` | 一类成片的规范：`blocks`、`style`、`rules`、`captions`、`audio`、`verify` | 内容、叙事、绘制 |
+| **recipe** | `recipes/` | 一类成片的规范：`blocks`、`fonts`、`rules`、`captions`、`audio`、`verify` | 内容、叙事、绘制 |
 | **block** | `platform/blocks/` | 可穷举、参数化的版式或视觉单元 | 题材枚举、故事结构 |
 | **kit** | `platform/kit/` | 可复用的绘制词法：文字、笔、标注、舞台、相机、转场、字幕、新闻背景 | 构图、题材 |
 
-`recipe.json` 里的 `style` 是编译与 QA 共用的机器契约：只含字体角色与颜色 token，不承载字号、行高、版式或动效；这些归 code 场或 block 本地元数据。所有取值静态可追踪。
+`recipe.json` 顶层的 `fonts` 是编译共用的机器契约：只有字体角色，没有 `style` 包装，也不承载颜色、背景、字号、行高、版式或动效。颜色由 kit 自带默认值或 `scene.code` 直接写 hex，背景由 `scene.code` / block 自己铺满。所有取值静态可追踪。
 
 编译是确定性的：同一份 storyboard 与相同输入产出同一份 `composition.json`，由 `tt det` 验证。渐进式披露也是设计的一部分：`SKILL.md` 只做路由，写稿前只读一条 recipe 的 `brief.md` 和 demo，`references/` 按需一次读一篇。
 
@@ -90,7 +90,7 @@ recipe 覆盖讲解、叙事、快闪、突发新闻与实拍。每条要么用�
 
 除此之外：
 
-- **带 kit 的场景代码**——`TT.text`、`TT.pen`、`TT.mark`、`TT.board`、`TT.geom`、`TT.transition`、`TT.chart`、`TT.newsBg` 等；编译器只注入场景实际用到的成员。
+- **带 kit 的场景代码**——`TT.text`、`TT.pen`、`TT.mark`、`TT.board`、`TT.geom`、`TT.transition`、`TT.flash`、`TT.chart`、`TT.newsBg` 等；编译器只注入场景实际用到的成员。
 - **7 种字幕样式 + `none`**——band、plain、card、karaoke、collage、handnote、vertical，支持逐字时间与主体避让。
 - **旁白与声音**——默认零密钥 edge-tts，可选 Volc TTS；BGM/SFX 支持淡入淡出与人声闪避。
 - **实拍素材**——Pexels 检索、下载、署名、缓存与内置素材降级。
@@ -118,7 +118,7 @@ npm install
 node scripts/doctor.mjs
 ```
 
-`doctor` 会检查 Node、Ticktoon 引擎产物、Chrome、WebGL2，以及可选的 TTS/素材 provider。无 GPU 服务器可设置 `DH_VIDEO_WEBGL=swiftshader`。
+`doctor` 会检查 Node、Ticktoon 引擎产物、npm 依赖、Chrome、WebGL2，以及可选的 TTS/素材 provider。若报 `deps` 缺失，在 skill 目录执行 `npm install`；Playwright 只作为驱动层使用本机 Chrome（≥120），不会下载自带浏览器。无 GPU 服务器可设置 `DH_VIDEO_WEBGL=swiftshader`。
 
 默认链路不需要 API key：edge-tts + 内置演示素材。可选的 Volc TTS 与 Pexels 通过 `node scripts/auth.mjs set <KEY> <value>` 配置；凭证只从环境变量或 `~/.dh-video/credentials.json` 读取，不写入 storyboard 或工程。
 
@@ -164,7 +164,7 @@ ticktoon-skill/
 ├── SKILL.md                     # Agent 入口：路由、闭环、红线
 ├── recipes/                     # 内置 recipe：规范、brief、demo、examples
 │   ├── whiteboard-explainer/
-│   │   ├── recipe.json          # blocks / style / rules / captions / audio / verify
+│   │   ├── recipe.json          # blocks / fonts / rules / captions / audio / verify
 │   │   ├── brief.md             # 何时用、何时不用、视觉数值
 │   │   ├── demo.storyboard.json
 │   │   ├── visual.md            # code 型 recipe 的画法规范

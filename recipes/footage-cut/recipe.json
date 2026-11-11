@@ -14,22 +14,10 @@
   "blocks": [
     "scene.footage"
   ],
-  "style": {
-    "fonts": {
-      "display": "sans-900",
-      "body": "sans-400",
-      "num": "latin-700"
-    },
-    "colors": {
-      "bg": "#0E0C0A",
-      "ink": "#F0ECE4",
-      "muted": "#9A8F80",
-      "accent": "#C0392B",
-      "line": "#2A241D"
-    },
-    "backgrounds": {
-      "night": "#0E0C0A"
-    }
+  "fonts": {
+    "display": "sans-900",
+    "body": "sans-400",
+    "num": "latin-700"
   },
   "rules": {
     "safeMargin": 0.055,

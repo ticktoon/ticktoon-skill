@@ -24,7 +24,7 @@ composition.json / events.json / subs.srt / report.json
    ↓
 ticktoon CanvasCompositor.tick(t)
    ├─ 只读预览 / 画笔批注
-   ├─ stills / probe / qa（含 verify/forbid/temporal 与 12 格联系表）
+   ├─ stills / probe / qa（轻量空墨迹校验 + verify/forbid 与 12 格联系表）
    ├─ det
    └─ WebCodecs + Mediabunny → 普通 MP4（H.264 + AAC）
 ```
@@ -33,7 +33,7 @@ ticktoon CanvasCompositor.tick(t)
 
 | 项 | 实际数量 |
 |---|---|
-| recipe | **9**（ABI 8，内置 `style / rules / captions / audio`） |
+| recipe | **9**（ABI 8，内置 `fonts / rules / captions / audio`） |
 | 正式 block | **4**（`scene.*`，另有 2 个 `_lab` 实验件） |
 | 公共 kit 命名空间 | **11** 个 `TT.*` 入口 + 字幕 kit |
 | 字幕样式 | **7** 种，另有 `none` |
@@ -46,13 +46,13 @@ ticktoon CanvasCompositor.tick(t)
 | 层 | 当前位置 | 职责 | Agent 是否直接读 |
 |---|---|---|---|
 | 操作契约 | `SKILL.md` | 路由、创作闭环、红线、交付自检 | 每次读 |
-| recipe 规范 | `recipes/*/recipe.json`、recipe 目录内 `visual.md` / `examples/` | `style / rules / captions / audio / forbid / verify` 与画法沉淀 | 只读选中的 1 份 |
+| recipe 规范 | `recipes/*/recipe.json`、recipe 目录内 `visual.md` / `examples/` | `fonts / rules / captions / audio / forbid / verify` 与画法沉淀 | 只读选中的 1 份 |
 | 运行时参考 | `references/` | `scene.code` 与公共 kit 的 API 手册 | 需要时读对应 1 篇 |
 | 内容 | `<工程>/storyboard.json` | 本片叙事、场景、字幕、素材、code | **写** |
 | 公共 kit | `platform/kit/` | 舞台、笔、文字、标注、相机、转场、字幕等纯函数 | 通过注入使用 |
 | 版式件 | `platform/blocks/` | 可穷举、参数化的整幅版式 | 通过 elements 使用 |
 | 编译 | `platform/compile/` | 六阶段编译链与确定性哈希 | 不读 |
-| 检查 | `platform/inspect/` | 采样、receipts、qa、verify/forbid、temporal、统一质量管线 | 通过 `tt` 使用 |
+| 检查 | `platform/inspect/` | 采样、receipts、轻量 qa、verify/forbid、统一质量管线 | 通过 `tt` 使用 |
 | 宿主工具 | `platform/project/`、`scripts/` | 建工程、审计、预览、导出、TTS、素材 | 通过 `tt` 使用 |
 | 引擎 | `ticktoon/dist/`（或显式源码仓） | protocol v1.0、Canvas/WebCodecs 渲染 | 不读 |
 | 人类/开发文档 | `docs/` | 架构、历史、基准、运维记录 | 不读 |
@@ -65,13 +65,13 @@ ticktoon CanvasCompositor.tick(t)
 
 以下为当前快照；实时清单以 `tt recipe list` 为准，本表随目录变化可能滞后。
 
-| recipe | 内容载体 | 自带视觉（`style` 摘要） |
+| recipe | 内容载体 | 自带视觉（block / code 内） |
 |---|---|---|
 | `whiteboard-explainer` | `scene.code` | 暖白纸 / 马克笔红 |
 | `blackboard-lesson` | `scene.code` | 绿黑板 / 粉笔白 |
 | `ink-painting` | `scene.code` | 近黑底 / 水墨浓淡 |
 | `illustrated-story` | `scene.code` | 米色纸 / 拼贴色 |
-| `flash-cut` | `scene.code` | 近黑底 / 金色强调 |
+| `flash-cut` | `scene.code` | 近黑底 / 橙与深蓝 |
 | `crayon-guide` | `scene.crayon` | 暖米纸 / 蜡笔色 |
 | `shadow-play` | `scene.shadow` | 深棕夜底 / 琥珀剪影 |
 | `news-broadcast` | `scene.news` | 径向深蓝 / 地图与网格 |
@@ -81,7 +81,7 @@ ticktoon CanvasCompositor.tick(t)
 
 **公共 kit（`platform/kit/index.json`）**
 
-`ease`、`num`（含 `clamp01 / env / rng`）、`text`、`style`（`color / font`）、`chart`、`pen`、`mark`、`transition`、`board`、`geom`、`newsbg`（`newsBg`：新闻径向蓝底 + 地图 + 网格 + 种子流动线）。
+`ease`、`num`（含 `clamp01 / env / rng`）、`text`、`fonts`（`font`）、`chart`、`pen`、`mark`、`transition`、`board`、`geom`、`newsbg`（`newsBg`：新闻径向蓝底 + 地图 + 网格 + 种子流动线）、`flash`（快闪排版与图案）。
 
 字幕 kit 在 `platform/kit/captions/`：`core.js` 提供 `TT.captionKit`，`styles/*.js` 是七种可选样式。它随编译期选中的样式一起注入，不走 `index.json` 的命名空间机制。
 
@@ -93,15 +93,15 @@ ticktoon CanvasCompositor.tick(t)
 
 `platform/blocks/_lab/` 还有 `scene.caption-demo` / `scene.pen-demo`。它们用于 kit 对照，不属于正式创作货架；`tt block list` 目前会一并列出。
 
-**style 契约（ABI 8）**
+**fonts 契约（ABI 8）**
 
-`style` 只有 `fonts`（角色 → manifest 字体键）与 `colors`（`bg / ink / muted / accent / line`），可选 `backgrounds`（命名背景色）。字号、行高、版式、动效、图表参数不属于 `style`；它们归 recipe `rules` 的白名单字段或 block 本地配置。`style` 是 recipe 自带的静态字段，直接参与编译与 QA，不经过注册表或运行时合并。
+recipe 顶层只有 `fonts`（角色 → manifest 字体键），没有 `style` 包装。颜色不属于 recipe：kit 自带默认调色板，调用方需要品牌色时直接传 hex；背景也不属于 recipe，由 `scene.code` / block 自己铺满整帧。字号、行高、版式、动效、图表参数同样不属于 `fonts`；它们归 recipe `rules` 的白名单字段或 block 本地配置。`fonts` 是 recipe 自带的静态字段，直接参与编译，不经过注册表或运行时合并。
 
 ---
 
 ## 2. storyboard 契约
 
-顶层只允许 `recipe / format / meta / beats / scenes / uses`。场景允许 `id / narration / duration / bg / camera / elements / code / resources / note / transitionIn / transitionOut`。
+顶层只允许 `recipe / format / meta / beats / scenes / uses`。场景允许 `id / narration / duration / camera / elements / code / resources / note / transitionIn / transitionOut`。场景不再声明背景色：`scene.code` / block 负责铺满整帧。
 
 关键规则：
 
@@ -139,7 +139,7 @@ out/{composition,events,subs.srt,report}.json
 
 | 阶段 | 当前行为 |
 |---|---|
-| schema | 载入 block/style/Caption/recipe 契约；补齐缺省；校验未知键与参数；同时执行 `scene.code` 静态扫描 |
+| schema | 载入 block/fonts/Caption/recipe 契约；补齐缺省；校验未知键与参数；同时执行 `scene.code` 静态扫描 |
 | resolve | 解析 TTS 时长与词级时间、素材路径、BGM、SFX manifest；TTS 为空时按 4.6 字/秒估算 |
 | plan | 求每场时长与起点；解析 `beats`；切 caption cue；生成场景相对逐字时间 |
 | emit | 按引用注入 kit/block/caption 源码；生成两段式场景函数；收集 resources/needs/cues；冻结 element 参数 |
@@ -191,7 +191,7 @@ emit 规则：
 
 - kit 按 `platform/kit/index.json` 的 `provides` 和 `requires` 递归解析，只注入当前场景引用到的命名空间。
 - block 只注入当前场景 `elements[]` 用到的条目。
-- code 场会把 `STYLE` 的全部字体角色带进本场 `resources`，因为无法静态穷举作者会调用哪些 `TT.font`。
+- code 场会把 `FONTS` 的全部字体角色带进本场 `resources`，因为无法静态穷举作者会调用哪些 `TT.font`。
 - `RULES` 只在含 `scene.code` 的场景注入。
 - `render receipts` 只在采样模式注入；正式 `composition.json` 不含调试钩子。
 
@@ -317,7 +317,7 @@ sceneDur ──累加──► scene.start
 |---|---|---|---|
 | `tt build` | storyboard | 六阶段编译通过，引擎协议校验通过 | 画面好不好 |
 | `tt stills` / `probe` | 指定时刻 | 真实 ink/text/caption 框、亮度、元素可见性 | 全片时间连续性 |
-| `tt qa` | 一次 build + 一次浏览器会话；约 24 个时间维采样帧，联系表 12 格复用其中大部分采样点（首尾与 verify 时刻追加），单会话约 24–30 帧 | must 级像素/几何缺陷、recipe verify/forbid、采样帧间的 temporal 事实、12 格视觉证据 | 全片逐帧无缺陷；审美好坏 |
+| `tt qa` | 一次 build + 一次浏览器会话；约 24 个采样帧，联系表 12 格复用其中大部分采样点（首尾与 verify 时刻追加），单会话约 24–30 帧 | 空墨迹（`QA_INK_EMPTY`）、recipe verify/forbid、12 格视觉证据 | 全片逐帧无缺陷；安全框、碰撞、审美好坏 |
 | recipe `verify/forbid` | receipts + composition（由 `tt qa` 调用） | 规范断言与题材枚举禁止项 | 主观审美 |
 | `tt det` | 编译产物 | 规范化 composition 的 SHA-256 指纹 | 像素一致、MP4 字节一致 |
 | `tt ci --baseline` | 9 条 demo | 编译指纹与构建状态回归；指纹变化提示人审后刷新 | 像素/视觉回归 |
@@ -346,30 +346,18 @@ sceneDur ──累加──► scene.start
 
 ### 7.3 质量门与联系表
 
-`tt qa` 的唯一硬门禁是 **must = 0**。must 项包括：
+`tt qa` 是**轻校验**，唯一硬门禁是 **must = 0**。must 只有四类：
 
 - 页内渲染异常 `RENDER_PAGE_ERROR`；
-- `QA_INK_EMPTY`：元素声明了却没有墨迹；
-- `QA_TEXT_OUT_OF_SAFE`：文字越出安全框；
-- `QA_TEXT_OVERLAP > 12%`：同一帧文字互压；
+- `QA_INK_EMPTY`：元素声明了却没有墨迹（字体没加载、资源丢失、颜色透明）；
 - recipe `verify` 的 must 断言失败；
 - `RECIPE_FORBID_VIOLATION`：recipe `forbid` 命中。
 
-其余为 `should`：墨迹出安全框、元素碰撞、字幕带、空帧、temporal 闪烁/字幕跳位/转场越界、未知 verify 断言。它们写进 `out/qa.json` 和 `report.json.quality`，但不改变退出码。
+安全框、碰撞、文字互压、字幕带、对比度、停留时长、空帧、能量曲线、时间维闪烁都不再自动判定——它们是构图与审美，机器不替人下结论，也不写进报告。
 
-12 格联系表固定输出到 `review/qa-sheet.png`（默认 4 列 × 3 行，格子 420px，标签为 `<秒> <场>`）。审美判断直接看这张图，由 Agent 或人定“好不好”；不再用确定性评分替代。轻量人审问题见 `references/qa.md` 的“12 格联系表怎么读”。`--count` 改时间维采样帧数，`--cols` 改联系表列数。
+12 格联系表固定输出到 `review/qa-sheet.png`（默认 4 列 × 3 行，格子 420px，标签为 `<秒> <场>`）。**这才是质量入口**：由 Agent 或人直接看图定“好不好”。`--count` 改时间维采样帧数，`--cols` 改联系表列数。
 
-### 7.4 temporal 的真实语义
-
-时间维检查不再有独立命令，由 `tt qa` 在统一采样上运行。`scanTemporal` 只读取 `sampleFilm` 已产出的 receipts / luminance，不重新渲染全片。检查：
-
-1. 相邻采样帧的单帧亮度尖峰：必须是局部极值，且前后两帧接近；单调淡入/淡出不算；
-2. 同一场、同一字幕样式且框尺寸可比时 caption 框中心大幅位移；逐字排版导致的 bbox 变化不算；
-3. 转场场里的 ink/text 框越过安全边距。
-
-三类问题都记为 `should`，不改变 `tt qa` 的退出码；不能把“命令成功”当成时间维零问题。结果看 `out/qa.json` 的 `checks.temporal` 和命令输出。
-
-### 7.5 baseline 的真实语义
+### 7.4 baseline 的真实语义
 
 `tt ci --baseline` 直接编译 9 条 demo，只记录每条 recipe 的编译指纹与构建状态到 `output/baseline.json`，不启浏览器、不采样、不存分数。构建失败是硬失败；指纹变化是复审提示，人审后 `--write` 刷新。它证明“编译产物是否稳定”，不证明像素或审美回归。
 
@@ -385,7 +373,7 @@ sceneDur ──累加──► scene.start
 | `tt build` | 编译，产出 `out/` 四件套 |
 | `tt assets fetch` | Pexels 检索/下载/署名/回写素材 |
 | `tt stills` / `tt probe` | 指定帧 / 单帧凭据 |
-| `tt qa` | 统一质量管线：像素/几何 + verify/forbid + temporal + 12 格联系表 |
+| `tt qa` | 轻量质量管线：空墨迹 + verify/forbid + 12 格联系表 |
 | `tt det` | 编译指纹 |
 | `tt preview` | 只读预览 + 多帧画笔批注；发送后写工程 `annotations/` 并关闭 |
 | `tt annotations [--all] [--ack [id]]` | 读取批注批次：默认最新未处理批次；`--ack` 标记整批已处理 |
@@ -443,7 +431,7 @@ sceneDur ──累加──► scene.start
 - `references/iterate.md`：反馈、预览批注与 TTS 语义
 - `docs/style-dictionary.md`：40 条风格描述词典（人读参考，不是 recipe 实现清单）
 - `references/pexels.md`：实拍素材检索、缓存与降级
-- `references/captions.md` / `mark.md` / `pen.md` / `board.md` / `newsbg.md` / `transition.md`：公共 kit 契约
+- `references/captions.md` / `mark.md` / `pen.md` / `board.md` / `newsbg.md` / `transition.md` / `flash.md`：公共 kit 契约
 
 **人类/开发（不进入运行时）**
 

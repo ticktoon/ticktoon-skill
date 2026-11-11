@@ -10,7 +10,7 @@
 |---|---|---|---|
 | `pen` | enum | `'marker'` | 转调 `TT.pen.stroke` 的笔种 |
 | `width` | number | 3.2 | 线宽 |
-| `color` | string\|null | `null` | null 取 `TT.color('ink')`；强调类词条默认取 `accent` |
+| `color` | string\|null | `null` | null 取 kit 默认墨色（铅笔灰）；强调类词条默认取 kit 的陶土红 |
 | `alpha` | number | 1 | 整体透明度 |
 | `seed` | number | 0 | 抖动种子，**确定性**：同 seed 同参两次调用结果逐像素一致 |
 | `progress` | number | 1 | 0→1 渐进绘制，配合书写节拍（`seal` 除外：印章是"砸"上去的） |
@@ -45,7 +45,7 @@ TT.mark.seal(ctx, { at: [1650, 540], text: '重点', shape: 'circle', color: acc
 - **`bend` 的符号**：正负决定弧拱向 `from→to` 连线的哪一侧；想清楚再写。
 - **不要超线宽规范**：线宽用 `RULES.stroke` 的三档（见白板 contract），标注是"中档"的典型消费者。
 - **确定性**：不要在参数里放 `Math.random()`（静态扫描会拦），要变化用 `seed`。
-- **墨迹框**：mark 的框自动并入场景 bbox 参与 `ink.insideSafe` / 碰撞检测；把标注画出安全框会被 qa 判 must。
+- **墨迹框**：mark 的框自动并入场景 bbox，供 `tt probe` 和 12 格联系表定位；画出安全框不再自动判 must。
 
 ## 扩展词条
 

@@ -64,11 +64,11 @@ Three units carry everything:
 
 | Unit | Where | It owns | It does not own |
 |---|---|---|---|
-| **recipe** | `recipes/` | the rules for one kind of film: `blocks`, `style`, `rules`, `captions`, `audio`, `verify` | content, narrative, drawing |
+| **recipe** | `recipes/` | the rules for one kind of film: `blocks`, `fonts`, `rules`, `captions`, `audio`, `verify` | content, narrative, drawing |
 | **block** | `platform/blocks/` | an exhaustible, parameterized layout or visual unit | topic enums, story structure |
 | **kit** | `platform/kit/` | reusable drawing vocabulary: text, pen, mark, board, camera, transition, captions, news background | composition, subject matter |
 
-`recipe.json`'s `style` is the machine contract shared by the compiler and QA: font roles and color tokens only. It carries no sizes, line heights, layouts, or motion; those belong to code scenes or block-local metadata. All values are static and traceable.
+`recipe.json`'s top-level `fonts` is the machine contract shared by the compiler and QA: font roles only, with no `style` wrapper. Colors come from kit defaults or hex written directly in code scenes; backgrounds are painted by code scenes or blocks. It carries no sizes, line heights, layouts, or motion; those belong to code scenes or block-local metadata. All values are static and traceable.
 
 Compilation is deterministic: the same storyboard and inputs produce the same `composition.json`, which `tt det` verifies. Progressive disclosure is part of the design too: `SKILL.md` routes, a recipe's `brief.md` and demo are the only documents read before writing, and `references/` are consulted one page at a time.
 
@@ -90,12 +90,12 @@ Recipes cover explainers, stories, fast cuts, breaking news, and real footage. A
 
 Also included:
 
-- **Scene code with an injected kit** — `TT.text`, `TT.pen`, `TT.mark`, `TT.board`, `TT.geom`, `TT.transition`, `TT.chart`, `TT.newsBg`, and more. The compiler injects only the members the scene actually uses.
+- **Scene code with an injected kit** — `TT.text`, `TT.pen`, `TT.mark`, `TT.board`, `TT.geom`, `TT.transition`, `TT.flash`, `TT.chart`, `TT.newsBg`, and more. The compiler injects only the members the scene actually uses.
 - **7 caption styles + `none`** — band, plain, card, karaoke, collage, handnote, vertical, with per-character timing and subject avoidance.
 - **Narration and sound** — zero-key edge-tts by default, optional Volc TTS, BGM/SFX with ducking and fades.
 - **Stock footage** — Pexels search, download, attribution, caching, and bundled fallback.
 - **Preview and review** — read-only preview, stills, probe receipts, and per-frame pen annotations accumulated into a send list; sending writes the whole batch with screenshots into `<project>/annotations/` and closes the preview, read back with `tt annotations`.
-- **Quality gates** — `tt qa` with pixel/geometry must-checks, recipe `verify` / `forbid`, temporal checks, and a 12-cell contact sheet; `tt det` for compile determinism.
+- **Quality gates** — `tt qa` with an empty-ink must-check, recipe `verify` / `forbid`, and a 12-cell contact sheet; `tt det` for compile determinism.
 - **Direct MP4** — H.264 + AAC through WebCodecs and Mediabunny; no external FFmpeg executable.
 - **Formats** — 1920×1080@30 and 1080×1920@30.
 
@@ -118,7 +118,7 @@ npm install
 node scripts/doctor.mjs
 ```
 
-`doctor` checks Node, the Ticktoon engine artifacts, Chrome, WebGL2, and optional TTS/asset providers. On a headless server, set `DH_VIDEO_WEBGL=swiftshader`.
+`doctor` checks Node, the Ticktoon engine artifacts, npm dependencies, Chrome, WebGL2, and optional TTS/asset providers. If it reports missing `deps`, run `npm install` in the skill directory; Playwright only drives the locally installed Chrome (≥120) and does not download its own browsers. On a headless server, set `DH_VIDEO_WEBGL=swiftshader`.
 
 The default path needs no API keys: edge-tts plus bundled demo assets. Optional Volc TTS and Pexels upgrades are configured with `node scripts/auth.mjs set <KEY> <value>`; credentials are read from environment variables or `~/.dh-video/credentials.json` and never stored in a storyboard or project.
 
@@ -164,7 +164,7 @@ ticktoon-skill/
 ├── SKILL.md                     # agent entry: routing, loop, red lines
 ├── recipes/                     # bundled recipes: rules, briefs, demos, examples
 │   ├── whiteboard-explainer/
-│   │   ├── recipe.json          # blocks / style / rules / captions / audio / verify
+│   │   ├── recipe.json          # blocks / fonts / rules / captions / audio / verify
 │   │   ├── brief.md             # when to use, when not, visual numbers
 │   │   ├── demo.storyboard.json
 │   │   ├── visual.md            # code-recipe visual physics

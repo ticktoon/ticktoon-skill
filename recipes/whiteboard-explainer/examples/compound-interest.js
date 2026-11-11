@@ -119,7 +119,7 @@ label('100 元', 300, 352, bigPx, ink, prog(1.9, 0.7));
 stroke([[302, 360], [430, 363], [560, 358]], 2.2, 0.7, ink, mid);
 
 const formula = '100 × (1 + 8%)';
-const formulaFont = TT.font(STYLE, notePx, 'body');
+const formulaFont = TT.font(FONTS, notePx, 'body');
 ctx.font = formulaFont.css;
 const formulaW = TT.text.measure(ctx, formula);
 label(formula, 300, 425, notePx, muted, prog(2.5, 0.8));

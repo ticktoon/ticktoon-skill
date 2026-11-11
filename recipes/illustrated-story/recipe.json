@@ -14,25 +14,13 @@
   "blocks": [
     "scene.code"
   ],
-  "style": {
-    "fonts": {
-      "display": "sans-400",
-      "body": "sans-400",
-      "num": "latin-700",
-      "caption": "sans-900",
-      "hand": "ZTZiYouTi",
-      "serif": "WenYuanSerifSC-Bold"
-    },
-    "colors": {
-      "bg": "#FAF7F0",
-      "ink": "#33312C",
-      "muted": "#8B8578",
-      "accent": "#E2574C",
-      "line": "#D8D2C4"
-    },
-    "backgrounds": {
-      "paper": "#FAF7F0"
-    }
+  "fonts": {
+    "display": "sans-400",
+    "body": "sans-400",
+    "num": "latin-700",
+    "caption": "sans-900",
+    "hand": "ZTZiYouTi",
+    "serif": "WenYuanSerifSC-Bold"
   },
   "rules": {
     "safeMargin": 0.06,

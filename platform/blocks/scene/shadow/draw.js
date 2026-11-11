@@ -33,7 +33,7 @@
   };
 
   /** 悬挂名牌：文字来自参数，位置由序号决定。 */
-  const plaque = (ctx, style, value, cx, y, w, k) => {
+  const plaque = (ctx, fonts, value, cx, y, w, k) => {
     if (k <= 0 || !value) return;
     const h = 88;
     ctx.save();
@@ -47,9 +47,9 @@
     ctx.shadowColor = 'transparent';
     ctx.strokeStyle = '#542015'; ctx.lineWidth = 5; ctx.strokeRect(cx - w / 2, y, w, h);
     ctx.strokeStyle = '#c67b45'; ctx.lineWidth = 2; ctx.strokeRect(cx - w / 2 + 9, y + 9, w - 18, h - 18);
-    ctx.font = font(style, 43, 'display').css;
+    ctx.font = font(fonts, 43, 'display').css;
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#f3d58e';
-    TT.text(ctx, value, cx, y + h / 2 + 2, 43, { font: font(style, 43, 'display').css, color: '#f3d58e', align: 'center', baseline: 'middle', role: 'display' });
+    TT.text(ctx, value, cx, y + h / 2 + 2, 43, { font: font(fonts, 43, 'display').css, color: '#f3d58e', align: 'center', baseline: 'middle', role: 'display' });
     ctx.restore();
   };
 
@@ -221,7 +221,7 @@
   };
 
   BLOCKS['scene.shadow'] = (g, p) => {
-    const { ctx, W, H, style } = g;
+    const { ctx, W, H, fonts } = g;
     const t = g.sceneT;
     ctx.save(); ctx.globalAlpha = g.a;
     TT.board.stage(ctx, { W, H }, { seed: 1 });
@@ -236,19 +236,19 @@
     ctx.globalAlpha = titleK;
     ctx.translate(W * 0.096, H * 0.38 + (1 - titleK) * 18);
     ctx.rotate(-0.018);
-    ctx.font = font(style, 104, 'display').css;
+    ctx.font = font(fonts, 104, 'display').css;
     ctx.fillStyle = '#3b2418'; ctx.textBaseline = 'alphabetic';
-    TT.text(ctx, p.title, 0, 0, 104, { font: font(style, 104, 'display').css, color: '#3b2418', role: 'display' });
+    TT.text(ctx, p.title, 0, 0, 104, { font: font(fonts, 104, 'display').css, color: '#3b2418', role: 'display' });
     if (p.subtitle) {
-      ctx.font = font(style, 31, 'body').css;
+      ctx.font = font(fonts, 31, 'body').css;
       ctx.fillStyle = '#815637';
-      TT.text(ctx, p.subtitle, 8, 63, 31, { font: font(style, 31, 'body').css, color: '#815637', role: 'body' });
+      TT.text(ctx, p.subtitle, 8, 63, 31, { font: font(fonts, 31, 'body').css, color: '#815637', role: 'body' });
     }
     ctx.restore();
 
     const plaques = Array.isArray(p.plaques) ? p.plaques : [];
     plaques.forEach((value, i) => {
-      plaque(ctx, style, value, W * (0.41 + i * 0.31), H * (0.097 + i * 0.012), W * (i ? 0.11 : 0.19), back(t, 0.8 + i * 1.2, 0.7));
+      plaque(ctx, fonts, value, W * (0.41 + i * 0.31), H * (0.097 + i * 0.012), W * (i ? 0.11 : 0.19), back(t, 0.8 + i * 1.2, 0.7));
     });
 
     const characters = Array.isArray(p.characters) && p.characters.length ? p.characters : [];

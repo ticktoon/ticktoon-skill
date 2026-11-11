@@ -2,7 +2,7 @@
 (() => {
   const BG = ['#172B3A', '#376D8C', '#E7DCC4', '#17171B', '#3C78A0', '#241B1B', '#F3EDDE'];
   BLOCKS['scene.caption-demo'] = (g, p) => {
-    const { ctx, W, H, style } = g;
+    const { ctx, W, H, fonts } = g;
     const index = Math.max(0, Math.floor(p.index || 0));
     const light = index === 2 || index === 6;
     ctx.save();
@@ -25,12 +25,12 @@
       ctx.fillStyle = light ? 'rgba(40,48,43,0.045)' : 'rgba(255,244,216,0.055)';
       ctx.fillRect((i * 229.7) % 1920, (i * i * 17.3) % 1080, 2, 2);
     }
-    ctx.font = TT.font(style, 27, 'display').css;
+    ctx.font = TT.font(fonts, 27, 'display').css;
     ctx.textAlign = 'left';
     ctx.textBaseline = 'alphabetic';
     ctx.fillStyle = light ? '#35413E' : '#F4E8CE';
     ctx.fillText(`${String(index + 1).padStart(2, '0')}  /  ${p.label.toUpperCase()}`, 92, 92);
-    ctx.font = TT.font(style, 19, 'body').css;
+    ctx.font = TT.font(fonts, 19, 'body').css;
     ctx.globalAlpha = g.a * 0.64;
     ctx.fillText(p.note || '', 94, 128);
     ctx.restore();

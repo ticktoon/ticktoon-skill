@@ -1,9 +1,9 @@
 /**
- * 统一质量管线：一次 build + 一次浏览器采样，让 QA / verify / forbid / temporal
- * 共用同一批 receipts 与 luminance。
+ * 统一质量管线：一次 build + 一次浏览器采样，让 QA / verify / forbid
+ * 共用同一批 receipts。
  *
- * 退出码只看 must：画面坏了（空墨迹、文字出安全框、文字互压、渲染异常、配方断言失败）
- * 才失败；出界、碰撞、字幕带、时间维问题都是 should，留给 12 格图和人审。
+ * 退出码只看 must：渲染异常、空墨迹、配方自己的断言失败。
+ * 构图、安全框、碰撞、对比度、停留、时间维都留给 12 格联系表和人审。
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
@@ -11,7 +11,6 @@ import { buildProject } from '../project/build.mjs';
 import { sampleFilm, sampleTimes, reviewSampleTimes } from './sample.mjs';
 import { runQa } from './qa.mjs';
 import { runRecipeVerify, runRecipeForbid } from './verify.mjs';
-import { scanTemporal } from './temporal.mjs';
 
 function uniquePicks(picks) {
   const out = [];
@@ -62,8 +61,8 @@ export async function runFilmQuality({
     };
   }
 
-  const temporalPicks = sampleTimes(built.planned, Math.max(1, count));
-  const reviewPicks = reviewSampleTimes(built.planned, gridCount, temporalPicks);
+  const scanPicks = sampleTimes(built.planned, Math.max(1, count));
+  const reviewPicks = reviewSampleTimes(built.planned, gridCount, scanPicks);
   const extraPicks = [];
   const verifyT = built.recipe?.signature?.verify?.t;
   if (verifyT != null) {
@@ -75,7 +74,7 @@ export async function runFilmQuality({
       if (Number.isFinite(t) && t >= 0) extraPicks.push({ sceneId: '(verify)', time: Number(t.toFixed(3)) });
     }
   }
-  const picks = uniquePicks([...reviewPicks, ...temporalPicks, ...extraPicks]);
+  const picks = uniquePicks([...reviewPicks, ...scanPicks, ...extraPicks]);
   const grid = reviewPicks.length
     ? {
       cols,
@@ -101,13 +100,8 @@ export async function runFilmQuality({
   });
 
   const qa = runQa({
-    planned: built.planned,
     receipts: sampled.receipts,
-    luminance: sampled.luminance,
-    format: built.storyboard.format,
-    safeMargin: built.recipe?.rules?.safeMargin ?? 0.055,
     inkless,
-    caption: built.caption || null,
   });
   // abi 8 only：verify / forbid 读编译产物里的 _recipe；非 v8 配方没有 _recipe，全部为空。
   const recipe = built.composition?._recipe || (built.recipe?.abi === '8' ? built.recipe : null);
@@ -119,13 +113,6 @@ export async function runFilmQuality({
     caption: built.caption || null,
   });
   const forbidIssues = runRecipeForbid({ recipe, planned: built.planned });
-  const temporal = scanTemporal({
-    receipts: sampled.receipts,
-    luminance: sampled.luminance,
-    planned: built.planned,
-    format: built.storyboard.format,
-    times: picks.map((pick) => pick.time),
-  });
   // 渲染异常不是"建议"：页内抛错说明这一帧没有按预期画出来。
   const renderIssues = (sampled.pageErrors || []).map((message) => ({
     level: 'must', code: 'RENDER_PAGE_ERROR', t: 0, msg: message,
@@ -135,7 +122,6 @@ export async function runFilmQuality({
     ...qa.issues,
     ...verifyRun.issues,
     ...forbidIssues,
-    ...temporal.issues,
     ...renderIssues,
   ];
   const countLevel = (level) => issues.filter((issue) => issue.level === level).length;
@@ -154,7 +140,6 @@ export async function runFilmQuality({
       results: verifyRun.results,
     },
     forbid: { violations: forbidIssues.length },
-    temporal: temporal.checks,
   };
   const result = {
     ok: summary.must === 0,

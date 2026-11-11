@@ -24,7 +24,7 @@
 
 ## 视觉与数值依据
 
-- `style`：深棕黑底（`bg #0E0C0A`）、暖白字（`ink #F0ECE4`）、暗红强调（`accent #C0392B`）。
+- 调色板固定在 block 内：深棕黑底（`#0E0C0A`）、暖白字（`#F0ECE4`）、暗红强调（`#C0392B`）；recipe 不再声明颜色。
 - `rules.safeMargin: 0.055`；`scale.title: 1`，压屏字用基准字号，不再叠第二层标题。
 - `rules.stroke: [1, 2]`：素材上只用发丝线与细分割线。
 - `captions.style: "none"`；`audio.mood: "soft"`，音量 0.1，淡入 2s / 淡出 2.6s。

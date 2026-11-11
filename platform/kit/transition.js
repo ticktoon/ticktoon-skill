@@ -23,26 +23,15 @@
   };
 
   const HEX = /^#(?:[0-9a-f]{3}|[0-9a-f]{4}|[0-9a-f]{6}|[0-9a-f]{8})$/i;
-  const styleColor = (name, fallback) => {
-    try {
-      if (typeof STYLE !== 'undefined' && STYLE && typeof TT.color === 'function') {
-        const value = TT.color(STYLE, name);
-        if (typeof value === 'string' && value) return value;
-      }
-    } catch {
-      // style 缺色时用兜底色，过渡不能因为缺一个 token 就消失。
-    }
-    return fallback;
-  };
+  // 过渡不读 recipe 调色板：dip-to-color 明确要什么色就传 hex，
+  // 不传就落到场景清屏色（黑）。
+  const styleColor = (_name, fallback) => fallback;
   const bgColorOf = (g) => {
     if (g && typeof g.bg === 'string' && g.bg) return g.bg;
     return styleColor('bg', '#000000');
   };
   const colorOf = (g, value) => {
-    if (value === 'ink') return styleColor('ink', '#353b3c');
-    if (value === 'accent') return styleColor('accent', '#c66b57');
     if (typeof value === 'string' && HEX.test(value)) return value;
-    // 'bg'、缺省值与未知 token 都落到场景背景色；未知值由 schema 提前告警。
     return bgColorOf(g);
   };
   const dirOf = (value) => (['l', 'r', 'u', 'd'].includes(value) ? value : 'l');

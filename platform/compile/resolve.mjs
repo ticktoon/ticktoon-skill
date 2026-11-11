@@ -34,7 +34,7 @@ export function estimateSpeech(text) {
 /**
  * @returns {{ scenes, bgm, fonts, sfx, warnings, ttsUsed }}
  */
-export async function resolveStoryboard({ storyboard, style, recipe, catalog, tts }) {
+export async function resolveStoryboard({ storyboard, fonts: fontRoles, recipe, catalog, tts }) {
   const warnings = [];
   const ttsUsed = !!tts;
 
@@ -74,7 +74,7 @@ export async function resolveStoryboard({ storyboard, style, recipe, catalog, tt
     });
   }
 
-  // --- 字体：只解析 style.fonts 里真被 block 用到的角色 ---
+  // --- 字体：只解析 recipe.fonts 里真被 block 用到的角色 ---
   const roles = new Set();
   for (const scene of storyboard.scenes) {
     for (const el of scene.elements) {
@@ -83,11 +83,11 @@ export async function resolveStoryboard({ storyboard, style, recipe, catalog, tt
   }
   const fonts = [];
   for (const role of roles) {
-    const name = style?.fonts?.[role];
+    const name = fontRoles?.[role];
     const entry = name ? catalog.fonts[name] : null;
     if (!name || !entry) {
       warnings.push({
-        level: 'should', code: 'FONT_FALLBACK', path: `style.fonts.${role}`,
+        level: 'should', code: 'FONT_FALLBACK', path: `fonts.${role}`,
         msg: `字体角色 "${role}" 没有对应的 manifest 条目，该 block 会回落到系统字体`,
       });
       continue;

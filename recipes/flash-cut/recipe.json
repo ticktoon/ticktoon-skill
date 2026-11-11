@@ -9,48 +9,42 @@
     "短句",
     "节奏",
     "冲击",
-    "大字"
+    "大字",
+    "海报字"
   ],
-  "when": "需要三到五个短句用硬切与大字连打、不铺陈只给结论时",
+  "when": "需要一组短句用硬切与大字连打、不铺陈只给结论时；也适合品牌口号、产品卖点、活动预告这类纯大字卡点片",
   "blocks": [
     "scene.code"
   ],
-  "style": {
-    "fonts": {
-      "display": "sans-900",
-      "body": "sans-400",
-      "num": "latin-700"
-    },
-    "colors": {
-      "bg": "#0A0A0C",
-      "ink": "#F5F2EA",
-      "muted": "#8E8878",
-      "accent": "#D9A441",
-      "line": "#26262C"
-    },
-    "backgrounds": {
-      "night": "#0A0A0C",
-      "smoke": "#17181C",
-      "charcoal": "#17181C"
-    }
+  "fonts": {
+    "display": "sans-900",
+    "body": "sans-400",
+    "num": "latin-700"
   },
   "rules": {
-    "safeMargin": 0.05,
+    "safeMargin": 0.025,
     "scale": {
-      "title": 1.6,
-      "label": 0.7,
-      "note": 0.45
+      "title": 2,
+      "label": 0.72,
+      "note": 0.5
     },
     "stroke": [
       2,
-      7
+      10
     ],
     "forbid": [
       "把短句写进 block 的题材枚举参数；每句来自 storyboard 的 narration 与 code",
       "在快闪里再叠一层字幕；画面文字即正文，字幕必须 none",
       "单场超过 2.4s；超过就不是快切而是讲解",
       "同一场出现两种字号相近的标题；阶梯必须拉开",
-      "连续两场用 dip-to-color 假装叠化；同色 dip 只能成对用一次"
+      "连续两场用 dip-to-color 假装叠化；同色 dip 只能成对用一次",
+      "满屏只有一行居中文字、没有字重/色块/图像/微标签的层次；那不是快闪，是字幕",
+      "用纸白、米白、奶油色当底色；黑、纯白、橙、深蓝四色就够",
+      "主标题字号小于画面高度的 1/5；快闪的字要占到画面",
+      "给卡片画蓝色描边；卡片靠圆角和色块分界，不靠 UI 边框",
+      "图像填字叠 layers 阴影、描边或棋盘填充；字是窗口，不是贴图",
+      "数据卡画成两条横向进度条；默认用 columns 竖柱",
+      "给文字加黑色 / 白色描边；字重只靠字体与 mask 的 weight"
     ]
   },
   "captions": {
@@ -58,22 +52,15 @@
   },
   "audio": {
     "mood": "cut",
-    "volume": 0.11,
-    "fadeIn": 1,
-    "fadeOut": 1.8,
+    "volume": 0.12,
+    "fadeIn": 0.8,
+    "fadeOut": 1.2,
     "duck": {
       "level": 0.05,
       "edge": 0.12
     }
   },
   "verify": [
-    {
-      "at": 0.15,
-      "assert": "ink.insideSafe",
-      "args": {
-        "margin": 0.05
-      }
-    },
     {
       "at": 0.9,
       "assert": "element.count.gte",

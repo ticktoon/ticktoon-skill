@@ -15,23 +15,11 @@
   "blocks": [
     "scene.code"
   ],
-  "style": {
-    "fonts": {
-      "display": "sans-900",
-      "body": "sans-400",
-      "num": "latin-700",
-      "caption": "sans-900"
-    },
-    "colors": {
-      "bg": "#101010",
-      "ink": "#F2F2F2",
-      "muted": "#8A8A8A",
-      "accent": "#FFFFFF",
-      "line": "#2E2E2E"
-    },
-    "backgrounds": {
-      "paper": "#101010"
-    }
+  "fonts": {
+    "display": "sans-900",
+    "body": "sans-400",
+    "num": "latin-700",
+    "caption": "sans-900"
   },
   "rules": {
     "safeMargin": 0.09,

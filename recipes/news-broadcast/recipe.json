@@ -15,23 +15,11 @@
   "blocks": [
     "scene.news"
   ],
-  "style": {
-    "fonts": {
-      "display": "WenYuanSerifSC-Bold",
-      "body": "WenYuanSerifSC-Bold",
-      "brand": "sans-900",
-      "num": "latin-700"
-    },
-    "colors": {
-      "bg": "#08245E",
-      "ink": "#F7FAFF",
-      "muted": "#9DB8E8",
-      "accent": "#FFD24A",
-      "line": "#214C96"
-    },
-    "backgrounds": {
-      "night": "#08245E"
-    }
+  "fonts": {
+    "display": "WenYuanSerifSC-Bold",
+    "body": "WenYuanSerifSC-Bold",
+    "brand": "sans-900",
+    "num": "latin-700"
   },
   "rules": {
     "safeMargin": 0.055,

@@ -76,7 +76,7 @@ node "$SKILL_DIR/platform/cli.mjs" stills 1.4 2.2 \
 | 参数 | 类型 / 范围 | 默认值 | 说明 |
 |---|---|---|---|
 | `style` | 七样式 ID、`none`（关闭字幕），或旧 ID `bar` / `broadcast` | `band` | 对象形式时指定样式 |
-| `font` | recipe `style.fonts` 角色、kit 字体角色或 manifest 键 | 随样式 | 见下方字体表 |
+| `font` | recipe 顶层 `fonts` 角色、kit 字体角色或 manifest 键 | 随样式 | 见下方字体表 |
 | `size` | number，`0.5–2.0` | `1` | 相对 recipe `captions.baseSize` 的倍率 |
 | `at` | `bottom` / `top` / `center` / `auto` / `{x,y}` | 随样式 | 字幕整体位置 |
 | `band` | boolean | 随样式 | 是否绘制该样式的整体背衬；`collage` 例外 |
@@ -88,7 +88,7 @@ node "$SKILL_DIR/platform/cli.mjs" stills 1.4 2.2 \
 | `avoid` | 归一化矩形数组 | `[]` | `auto` 排位时的额外主体障碍，见“主体避让” |
 | `color` | CSS 颜色字符串 | 随样式 | 主文字颜色 |
 | `background` | CSS 颜色字符串 | 随样式 | 整体背衬颜色 |
-| `accent` | CSS 颜色字符串 | `style.colors.accent` | `band` 左侧边条 |
+| `accent` | CSS 颜色字符串 | `#E2574C` | `band` 左侧边条 |
 | `highlight` | CSS 颜色字符串 | `karaoke: #FFD166`；`handnote: #F4D35E` | 当前字或荧光笔高亮 |
 | `palette` | 非空 CSS 颜色字符串数组 | collage 六色色板 | 逐字循环的独立色块颜色 |
 | `seed` | integer | `17` | collage 确定性错位、块尺寸和旋转的种子 |
@@ -166,7 +166,7 @@ block 只需声明主体区域，不需要实现候选点评分或字幕排版�
 
 ## 字体角色
 
-`font` 优先解析 recipe `style.fonts` 的角色，其次解析下表 kit 角色，最后接受 `assets/fonts/manifest.json` 的键。字幕字体会独立加入本场资源，不依赖某个 block 恰好使用同一字体。
+`font` 优先解析 recipe 顶层 `fonts` 的角色，其次解析下表 kit 角色，最后接受 `assets/fonts/manifest.json` 的键。字幕字体会独立加入本场资源，不依赖某个 block 恰好使用同一字体。
 
 | kit 角色 | manifest 键 / 引擎 FontFace 键 | 字体真实 family | 文件 | 字重与用途 |
 |---|---|---|---|---|

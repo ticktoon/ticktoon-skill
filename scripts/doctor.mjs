@@ -2,7 +2,7 @@
  * Ticktoon Skill 环境自检
  *
  * 用法: node scripts/doctor.mjs [--json]
- * 检查 Node / Ticktoon 产物 / Playwright + Chrome + WebGL2。
+ * 检查 Node / Ticktoon 产物 / npm 依赖 / Chrome + WebGL2。
  * Provider 状态仅作能力报告，不影响退出码。普通 MP4 直出，无 FFmpeg 检查。
  */
 import { existsSync, readFileSync } from 'node:fs';
@@ -36,42 +36,75 @@ if (existsSync(entryHtml)) {
 }
 check('engine', existsSync(entryHtml), engineDetail, '先构建相邻 ticktoon 仓 dist/，或设置 TICKTOON_ENGINE_DIR');
 
+// npm 依赖先单独检查：缺失时不要把 "Cannot find package 'playwright'" 伪装成 Chrome 故障。
+const runtimeDeps = [
+  ['playwright', 'stills / qa / MP4 导出'],
+  ['msedge-tts', 'edge-tts 旁白'],
+  ['ws', 'edge-tts 旁白'],
+];
+const missingDeps = [];
+for (const [name] of runtimeDeps) {
+  try {
+    await import(name);
+  } catch {
+    missingDeps.push(name);
+  }
+}
+const depsOk = missingDeps.length === 0;
+check(
+  'deps',
+  depsOk,
+  depsOk ? 'playwright / msedge-tts / ws 已安装' : `缺少 ${missingDeps.join(' / ')}`,
+  `cd "${ROOT}" && npm install（只装 npm 包；Playwright 直接驱动本机 Chrome，无需下载浏览器）`,
+);
+
+const hasPlaywright = !missingDeps.includes('playwright');
 let chromeOk = false, chromeDetail = '';
 let webglOk = false, webglDetail = '未执行（Chrome 启动失败）';
 let browser;
-try {
-  const { chromium } = await import('playwright');
-  browser = await chromium.launch({ channel: 'chrome', headless: true, args: chromiumArgs() });
-  chromeDetail = browser.version();
-  chromeOk = true;
-  const page = await browser.newPage();
-  const result = await page.evaluate(() => {
-    const canvas = document.createElement('canvas');
-    canvas.width = canvas.height = 16;
-    const gl = canvas.getContext('webgl2', { preserveDrawingBuffer: true });
-    if (!gl) return { ok: false, detail: 'WebGL2 context 创建失败' };
-    gl.clearColor(1, 0, 0, 1);
-    gl.clear(gl.COLOR_BUFFER_BIT);
-    const pixel = new Uint8Array(4);
-    gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixel);
-    const ok = pixel[0] === 255 && pixel[1] === 0 && pixel[2] === 0 && pixel[3] === 255;
-    return { ok, detail: ok ? 'WebGL2 + 16×16 测试帧正常' : `测试帧像素异常: ${[...pixel].join(',')}` };
-  });
-  webglOk = result.ok;
-  webglDetail = result.detail;
-} catch (error) {
-  const detail = String(error?.message || error).split('\n')[0].slice(0, 160);
-  if (chromeOk) webglDetail = detail;
-  else chromeDetail = detail;
-} finally {
-  await browser?.close();
+if (hasPlaywright) {
+  try {
+    const { chromium } = await import('playwright');
+    browser = await chromium.launch({ channel: 'chrome', headless: true, args: chromiumArgs() });
+    chromeDetail = browser.version();
+    chromeOk = true;
+    const page = await browser.newPage();
+    const result = await page.evaluate(() => {
+      const canvas = document.createElement('canvas');
+      canvas.width = canvas.height = 16;
+      const gl = canvas.getContext('webgl2', { preserveDrawingBuffer: true });
+      if (!gl) return { ok: false, detail: 'WebGL2 context 创建失败' };
+      gl.clearColor(1, 0, 0, 1);
+      gl.clear(gl.COLOR_BUFFER_BIT);
+      const pixel = new Uint8Array(4);
+      gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixel);
+      const ok = pixel[0] === 255 && pixel[1] === 0 && pixel[2] === 0 && pixel[3] === 255;
+      return { ok, detail: ok ? 'WebGL2 + 16×16 测试帧正常' : `测试帧像素异常: ${[...pixel].join(',')}` };
+    });
+    webglOk = result.ok;
+    webglDetail = result.detail;
+  } catch (error) {
+    const detail = String(error?.message || error).split('\n')[0].slice(0, 160);
+    if (chromeOk) webglDetail = detail;
+    else chromeDetail = detail;
+  } finally {
+    await browser?.close();
+  }
+  check('chrome', chromeOk, chromeDetail, '确认本机已安装 Chrome >= 120（Playwright 用 channel:"chrome"，不下载自带浏览器）');
+  check('webgl', webglOk, webglDetail, '确认 Chrome 支持 WebGL2；无 GPU 服务器可设置 DH_VIDEO_WEBGL=swiftshader 后重试');
+} else {
+  results.push({ name: 'chrome', ok: false, warnOnly: true, detail: '跳过：playwright 未安装' });
+  results.push({ name: 'webgl', ok: false, warnOnly: true, detail: '跳过：playwright 未安装' });
+  if (!asJson) {
+    console.log('⬜ chrome: 跳过（playwright 未安装，先 npm install）');
+    console.log('⬜ webgl: 跳过（playwright 未安装，先 npm install）');
+  }
 }
-check('chrome', chromeOk, chromeDetail, 'npm install（PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1）；并确认本机已安装 Chrome');
-check('webgl', webglOk, webglDetail, '确认 Chrome 支持 WebGL2；无 GPU 服务器可设置 DH_VIDEO_WEBGL=swiftshader 后重试');
 
+const edgeTtsMissing = ['msedge-tts', 'ws'].filter((name) => missingDeps.includes(name));
 const bundled = bundledTopics();
 const reports = [
-  ['tts:edge-tts', true, '默认，零密钥（字幕由 WordBoundary 直接产出）'],
+  ['tts:edge-tts', edgeTtsMissing.length === 0, edgeTtsMissing.length === 0 ? '默认，零密钥（字幕由 WordBoundary 直接产出）' : `缺少 ${edgeTtsMissing.join(' / ')} → 先在 SKILL 目录 npm install`],
   ['tts:volc-tts', hasVolcTts(), hasVolcTts() ? `已配置（${credentialSource('VOLC_TTS_APP_ID')}）` : '未配置 VOLC_TTS_APP_ID/VOLC_TTS_ACCESS_TOKEN → node scripts/auth.mjs set'],
   ['assets:pexels', hasCredential('PEXELS_API_KEY'), hasCredential('PEXELS_API_KEY') ? '已配置' : '未配置 PEXELS_API_KEY（pexels.com/api 免费申请）'],
   ['assets:bundled', bundled.length > 0, bundled.length ? `内置演示素材 ${bundled.length} 段：${bundled.map((item) => item.topic).join('/')}` : 'assets/catalog.json 缺失'],

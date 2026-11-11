@@ -14,24 +14,12 @@
   "blocks": [
     "scene.crayon"
   ],
-  "style": {
-    "fonts": {
-      "display": "ZTZiYouTi",
-      "body": "sans-400",
-      "hand": "ZTZiYouTi",
-      "num": "latin-700",
-      "caption": "sans-900"
-    },
-    "colors": {
-      "bg": "#F6EEE0",
-      "ink": "#3A352D",
-      "muted": "#6C6255",
-      "accent": "#D2694E",
-      "line": "#D8CBB6"
-    },
-    "backgrounds": {
-      "paper": "#F6EEE0"
-    }
+  "fonts": {
+    "display": "ZTZiYouTi",
+    "body": "sans-400",
+    "hand": "ZTZiYouTi",
+    "num": "latin-700",
+    "caption": "sans-900"
   },
   "rules": {
     "safeMargin": 0.06,

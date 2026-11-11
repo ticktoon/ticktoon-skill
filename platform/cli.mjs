@@ -301,7 +301,6 @@ async function cmdQa() {
     }
     const checks = quality.checks;
     console.log(`  verify ${checks.verify.pass} 通过 / ${checks.verify.fail} 失败 / ${checks.verify.skip} 跳过`);
-    console.log(`  temporal 闪烁 ${checks.temporal.flicker} / 字幕突跳 ${checks.temporal.captionJump} / 转场越界 ${checks.temporal.transitionSafe}`);
     if (quality.coverage) console.log(`  覆盖 ${quality.coverage.covered}/${quality.coverage.declared}`);
     if (quality.sheet) console.log(`  联系表 ${quality.sheet}（${quality.sampling.review} 格 / ${quality.sampling.cols} 列）`);
     console.log('');
@@ -577,9 +576,8 @@ async function cmdCi() {
       if (quality.built.ok) {
         const summary = quality.result.summary;
         const checks = quality.result.checks;
-        const temporal = checks.temporal;
         add('qa', quality.result.ok,
-          `must ${summary.must} / should ${summary.should} / temporal ${temporal.flicker + temporal.captionJump + temporal.transitionSafe}`);
+          `must ${summary.must} / should ${summary.should}`);
         add('verify', checks.verify.fail === 0,
           `${checks.verify.pass} 通过 / ${checks.verify.fail} 失败 / ${checks.verify.skip} 跳过`);
       } else {
@@ -659,7 +657,7 @@ function cmdRecipeShow() {
     keywords: recipe.keywords || [],
     when: recipe.when,
     blocks: recipe.blocks ?? recipe.needs?.blocks ?? [],
-    style: recipe.style ?? null,
+    fonts: recipe.fonts ?? null,
     rules: recipe.rules ?? null,
     captions: recipe.captions ?? null,
     audio: recipe.audio ?? null,
@@ -681,7 +679,7 @@ function cmdRecipeShow() {
   console.log(`  blocks  ${(view.blocks || []).join(' / ') || '-'}`);
   if (view.keywords.length) console.log(`  keywords ${view.keywords.join(' / ')}`);
   if (view.when) console.log(`  when    ${view.when}`);
-  pretty('style', view.style);
+  pretty('fonts', view.fonts);
   pretty('rules', view.rules);
   pretty('captions', view.captions);
   pretty('audio', view.audio);
@@ -702,12 +700,12 @@ function usage() {
                 [--strict]                  检索、下载、署名并回写 job:media；默认失败时明确降级 bundled
   tt stills <t…> [--dir <工程>]   静帧 + 布局凭据（receipts）
   tt probe --t <秒> [--dir <工程>] 该时刻全部凭据（kind/block/label/bbox/安全框/字幕带）
-  tt qa [--count N] [--cols C]    全片质量检查（像素/verify/forbid/temporal）+ 12 格联系表，must=0
+  tt qa [--count N] [--cols C]    轻量渲染校验（空墨迹/verify/forbid）+ 12 格联系表，must=0
   tt det [--twice] [--verify H]   确定性指纹
   tt preview [--port N]           只读预览（复用引擎面板）；批注在页面内多帧累积，发送后落盘并关闭
   tt annotations [--all] [--ack [id]]  读取批注批次：默认最新未处理批次；--ack 标记整批已处理
   tt block list                   列出 block 与其契约
-  tt recipe list / show <id> / audit   recipe 货架（id/名称/关键词/when）/ 单条详情（style+rules+verify）/ 全量审计
+  tt recipe list / show <id> / audit   recipe 货架（id/名称/关键词/when）/ 单条详情（fonts+rules+verify）/ 全量审计
   tt ci [--deep] [--count N]      全量回归：audit + 逐条 det 两次；--deep 复用 tt qa 管线
   tt ci --baseline [--write]       逐条 recipe demo 的编译指纹与构建状态基线（新 recipe 自动纳入）；--write 刷新基线
   tt pack [目标目录]              打干净分发包（Skill + 引擎 dist）

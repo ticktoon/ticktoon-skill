@@ -20,11 +20,10 @@ import { PACING, estimateSpeech } from './resolve.mjs';
 
 export const RESERVED_ELEMENT_KEYS = ['block', 'slot', 'rect', 'at', 'dur', 'sfx', 'sfxAt'];
 // `code` 是 scene 的另一种内容形态：它和 elements 可以共存，二者都不改变时间链。
-export const SCENE_KEYS = ['id', 'narration', 'duration', 'bg', 'camera', 'elements', 'code', 'resources', 'note', 'transitionIn', 'transitionOut'];
+export const SCENE_KEYS = ['id', 'narration', 'duration', 'camera', 'elements', 'code', 'resources', 'note', 'transitionIn', 'transitionOut'];
 export const TRANSITION_OUT_TYPES = ['cut', 'dip-to-color', 'wipe', 'push', 'page', 'zoom-out', 'glitch'];
 export const TRANSITION_IN_TYPES = ['cut', 'fade-in', 'iris', 'zoom-punch', 'glitch-in'];
 export const TRANSITION_KEYS = ['type', 'dur', 'dir', 'color', 'at'];
-const TRANSITION_TOKENS = ['bg', 'ink', 'accent'];
 const HEX_COLOR = /^#(?:[0-9a-f]{3}|[0-9a-f]{4}|[0-9a-f]{6}|[0-9a-f]{8})$/i;
 export const ROOT_KEYS = ['recipe', 'format', 'meta', 'beats', 'scenes', 'uses'];
 export const SUPPORTED_FORMATS = [
@@ -374,7 +373,7 @@ function checkParams(element, meta, bag, at) {
 }
 
 /**
- * @returns {{ storyboard, bag, recipe, style, caption }}
+ * @returns {{ storyboard, bag, recipe, fonts, caption }}
  *   storyboard 是规范化结果：缺省值补齐、`dur` 留空等 plan 填。
  */
 /**
@@ -437,13 +436,13 @@ function normalizeTransition(raw, direction, bag, at, sceneDuration, estimated =
     }
   }
 
-  let color = 'bg';
+  let color = '#000000';
   if (raw.color !== undefined && raw.color !== null) {
-    if (typeof raw.color === 'string' && (TRANSITION_TOKENS.includes(raw.color) || HEX_COLOR.test(raw.color))) {
+    if (typeof raw.color === 'string' && HEX_COLOR.test(raw.color)) {
       color = raw.color;
     } else {
       bag.warn('should', 'TRANSITION_COLOR_UNKNOWN', `${at}.color`,
-        `color 只能是 bg / ink / accent 或 #rgb/#rrggbb/#rrggbbaa，收到 ${JSON.stringify(raw.color)}；已回落到 bg`);
+        `color 只能是 #rgb/#rrggbb/#rrggbbaa，收到 ${JSON.stringify(raw.color)}；已回落到 #000000`);
     }
   }
 
@@ -467,7 +466,7 @@ export function normalizeStoryboard(input, catalog, captionOverride = null) {
 
   if (!isPlainObject(input)) {
     bag.error('ROOT_TYPE', '', 'storyboard 必须是一个对象');
-    return { storyboard: out, bag, recipe: null, style: null, caption: null };
+    return { storyboard: out, bag, recipe: null, fonts: null, caption: null };
   }
 
   for (const key of Object.keys(input)) {
@@ -483,7 +482,7 @@ export function normalizeStoryboard(input, catalog, captionOverride = null) {
   } else if (!recipe) {
     bag.error('RECIPE_UNKNOWN', 'recipe', `未注册的 recipe "${input.recipe}"；可用：${[...catalog.recipes.keys()].join(' / ')}`);
   }
-  const style = recipe?.style || null;
+  const fonts = recipe?.fonts || null;
   if (recipe) {
     out.recipe = recipe.id;
     // loadCatalog 的结构错误在这里变成 build 的硬失败。
@@ -501,7 +500,7 @@ export function normalizeStoryboard(input, catalog, captionOverride = null) {
         if (key !== 'captions') {
           bag.error('USES_UNKNOWN_KEY', `uses.${key}`,
             key === 'theme'
-              ? 'storyboard 不再支持 uses.theme：视觉契约在 recipe.style 里，字幕用 uses.captions 或 CLI --captions'
+              ? 'storyboard 不再支持 uses.theme：字体契约在 recipe.fonts 里，字幕用 uses.captions 或 CLI --captions'
               : 'storyboard 的 uses 只支持 captions');
         }
       }
@@ -510,8 +509,8 @@ export function normalizeStoryboard(input, catalog, captionOverride = null) {
   }
 
   const captionInput = captionOverride ?? storyboardCaption ?? recipe?.captions;
-  const caption = style
-    ? normalizeCaption(captionInput, catalog, style, bag, { margin: recipe?.rules?.safeMargin })
+  const caption = fonts
+    ? normalizeCaption(captionInput, catalog, fonts, bag, { margin: recipe?.rules?.safeMargin })
     : null;
 
   // --- format ---
@@ -544,7 +543,7 @@ export function normalizeStoryboard(input, catalog, captionOverride = null) {
   // --- scenes ---
   if (!Array.isArray(input.scenes) || !input.scenes.length) {
     bag.error('SCENES_EMPTY', 'scenes', 'scenes 必须是非空数组');
-    return { storyboard: out, bag, recipe, style, caption };
+    return { storyboard: out, bag, recipe, fonts, caption };
   }
 
   const seen = new Set();
@@ -600,16 +599,6 @@ export function normalizeStoryboard(input, catalog, captionOverride = null) {
       `${at}.transitionIn`, estimatedDuration, !hasDuration && hasNarration);
     const transitionOut = normalizeTransition(raw.transitionOut, 'out', bag,
       `${at}.transitionOut`, estimatedDuration, !hasDuration && hasNarration);
-
-    // 不写 bg 就用 style.colors.bg；写了就必须能在 backgrounds 或颜色 token 里查到。
-    const bg = raw.bg === undefined ? null : raw.bg;
-    if (bg !== null && style) {
-      const known = style.backgrounds?.[bg] || style.colors?.[bg];
-      if (!known) {
-        bag.error('SCENE_BG_UNKNOWN', `${at}.bg`,
-          `recipe ${recipe.id} 没有背景 "${bg}"，可用：${Object.keys(style.backgrounds || {}).join(' / ') || '（无 backgrounds）'}`);
-      }
-    }
 
     let camera = null;
     if (raw.camera !== undefined) {
@@ -702,7 +691,6 @@ export function normalizeStoryboard(input, catalog, captionOverride = null) {
       id,
       narration: hasNarration ? String(raw.narration) : null,
       duration: hasDuration ? Number(raw.duration) : null,
-      bg,
       camera,
       elements,
       code,
@@ -713,5 +701,5 @@ export function normalizeStoryboard(input, catalog, captionOverride = null) {
     });
   });
 
-  return { storyboard: out, bag, recipe, style, caption };
+  return { storyboard: out, bag, recipe, fonts, caption };
 }

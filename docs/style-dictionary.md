@@ -1,8 +1,8 @@
 # 风格词典 · 40 条
 
-**这份文档不是 `recipe.style` 的实现清单，是"想做出这种味道"的描述清单。**
+**这份文档不是 recipe 的实现清单，是"想做出这种味道"的描述清单。**
 
-当前视觉由 recipe 承载：每条 `recipe.json` 自带最小 `style`（字体角色与颜色/背景色）和 `rules`（safeMargin / scale / stroke / pen / board / forbid）；字号、版式、动效归 code 场或 block 本地。词典条目是一段描述（人读，照着它写出 `scene.code`），不是可切换的主题包。
+当前视觉由 recipe 承载：每条 `recipe.json` 自带顶层 `fonts`（角色 → manifest 键）和 `rules`（safeMargin / scale / stroke / pen / board / forbid）；颜色由 kit 默认值或 code 直接写 hex，背景由 code / block 自己铺满，字号、版式、动效归 code 场或 block 本地。词典条目是一段描述（人读，照着它写出 `scene.code`），不是可切换的主题包。
 
 两条使用规则：
 

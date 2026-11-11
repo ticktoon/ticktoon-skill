@@ -1,5 +1,5 @@
 /**
- * 字幕带几何：verify 的 caption.noOverlapSubject 与 qa 的 QA_CAPTION_ZONE 共用。
+ * 字幕带几何：verify 的 caption.noOverlapSubject 与 tt probe 共用。
  *
  * 两个来源，优先级从高到低：
  *   1. caption receipt —— emit 在 code 场包住字幕绘制时记下的真实文字框（画布逻辑像素）；

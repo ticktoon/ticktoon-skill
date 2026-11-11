@@ -1,5 +1,5 @@
 {
-  "note": "字体角色或真实 family → 文件。name 同时是引擎 FontFace 族名；recipe.style.fonts 的值必须与 manifest 键逐字相同。",
+  "note": "字体角色或真实 family → 文件。name 同时是引擎 FontFace 族名；recipe.fonts 的值必须与 manifest 键逐字相同。",
   "sans-900": {
     "src": "skill:assets/fonts/DingTalk-JinBuTi.woff2",
     "family": "DingTalk JinBuTi",

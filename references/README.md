@@ -11,4 +11,4 @@
 - `qa.md`：交付前检查、12 格联系表读法
 - `iterate.md`：反馈、预览批注与 TTS 语义
 - `pexels.md`：实拍素材检索、缓存与降级
-- `captions.md` / `mark.md` / `pen.md` / `board.md` / `newsbg.md` / `transition.md`：公共 kit 参数与用法
+- `captions.md` / `mark.md` / `pen.md` / `board.md` / `newsbg.md` / `transition.md` / `flash.md`：公共 kit 参数与用法

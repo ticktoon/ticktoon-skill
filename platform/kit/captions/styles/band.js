@@ -5,7 +5,7 @@
     if (o.band !== false) {
       ctx.fillStyle = o.background || 'rgba(10,12,16,0.88)';
       ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
-      ctx.fillStyle = o.accent || c.style?.colors?.accent || '#E2574C';
+      ctx.fillStyle = o.accent || '#E2574C';
       ctx.fillRect(0, rect.y, Math.max(4, f.size * 0.12), rect.h);
     }
     const spoken = o.color || '#FFFFFF';
