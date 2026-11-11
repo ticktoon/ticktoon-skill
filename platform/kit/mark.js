@@ -6,7 +6,7 @@
  * `TT.pen.stroke` 来，mark 自己不碰 ctx.stroke()。
  *
  * 唯一例外是填充：highlight 的 fill 模式与 arrow 的 solid 箭头没有中心线，
- * 它们用 fill 画，但必须把区域并入 `TT.pen.addBox` 的墨迹框，否则 qa/verify
+ * 它们用 fill 画，但必须把区域并入 `TT.pen.addBox` 的墨迹框，否则 qa
  * 看不到它们。
  *
  * 所有扰动都是参数与 seed 的纯函数。同一帧、同一 progress、同一 seed 的两次

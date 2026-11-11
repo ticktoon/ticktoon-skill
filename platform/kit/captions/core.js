@@ -24,20 +24,12 @@
     }));
   }
 
+  /** 避障区只来自 recipe 的归一化 `avoid`；场景代码 / 模板不往里塞结构化矩形。 */
   function obstacles(c) {
     const out = [];
     for (const item of c.options?.avoid || []) {
       if (Array.isArray(item) && item.length === 4) out.push({ x: item[0] * c.W, y: item[1] * c.H, w: item[2] * c.W, h: item[3] * c.H });
       else if (item && typeof item === 'object') out.push({ x: item.x * c.W, y: item.y * c.H, w: item.w * c.W, h: item.h * c.H });
-    }
-    for (const g of c.avoid || []) {
-      if (!g.captionActive) continue;
-      if (Array.isArray(g.captionAvoid)) {
-        out.push(...g.captionAvoid);
-        continue;
-      }
-      if (g.ink && g.ink.w > 0 && g.ink.h > 0) out.push(g.ink);
-      else if (g.rect && g.rect.w * g.rect.h < c.W * c.H * 0.72) out.push(g.rect);
     }
     return out;
   }
@@ -61,14 +53,14 @@
       [0.72, 0.30], [0.28, 0.30], [0.50, 0.25], [0.72, 0.48], [0.28, 0.48],
       [0.50, 0.48], [0.72, 0.72], [0.28, 0.72], [0.50, 0.72],
     ];
-    const blocked = obstacles(c);
+    const avoidZones = obstacles(c);
     let best = null;
     let bestScore = Infinity;
     for (let i = 0; i < candidates.length; i += 1) {
       const [nx, ny] = candidates[i];
       const rect = fit(nx * c.W - w / 2, ny * c.H - h / 2);
       let score = i * 0.002;
-      for (const b of blocked) score += overlap(rect, b) / Math.max(1, w * h) * 100;
+      for (const zone of avoidZones) score += overlap(rect, zone) / Math.max(1, w * h) * 100;
       if (score < bestScore) { bestScore = score; best = rect; }
     }
     return best;

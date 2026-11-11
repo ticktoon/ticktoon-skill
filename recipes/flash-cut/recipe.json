@@ -1,6 +1,6 @@
 {
   "id": "flash-cut",
-  "abi": "8",
+  "abi": "9",
   "name": "快闪卡点",
   "keywords": [
     "快闪",
@@ -13,9 +13,6 @@
     "海报字"
   ],
   "when": "需要一组短句用硬切与大字连打、不铺陈只给结论时；也适合品牌口号、产品卖点、活动预告这类纯大字卡点片",
-  "blocks": [
-    "scene.code"
-  ],
   "fonts": {
     "display": "sans-900",
     "body": "sans-400",
@@ -33,7 +30,7 @@
       10
     ],
     "forbid": [
-      "把短句写进 block 的题材枚举参数；每句来自 storyboard 的 narration 与 code",
+      "把短句写进场景外的枚举参数；每句来自 storyboard 的 narration 与 code",
       "在快闪里再叠一层字幕；画面文字即正文，字幕必须 none",
       "单场超过 2.4s；超过就不是快切而是讲解",
       "同一场出现两种字号相近的标题；阶梯必须拉开",
@@ -44,7 +41,8 @@
       "给卡片画蓝色描边；卡片靠圆角和色块分界，不靠 UI 边框",
       "图像填字叠 layers 阴影、描边或棋盘填充；字是窗口，不是贴图",
       "数据卡画成两条横向进度条；默认用 columns 竖柱",
-      "给文字加黑色 / 白色描边；字重只靠字体与 mask 的 weight"
+      "给文字加黑色 / 白色描边；字重只靠字体与 mask 的 weight",
+      "在同一场景写 scene.params；本 recipe 只收 scene.code"
     ]
   },
   "captions": {
@@ -60,18 +58,5 @@
       "edge": 0.12
     }
   },
-  "verify": [
-    {
-      "at": 0.9,
-      "assert": "element.count.gte",
-      "args": {
-        "n": 1
-      }
-    },
-    {
-      "at": 0.9,
-      "assert": "caption.noOverlapSubject",
-      "args": {}
-    }
-  ]
+  "mode": "code"
 }

@@ -2,8 +2,8 @@
  * 工程素材闭环：storyboard 查询 → provider 选片 → out/media 缓存 → src 回写。
  *
  * 查询写法（推荐）：
- *   { "block": "media.video", "src": "pexels:night city traffic", ... }
- * 也可在 meta.assets.queriesEn 中按 media.video 出现顺序给出英文查询。
+ *   { "params": { "src": "pexels:night city traffic", ... } }
+ * 也可在 meta.assets.queriesEn 中按带 src 的 params 场顺序给出英文查询。
  *
  * 下载后的 src 是 `job:media/pexels-<id>.mp4`，以 composition 所在 out/ 为根；
  * 同目录的 pexels-manifest.json 永久保留作者、原页、授权与下载地址。
@@ -15,28 +15,27 @@ import { Readable } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
 import { pickSegments } from './assets.mjs';
 
-const round3 = (value) => Number(Number(value).toFixed(3));
-
 function requestsFrom(storyboard) {
   const requests = [];
   const configured = storyboard.meta?.assets?.queriesEn || storyboard.meta?.assets?.tags || [];
   let configuredIndex = 0;
   storyboard.scenes?.forEach((scene, sceneIndex) => {
-    scene.elements?.forEach((element, elementIndex) => {
-      const src = typeof element.src === 'string' ? element.src : '';
-      const inline = src.startsWith('pexels:') ? src.slice('pexels:'.length).trim() : '';
-      const useConfigured = !inline && configured.length > 0 && element.block === 'media.video';
-      if (!inline && !useConfigured) return;
-      const query = inline || configured[configuredIndex++];
-      if (!query) return;
-      const fallbackDuration = storyboard.meta?.assets?.segmentDuration || 6;
-      const duration = Number(element.dur || scene.duration || fallbackDuration);
-      if (!(duration > 0)) throw new Error(`${scene.id}.${element.id} 的素材窗口不是正数`);
-      requests.push({ sceneIndex, elementIndex, sceneId: scene.id, query: String(query), duration });
-    });
+    const params = scene.params;
+    if (!params || typeof params !== 'object') return;
+    const src = typeof params.src === 'string' ? params.src : '';
+    if (!src) return;
+    const inline = src.startsWith('pexels:') ? src.slice('pexels:'.length).trim() : '';
+    const useConfigured = !inline && configured.length > 0;
+    if (!inline && !useConfigured) return;
+    const query = inline || configured[configuredIndex++];
+    if (!query) return;
+    const fallbackDuration = storyboard.meta?.assets?.segmentDuration || 6;
+    const duration = Number(params.dur || scene.duration || fallbackDuration);
+    if (!(duration > 0)) throw new Error(`${scene.id}.template 的素材窗口不是正数`);
+    requests.push({ sceneIndex, sceneId: scene.id, query: String(query), duration });
   });
   if (configured.length > configuredIndex) {
-    throw new Error(`meta.assets 声明了 ${configured.length} 个查询，但只匹配到 ${configuredIndex} 个 media.video`);
+    throw new Error(`meta.assets 声明了 ${configured.length} 个查询，但只匹配到 ${configuredIndex} 个带 src 的 params 场`);
   }
   return requests;
 }
@@ -131,12 +130,11 @@ export async function fetchProjectAssets({
   for (let i = 0; i < requests.length; i += 1) {
     const request = requests[i];
     const segment = segments[i];
-    const element = storyboard.scenes[request.sceneIndex].elements[request.elementIndex];
+    const params = storyboard.scenes[request.sceneIndex].params;
     if (segment.provider === 'bundled') {
-      element.src = segment.remotePath;
-      element.start = 0;
-      if (element.credit === 'auto') element.credit = '内置演示素材 / 非 Pexels 实时检索';
-      if (!element.dur && storyboard.scenes[request.sceneIndex].duration) element.dur = round3(segment.duration);
+      params.src = segment.remotePath;
+      params.start = 0;
+      if (params.credit === 'auto') params.credit = '内置演示素材 / 非 Pexels 实时检索';
       records.push({
         ...request,
         provider: 'bundled',
@@ -174,10 +172,9 @@ export async function fetchProjectAssets({
     }
 
     const src = `job:media/${filename}`;
-    element.src = src;
-    element.start = 0;
-    if (element.credit === 'auto') element.credit = `PEXELS / ${segment.author}`;
-    if (!element.dur && storyboard.scenes[request.sceneIndex].duration) element.dur = round3(segment.duration);
+    params.src = src;
+    params.start = 0;
+    if (params.credit === 'auto') params.credit = `PEXELS / ${segment.author}`;
     const record = {
       id: segment.id,
       query: request.query,

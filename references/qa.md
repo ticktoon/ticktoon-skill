@@ -8,7 +8,7 @@ node "$SKILL_DIR/platform/cli.mjs" det --twice --dir <dir>    # 编译指纹，�
 ```
 
 - `det` 比对的是规范化 `composition.json` 的 SHA-256，不是像素或 MP4 字节；带 `--tts` 时第一次会接 TTS、第二次强制不接，只有不带 `--tts` 才是严格同输入链。CI 内部两次都不接 TTS。
-- `qa` 一次 build + 一次浏览器会话采样约 24–30 帧，只判四类硬问题：渲染异常、空墨迹、recipe verify/forbid。安全框、碰撞、文字互压、字幕带、对比度、停留、时间维都**不自动判定**，直接看联系表。
+- `qa` 一次 build + 一次浏览器会话采样约 24–30 帧，只判两类硬问题：`RENDER_PAGE_ERROR` 与 `QA_INK_EMPTY`。安全框、碰撞、文字互压、字幕带、对比度、停留、时间维都**不自动判定**，直接看联系表。
 - 拿不准成片什么样：看 `review/qa-sheet.png` 的 12 格联系表（`tt qa` 自动生成），不要另跑抽帧命令。
 
 ## 12 格联系表怎么读（不打分）

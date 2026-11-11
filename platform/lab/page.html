@@ -1,0 +1,543 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Code Lab · ticktoon</title>
+<style>
+  :root {
+    color-scheme: dark;
+    --bg:#0d1117; --panel:#161b22; --panel-2:#1b222b; --line:#30363d;
+    --text:#e6edf3; --muted:#8b949e; --blue:#58a6ff; --red:#ff7b72; --amber:#e3b341;
+  }
+  * { box-sizing:border-box; margin:0; }
+  body { min-height:100vh; background:var(--bg); color:var(--text); font:14px/1.55 -apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif; }
+  button,input,select,textarea { font:inherit; }
+  button { cursor:pointer; }
+  .hidden { display:none !important; }
+
+  .page-header { display:flex; align-items:flex-end; justify-content:space-between; gap:20px; padding:24px 28px 18px; }
+  h1 { font-size:24px; font-weight:650; letter-spacing:.2px; }
+  .title-row { display:flex; align-items:baseline; gap:14px; flex-wrap:wrap; }
+  .total, .subtitle { color:var(--muted); font-size:13px; }
+  .subtitle { margin-top:4px; }
+  .header-actions { display:flex; gap:10px; }
+  .btn { border:1px solid var(--line); border-radius:7px; background:#21262d; color:var(--text); padding:7px 14px; }
+  .btn:hover { border-color:var(--blue); filter:brightness(1.08); }
+  .btn.primary { background:#1f6feb; border-color:#1f6feb; color:#fff; }
+  .btn:disabled { opacity:.5; cursor:default; }
+
+  .filter-bar { margin:0 28px 18px; padding:12px 16px; display:flex; align-items:center; gap:18px; flex-wrap:wrap; background:var(--panel); border:1px solid var(--line); border-radius:9px; }
+  .filter-bar label { display:flex; align-items:center; gap:9px; color:var(--muted); font-size:13px; }
+  select { background:var(--bg); color:var(--text); border:1px solid var(--line); border-radius:6px; padding:6px 9px; }
+  select:disabled { opacity:.5; }
+  #recipeSelect { min-width:230px; }
+  .recipe-meta { margin-left:auto; color:var(--muted); font-size:12px; }
+
+  .banner { margin:0 28px 18px; padding:11px 14px; border:1px solid #6e2b2b; border-radius:8px; background:#2a1515; color:#ffb4ab; font:12px/1.55 ui-monospace,SFMono-Regular,Consolas,monospace; white-space:pre-wrap; }
+
+  .grid { padding:0 28px 40px; display:grid; grid-template-columns:repeat(auto-fill,minmax(360px,1fr)); gap:20px; align-items:start; }
+  .empty { grid-column:1/-1; padding:70px 20px; text-align:center; color:var(--muted); border:1px dashed var(--line); border-radius:10px; }
+  .card { min-width:0; overflow:hidden; background:var(--panel); border:1px solid var(--line); border-radius:11px; transition:border-color .18s, transform .18s; }
+  .card:hover { border-color:var(--blue); transform:translateY(-2px); }
+  .thumb { position:relative; aspect-ratio:16/9; overflow:hidden; background:#080b10; cursor:pointer; }
+  .thumb.portrait { aspect-ratio:9/16; max-height:520px; }
+  .thumb img { display:block; width:100%; height:100%; object-fit:contain; opacity:0; transition:opacity .25s; }
+  .thumb img.ready { opacity:1; }
+  .thumb-placeholder { position:absolute; inset:0; display:grid; place-items:center; color:#59657a; font-size:12px; text-align:center; padding:18px; }
+  .play-overlay { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,.42); opacity:0; transition:opacity .18s; }
+  .thumb:hover .play-overlay { opacity:1; }
+  .play-button { width:58px; height:58px; display:grid; place-items:center; border-radius:50%; background:rgba(31,111,235,.94); color:#fff; font-size:24px; padding-left:5px; box-shadow:0 8px 28px rgba(0,0,0,.35); }
+  .badge { position:absolute; top:9px; left:9px; padding:2px 8px; border:1px solid rgba(255,255,255,.12); border-radius:5px; background:rgba(0,0,0,.72); color:#e6edf3; font-size:11px; }
+  .time-badge { left:auto; right:9px; font-family:ui-monospace,monospace; }
+  .thumb-error { position:absolute; inset:auto 8px 8px; display:none; padding:6px 8px; border-radius:5px; background:rgba(130,25,25,.94); color:#fff; font:11px/1.45 ui-monospace,monospace; white-space:pre-wrap; }
+  .card-body { padding:13px 14px 14px; }
+  .card-title-row { display:flex; align-items:flex-start; justify-content:space-between; gap:10px; }
+  .card-title { font-size:14px; font-weight:600; line-height:1.45; }
+  .icon-btn { flex:none; border:0; background:transparent; color:var(--muted); padding:0 2px; font-size:12px; }
+  .icon-btn:hover { color:var(--blue); }
+  .card-meta { margin:5px 0 8px; color:var(--muted); font-size:12px; }
+  .tags { display:flex; flex-wrap:wrap; gap:5px; }
+  .tag { padding:1px 7px; border:1px solid var(--line); border-radius:999px; color:#9fb0c7; font-size:11px; }
+
+  dialog { width:min(1480px,96vw); max-width:none; height:min(920px,94vh); max-height:none; padding:0; color:var(--text); background:var(--bg); border:1px solid var(--line); border-radius:12px; overflow:hidden; }
+  dialog::backdrop { background:rgba(0,0,0,.78); }
+  .modal-header { height:58px; display:flex; align-items:center; justify-content:space-between; gap:16px; padding:0 18px; background:var(--panel); border-bottom:1px solid var(--line); }
+  .modal-title { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:16px; font-weight:600; }
+  .modal-sub { margin-left:10px; color:var(--muted); font-size:12px; font-weight:400; }
+  .close { width:34px; height:34px; border:0; border-radius:6px; background:transparent; color:var(--muted); font-size:23px; }
+  .close:hover { background:#252b33; color:#fff; }
+  .modal-grid { display:grid; grid-template-columns:minmax(0,1fr) 450px; height:calc(100% - 58px); min-height:0; }
+  .preview-pane { min-width:0; min-height:0; display:flex; flex-direction:column; gap:10px; padding:18px; }
+  .preview-note { color:var(--muted); font-size:12px; }
+  .stage { flex:1; min-height:0; display:flex; align-items:center; justify-content:center; overflow:hidden; }
+  .stage-frame { width:100%; height:100%; max-width:100%; max-height:100%; border:1px solid #222932; border-radius:8px; overflow:hidden; background:#05070a; }
+  .stage-frame.portrait { width:auto; aspect-ratio:9/16; }
+  .stage-frame.landscape { aspect-ratio:16/9; }
+  #panel { display:block; width:100%; height:100%; border:0; background:#000; }
+  .status { min-height:34px; color:var(--muted); font:12px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace; white-space:pre-wrap; }
+  .status.error { color:var(--red); }
+  .status.ok { color:#7ee787; }
+
+  .editor { min-height:0; display:flex; flex-direction:column; gap:10px; padding:16px; background:var(--panel); border-left:1px solid var(--line); overflow:auto; }
+  .editor-title { font-weight:600; }
+  .field-row { display:grid; grid-template-columns:1fr 1fr 1fr; gap:9px; }
+  .field { min-width:0; display:flex; flex-direction:column; gap:4px; color:var(--muted); font-size:12px; }
+  .field input,.field select { width:100%; min-width:0; }
+  input[type=number], input[type=text] { background:var(--bg); color:var(--text); border:1px solid var(--line); border-radius:6px; padding:7px 9px; }
+  input[type=color] { height:35px; padding:3px; background:var(--bg); border:1px solid var(--line); border-radius:6px; }
+  .resource-summary { color:var(--muted); font:11px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace; white-space:pre-wrap; max-height:74px; overflow:auto; }
+  #codeInput { flex:1; min-height:300px; resize:none; outline:none; background:#0b0f14; color:#d5dde5; border:1px solid var(--line); border-radius:7px; padding:11px; font:12px/1.55 ui-monospace,SFMono-Regular,Consolas,monospace; tab-size:2; }
+  #codeInput:focus { border-color:var(--blue); }
+  .editor-actions { display:flex; gap:9px; }
+  .editor-actions .primary { flex:1; }
+  .editor-foot { color:var(--muted); font-size:11px; }
+
+  @media (max-width:1080px) {
+    dialog { overflow:auto; height:94vh; }
+    .modal-grid { display:block; height:auto; }
+    .preview-pane { min-height:520px; }
+    .editor { border-left:0; border-top:1px solid var(--line); }
+    #codeInput { min-height:320px; }
+  }
+  @media (max-width:620px) {
+    .page-header { padding:18px; align-items:flex-start; }
+    .filter-bar, .banner { margin-left:18px; margin-right:18px; }
+    .grid { padding:0 18px 28px; grid-template-columns:1fr; }
+    .recipe-meta { margin-left:0; }
+    .preview-pane { min-height:340px; padding:10px; }
+  }
+</style>
+</head>
+<body>
+<header class="page-header">
+  <div>
+    <div class="title-row"><h1>Code Lab</h1><span id="total" class="total">正在读取…</span></div>
+    <div class="subtitle">镜头参考来自 <code>recipes/&lt;id&gt;/ref-shots/</code> · 预览走真实 build + 引擎面板</div>
+  </div>
+  <div class="header-actions"><button id="refreshBtn" class="btn">↻ 刷新镜头参考</button></div>
+</header>
+
+<section class="filter-bar">
+  <label>recipe
+    <select id="recipeSelect" disabled><option>正在读取…</option></select>
+  </label>
+  <label>画幅
+    <select id="orientationFilter">
+      <option value="">全部</option>
+      <option value="landscape">横屏</option>
+      <option value="portrait">竖屏</option>
+    </select>
+  </label>
+  <span id="recipeMeta" class="recipe-meta"></span>
+</section>
+
+<div id="errorBanner" class="banner hidden"></div>
+<main id="grid" class="grid"><div class="empty">正在载入镜头参考…</div></main>
+
+<dialog id="modal">
+  <div class="modal-header">
+    <div class="modal-title"><span id="modalTitle"></span><span id="modalSub" class="modal-sub"></span></div>
+    <button id="closeModal" class="close" title="关闭">×</button>
+  </div>
+  <div class="modal-grid">
+    <section class="preview-pane">
+      <div class="preview-note">真实引擎预览 · 下方是引擎自带播放/暂停与时间轴 · 改右侧代码后点“运行并播放”</div>
+      <div class="stage"><div id="stageFrame" class="stage-frame landscape"><iframe id="panel" title="Ticktoon 真实预览"></iframe></div></div>
+      <div id="status" class="status"></div>
+    </section>
+    <aside class="editor">
+      <div class="editor-title">这一场的 scene.code</div>
+      <div class="field-row">
+        <label class="field">时长（秒）<input id="durationInput" type="number" min="0.1" max="600" step="0.01"></label>
+        <label class="field">画幅<select id="modalOrientation"><option value="landscape">横屏 16:9</option><option value="portrait">竖屏 9:16</option></select></label>
+        <label class="field">预览底色<input id="bgInput" type="color" value="#10151d"></label>
+      </div>
+      <div id="resourceSummary" class="resource-summary"></div>
+      <textarea id="codeInput" spellcheck="false"></textarea>
+      <div class="editor-actions">
+        <button id="runBtn" class="btn primary">运行并播放</button>
+        <button id="resetBtn" class="btn">恢复本例</button>
+      </div>
+      <div class="editor-foot">这里的编辑只影响当前预览，不会回写 <code>ref-shots/</code>。Ctrl/⌘ + Enter 运行。</div>
+    </aside>
+  </div>
+</dialog>
+
+<script>
+const $ = (selector) => document.querySelector(selector);
+const grid = $('#grid');
+const modal = $('#modal');
+const panel = $('#panel');
+const statusEl = $('#status');
+const codeInput = $('#codeInput');
+
+const state = {
+  recipes: [],
+  recipeId: '',
+  refShots: [],
+  active: null,
+  panelReady: false,
+  pendingComposition: null,
+  playAfterLoad: false,
+  lastWarnings: [],
+  runToken: 0,
+};
+
+const clamp = (value, lo, hi) => Math.min(hi, Math.max(lo, value));
+const fmt = (seconds) => Number(seconds || 0).toFixed(2);
+
+function setStatus(text, kind = '') {
+  statusEl.textContent = text;
+  statusEl.className = `status${kind ? ` ${kind}` : ''}`;
+}
+
+async function getJson(url, options) {
+  const response = await fetch(url, options);
+  let data = null;
+  try { data = await response.json(); } catch { /* 非 JSON 错误由下面统一报 */ }
+  if (!response.ok) {
+    const message = data?.error || data?.errors?.map((item) => item.msg).join('\n') || `HTTP ${response.status}`;
+    throw new Error(message);
+  }
+  return data;
+}
+
+function recipeMetaText(recipe) {
+  const parts = [`${recipe.count} 个镜头参考`];
+  if (recipe.keywords?.length) parts.push(recipe.keywords.join(' / '));
+  return parts.join(' · ');
+}
+
+async function loadRecipes() {
+  const data = await getJson('/api/recipes');
+  state.recipes = data.recipes || [];
+  const select = $('#recipeSelect');
+  select.innerHTML = '';
+  for (const recipe of state.recipes) {
+    const option = document.createElement('option');
+    option.value = recipe.id;
+    option.textContent = `${recipe.name} · ${recipe.id}`;
+    option.title = recipe.when || '';
+    select.appendChild(option);
+  }
+  select.disabled = !state.recipes.length;
+  if (!state.recipes.length) {
+    grid.innerHTML = '<div class="empty">没有 code recipe</div>';
+    $('#total').textContent = '0 个镜头参考';
+    return;
+  }
+  const fromHash = new URLSearchParams(location.hash.slice(1)).get('recipe');
+  const wanted = state.recipes.some((item) => item.id === fromHash) ? fromHash : state.recipes[0].id;
+  select.value = wanted;
+  await loadRefShots(wanted);
+}
+
+async function loadRefShots(recipeId) {
+  state.recipeId = recipeId;
+  state.refShots = [];
+  grid.innerHTML = '<div class="empty">正在读取镜头参考…</div>';
+  $('#total').textContent = '正在读取…';
+  $('#recipeMeta').textContent = '';
+  $('#errorBanner').classList.add('hidden');
+  history.replaceState(null, '', `#recipe=${encodeURIComponent(recipeId)}`);
+
+  try {
+    const data = await getJson(`/api/ref-shots?recipe=${encodeURIComponent(recipeId)}`);
+    state.refShots = data.refShots || [];
+    const recipe = state.recipes.find((item) => item.id === recipeId);
+    $('#recipeMeta').textContent = recipe ? recipeMetaText(recipe) : `${state.refShots.length} 个镜头参考`;
+
+    const problems = [...(data.errors || [])];
+    if (problems.length) {
+      const banner = $('#errorBanner');
+      banner.textContent = problems.map((item) => `[${item.code}] ${item.file ? item.file + ' — ' : ''}${item.msg}`).join('\n');
+      banner.classList.remove('hidden');
+    }
+    renderGrid();
+  } catch (error) {
+    grid.innerHTML = `<div class="empty">读取失败：${escapeHtml(error.message)}</div>`;
+    $('#total').textContent = '读取失败';
+  }
+}
+
+function escapeHtml(value) {
+  return String(value).replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
+}
+
+function visibleRefShots() {
+  const filter = $('#orientationFilter').value;
+  return filter ? state.refShots.filter((refShot) => refShot.orientation === filter) : state.refShots;
+}
+
+function renderGrid() {
+  const refShots = visibleRefShots();
+  $('#total').textContent = `共 ${refShots.length} 个镜头参考${refShots.length !== state.refShots.length ? `（已筛 ${state.refShots.length}）` : ''}`;
+  grid.innerHTML = '';
+  if (!refShots.length) {
+    grid.innerHTML = '<div class="empty">这个筛选下没有镜头参考</div>';
+    return;
+  }
+  for (const refShot of refShots) grid.appendChild(createCard(refShot));
+}
+
+function createCard(refShot) {
+  const card = document.createElement('article');
+  card.className = 'card';
+
+  const thumb = document.createElement('div');
+  thumb.className = `thumb${refShot.orientation === 'portrait' ? ' portrait' : ''}`;
+  thumb.style.background = refShot.bg || '#080b10';
+  thumb.title = '点击运行真实动画';
+
+  const image = document.createElement('img');
+  image.alt = refShot.title;
+  const placeholder = document.createElement('div');
+  placeholder.className = 'thumb-placeholder';
+  placeholder.textContent = '缩略图渲染中…';
+  const overlay = document.createElement('div');
+  overlay.className = 'play-overlay';
+  overlay.innerHTML = '<div class="play-button">▶</div>';
+  const badge = document.createElement('span');
+  badge.className = 'badge';
+  badge.textContent = refShot.orientation === 'portrait' ? '竖屏' : '横屏';
+  const timeBadge = document.createElement('span');
+  timeBadge.className = 'badge time-badge';
+  timeBadge.textContent = `${fmt(refShot.duration)}s`;
+  const thumbError = document.createElement('div');
+  thumbError.className = 'thumb-error';
+
+  thumb.append(image, placeholder, overlay, badge, timeBadge, thumbError);
+  thumb.onclick = () => openRefShot(refShot);
+
+  const body = document.createElement('div');
+  body.className = 'card-body';
+  const titleRow = document.createElement('div');
+  titleRow.className = 'card-title-row';
+  const title = document.createElement('div');
+  title.className = 'card-title';
+  title.textContent = refShot.title;
+  const copy = document.createElement('button');
+  copy.className = 'icon-btn copy';
+  copy.textContent = '复制';
+  copy.title = '复制 scene.code';
+  copy.onclick = async () => {
+    try {
+      await navigator.clipboard.writeText(refShot.code);
+      copy.textContent = '已复制';
+      setTimeout(() => { copy.textContent = '复制'; }, 1400);
+    } catch {
+      copy.textContent = '复制失败';
+    }
+  };
+  titleRow.append(title, copy);
+
+  const meta = document.createElement('div');
+  meta.className = 'card-meta';
+  const resources = refShot.resources?.length ? ` · ${refShot.resources.length} 个资源` : '';
+  meta.textContent = `${refShot.note || '点击画面查看真实动画'}${resources}`;
+
+  const tags = document.createElement('div');
+  tags.className = 'tags';
+  for (const tag of refShot.tags || []) {
+    const chip = document.createElement('span');
+    chip.className = 'tag';
+    chip.textContent = tag;
+    tags.appendChild(chip);
+  }
+
+  body.append(titleRow, meta, tags);
+  card.append(thumb, body);
+
+  loadThumb(state.recipeId, refShot, image, placeholder, thumbError);
+  return card;
+}
+
+let thumbChain = Promise.resolve();
+function loadThumb(recipeId, refShot, image, placeholder, errorEl) {
+  thumbChain = thumbChain.then(async () => {
+    const params = new URLSearchParams({
+      recipe: recipeId,
+      file: refShot.file,
+      orientation: refShot.orientation,
+      t: String(refShot.thumbTime),
+    });
+    try {
+      const response = await fetch(`/api/thumb?${params}`);
+      if (!response.ok) {
+        let message = `HTTP ${response.status}`;
+        try {
+          const data = await response.json();
+          message = data.error || message;
+        } catch { /* 保持 HTTP 状态 */ }
+        throw new Error(message);
+      }
+      const blob = await response.blob();
+      image.src = URL.createObjectURL(blob);
+      image.classList.add('ready');
+      placeholder.remove();
+    } catch (error) {
+      placeholder.remove();
+      errorEl.textContent = `缩略图不可用：${error.message}`;
+      errorEl.style.display = 'block';
+    }
+  }, () => {});
+}
+
+function fillEditor(refShot) {
+  $('#modalTitle').textContent = refShot.title;
+  $('#modalSub').textContent = `${state.recipeId} / ${refShot.file}`;
+  codeInput.value = refShot.code;
+  $('#durationInput').value = refShot.duration;
+  $('#modalOrientation').value = refShot.orientation;
+  $('#bgInput').value = /^#[0-9a-f]{6}$/i.test(refShot.bg) ? refShot.bg : '#10151d';
+  $('#resourceSummary').textContent = refShot.resources?.length
+    ? refShot.resources.map((item) => `${item.type}  ${item.name}  ${item.src}`).join('\n')
+    : '没有声明 resources';
+  syncStage(refShot.orientation, refShot.bg);
+}
+
+function syncStage(orientation, bg) {
+  const frame = $('#stageFrame');
+  frame.classList.toggle('portrait', orientation === 'portrait');
+  frame.classList.toggle('landscape', orientation !== 'portrait');
+  frame.style.background = bg || '#05070a';
+}
+
+function openRefShot(refShot) {
+  state.active = refShot;
+  state.pendingComposition = null;
+  state.playAfterLoad = false;
+  state.lastWarnings = [];
+  fillEditor(refShot);
+  if (!panel.getAttribute('src')) panel.src = '/preview-panel.html';
+  if (!modal.open) modal.showModal();
+  setStatus('正在准备真实引擎…');
+  if (state.panelReady) runActive();
+}
+
+function postToPanel(type, payload = {}) {
+  panel.contentWindow?.postMessage({ __source: 'ticktoon-preview-page', type, ...payload }, '*');
+}
+
+async function runActive() {
+  if (!state.active) return;
+  const token = ++state.runToken;
+  const refShot = state.active;
+  state.lastWarnings = [];
+  const duration = clamp(Number($('#durationInput').value) || refShot.duration, 0.1, 600);
+  const orientation = $('#modalOrientation').value;
+  const code = codeInput.value;
+  if (!code.trim()) {
+    setStatus('scene.code 不能为空', 'error');
+    return;
+  }
+
+  setStatus(`编译中… ${orientation === 'portrait' ? '竖屏' : '横屏'} / ${duration.toFixed(2)}s`);
+  syncStage(orientation, $('#bgInput').value);
+  try {
+    const data = await getJson('/api/build', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        recipe: state.recipeId,
+        file: refShot.file,
+        code,
+        duration,
+        orientation,
+      }),
+    });
+    if (token !== state.runToken) return;
+    if (!data.ok) {
+      const lines = (data.errors || []).map((item) => `[${item.code}] ${item.path ? item.path + ' — ' : ''}${item.msg}`);
+      setStatus(`编译失败：\n${lines.join('\n') || '未知错误'}`, 'error');
+      return;
+    }
+    state.lastWarnings = data.report?.warnings || [];
+    const warnings = state.lastWarnings.length
+      ? `\n建议：${state.lastWarnings.map((item) => `[${item.code}] ${item.msg}`).join('；')}`
+      : '';
+    setStatus(`编译通过 · ${fmt(data.report?.duration)}s${warnings}`, warnings ? '' : 'ok');
+    state.pendingComposition = data.composition;
+    state.playAfterLoad = true;
+    if (state.panelReady) loadComposition();
+  } catch (error) {
+    if (token !== state.runToken) return;
+    setStatus(`编译失败：${error.message}`, 'error');
+  }
+}
+
+function loadComposition() {
+  if (!state.pendingComposition) return;
+  setStatus('引擎装载中…');
+  postToPanel('load', { composition: state.pendingComposition, controls: true });
+  state.pendingComposition = null;
+}
+
+window.addEventListener('message', (event) => {
+  if (!panel.contentWindow || event.source !== panel.contentWindow) return;
+  const data = event.data;
+  if (!data || data.__source !== 'ticktoon-preview-panel') return;
+
+  if (data.type === 'ready') {
+    state.panelReady = true;
+    if (state.active && modal.open) {
+      if (state.pendingComposition) loadComposition();
+      else runActive();
+    }
+    return;
+  }
+  if (data.type === 'loading') {
+    setStatus('引擎装载中…');
+  } else if (data.type === 'loaded') {
+    const warnings = state.lastWarnings.length
+      ? `\n建议：${state.lastWarnings.map((item) => `[${item.code}] ${item.msg}`).join('；')}`
+      : '';
+    setStatus(`已就绪 · ${fmt(data.duration)}s${warnings}`, state.lastWarnings.length ? '' : 'ok');
+    if (state.playAfterLoad) {
+      state.playAfterLoad = false;
+      postToPanel('play');
+    }
+  } else if (data.type === 'error') {
+    state.playAfterLoad = false;
+    setStatus(`引擎错误：${data.message}`, 'error');
+  }
+});
+
+$('#refreshBtn').onclick = () => loadRefShots(state.recipeId);
+$('#recipeSelect').onchange = (event) => loadRefShots(event.target.value);
+$('#orientationFilter').onchange = renderGrid;
+$('#runBtn').onclick = runActive;
+$('#resetBtn').onclick = () => {
+  if (!state.active) return;
+  fillEditor(state.active);
+  runActive();
+};
+$('#modalOrientation').onchange = () => {
+  syncStage($('#modalOrientation').value, $('#bgInput').value);
+  runActive();
+};
+$('#bgInput').oninput = () => syncStage($('#modalOrientation').value, $('#bgInput').value);
+codeInput.addEventListener('keydown', (event) => {
+  if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
+    event.preventDefault();
+    runActive();
+  }
+});
+$('#closeModal').onclick = () => modal.close();
+modal.addEventListener('close', () => {
+  state.active = null;
+  state.pendingComposition = null;
+  state.playAfterLoad = false;
+  state.runToken += 1;
+  postToPanel('pause');
+});
+modal.addEventListener('click', (event) => { if (event.target === modal) modal.close(); });
+
+loadRecipes().catch((error) => {
+  grid.innerHTML = `<div class="empty">启动失败：${escapeHtml(error.message)}</div>`;
+  $('#total').textContent = '启动失败';
+});
+</script>
+</body>
+</html>

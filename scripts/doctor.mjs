@@ -10,7 +10,6 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { credentialSource, hasCredential, hasVolcTts } from './config.mjs';
 import { bundledTopics } from './providers/assets.mjs';
-import { chromiumArgs } from './lib/chromium-args.mjs';
 import { getEngineDir } from './lib/engine-runtime.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -36,11 +35,10 @@ if (existsSync(entryHtml)) {
 }
 check('engine', existsSync(entryHtml), engineDetail, '先构建相邻 ticktoon 仓 dist/，或设置 TICKTOON_ENGINE_DIR');
 
-// npm 依赖先单独检查：缺失时不要把 "Cannot find package 'playwright'" 伪装成 Chrome 故障。
+// npm 依赖先单独检查：缺 ws 时 CDP 驱动不可用，不要把依赖缺失伪装成 Chrome 故障。
 const runtimeDeps = [
-  ['playwright', 'stills / qa / MP4 导出'],
+  ['ws', 'Chrome CDP 驱动 / edge-tts 旁白'],
   ['msedge-tts', 'edge-tts 旁白'],
-  ['ws', 'edge-tts 旁白'],
 ];
 const missingDeps = [];
 for (const [name] of runtimeDeps) {
@@ -54,50 +52,53 @@ const depsOk = missingDeps.length === 0;
 check(
   'deps',
   depsOk,
-  depsOk ? 'playwright / msedge-tts / ws 已安装' : `缺少 ${missingDeps.join(' / ')}`,
-  `cd "${ROOT}" && npm install（只装 npm 包；Playwright 直接驱动本机 Chrome，无需下载浏览器）`,
+  depsOk ? 'ws / msedge-tts 已安装' : `缺少 ${missingDeps.join(' / ')}`,
+  `cd "${ROOT}" && npm install（安装 ws / msedge-tts；Chrome 直接使用本机安装，不下载浏览器）`,
 );
 
-const hasPlaywright = !missingDeps.includes('playwright');
+const hasDriver = !missingDeps.includes('ws');
 let chromeOk = false, chromeDetail = '';
 let webglOk = false, webglDetail = '未执行（Chrome 启动失败）';
-let browser;
-if (hasPlaywright) {
+if (hasDriver) {
+  let session = null;
   try {
-    const { chromium } = await import('playwright');
-    browser = await chromium.launch({ channel: 'chrome', headless: true, args: chromiumArgs() });
-    chromeDetail = browser.version();
-    chromeOk = true;
-    const page = await browser.newPage();
-    const result = await page.evaluate(() => {
-      const canvas = document.createElement('canvas');
-      canvas.width = canvas.height = 16;
-      const gl = canvas.getContext('webgl2', { preserveDrawingBuffer: true });
-      if (!gl) return { ok: false, detail: 'WebGL2 context 创建失败' };
-      gl.clearColor(1, 0, 0, 1);
-      gl.clear(gl.COLOR_BUFFER_BIT);
-      const pixel = new Uint8Array(4);
-      gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixel);
-      const ok = pixel[0] === 255 && pixel[1] === 0 && pixel[2] === 0 && pixel[3] === 255;
-      return { ok, detail: ok ? 'WebGL2 + 16×16 测试帧正常' : `测试帧像素异常: ${[...pixel].join(',')}` };
-    });
-    webglOk = result.ok;
-    webglDetail = result.detail;
+    const { launchChrome } = await import('./lib/chrome-cdp.mjs');
+    session = await launchChrome();
+    const product = await session.version();
+    const major = Number((product.match(/Chrome\/(\d+)/) || [])[1] || 0);
+    chromeDetail = `${product}${major && major < 120 ? '（需要 >=120）' : ''}`;
+    chromeOk = major >= 120;
+    if (chromeOk) {
+      const result = await session.page.evaluate(() => {
+        const canvas = document.createElement('canvas');
+        canvas.width = canvas.height = 16;
+        const gl = canvas.getContext('webgl2', { preserveDrawingBuffer: true });
+        if (!gl) return { ok: false, detail: 'WebGL2 context 创建失败' };
+        gl.clearColor(1, 0, 0, 1);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+        const pixel = new Uint8Array(4);
+        gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixel);
+        const ok = pixel[0] === 255 && pixel[1] === 0 && pixel[2] === 0 && pixel[3] === 255;
+        return { ok, detail: ok ? 'WebGL2 + 16×16 测试帧正常' : `测试帧像素异常: ${[...pixel].join(',')}` };
+      });
+      webglOk = result.ok;
+      webglDetail = result.detail;
+    }
   } catch (error) {
     const detail = String(error?.message || error).split('\n')[0].slice(0, 160);
     if (chromeOk) webglDetail = detail;
     else chromeDetail = detail;
   } finally {
-    await browser?.close();
+    await session?.close();
   }
-  check('chrome', chromeOk, chromeDetail, '确认本机已安装 Chrome >= 120（Playwright 用 channel:"chrome"，不下载自带浏览器）');
+  check('chrome', chromeOk, chromeDetail, '确认本机已安装 Chrome >= 120，或设置 TICKTOON_CHROME_PATH 指向 Chrome');
   check('webgl', webglOk, webglDetail, '确认 Chrome 支持 WebGL2；无 GPU 服务器可设置 DH_VIDEO_WEBGL=swiftshader 后重试');
 } else {
-  results.push({ name: 'chrome', ok: false, warnOnly: true, detail: '跳过：playwright 未安装' });
-  results.push({ name: 'webgl', ok: false, warnOnly: true, detail: '跳过：playwright 未安装' });
+  results.push({ name: 'chrome', ok: false, warnOnly: true, detail: '跳过：ws 未安装' });
+  results.push({ name: 'webgl', ok: false, warnOnly: true, detail: '跳过：ws 未安装' });
   if (!asJson) {
-    console.log('⬜ chrome: 跳过（playwright 未安装，先 npm install）');
-    console.log('⬜ webgl: 跳过（playwright 未安装，先 npm install）');
+    console.log('⬜ chrome: 跳过（ws 未安装，先 npm install）');
+    console.log('⬜ webgl: 跳过（ws 未安装，先 npm install）');
   }
 }
 

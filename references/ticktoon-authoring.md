@@ -1,6 +1,6 @@
 # Ticktoon v1.0 authoring contract
 
-本文是平台扩展（写新 block / 改 captions）时的场景代码契约，不是日常创作入口。日常只写 `storyboard.json`。编译产物是 protocol v1.0 `composition.json`（`scenes[]` + `audio[]`）；场景代码直接使用下述 Canvas/Three API。
+本文是平台扩展（写 recipe `template.js` / 改 captions）时的场景代码契约，不是日常创作入口。日常只写 `storyboard.json`。编译产物是 protocol v1.0 `composition.json`（`scenes[]` + `audio[]`）；场景代码直接使用下述 Canvas/Three API。
 
 ## Canvas scene
 
@@ -16,7 +16,7 @@
 
 禁止使用墙钟、`Math.random()`、异步绘制、帧间可变历史和 Canvas 像素回读。数学助手使用下方 `TT`，不要假设 `api` 提供 `ease`、`lerp`、`clamp`、`cover` 或 `contain`。
 
-`platform/compile/emit.mjs` 在 scene 前拼接 `TT`、`BLOCKS`、`CAPTIONS` 三层，都按 IIFE 挂到全局，只注入本次用到的成员（`new Function('ctx','api', code)` 没有 import）。可用的 `TT` 成员：`TT.ease.*`（缓动）、`TT.clamp01` / `TT.num.fmt` / `TT.env.fade|reveal` / `TT.rng`（数值与包络）、`TT.text`（中文优先断行 + 量测 + 墨迹框）、`TT.font`（recipe 顶层 `fonts` 查询，`font().css` 的族名恒等于 `resources[].name`），以及场景 kit `TT.chart` / `TT.pen` / `TT.mark` / `TT.transition` / `TT.board` / `TT.geom` / `TT.flash`。code 场额外注入 `FONTS` 与 `RULES`；block 场只读 `g.fonts` / `g.motion` / `g.sizes` / `g.rect`。block 可以用 `SETUP['<id>'](g, el, api)` 做一次性预处理，逐帧只跑 `draw.js` 导出的函数体。
+`platform/compile/emit.mjs` 在 scene 前拼接 `TT` 与 `CAPTIONS`（有字幕时），都按 IIFE 挂到全局，只注入本次用到的成员（`new Function('ctx','api', code)` 没有 import）。可用的 `TT` 成员：`TT.ease.*`（缓动）、`TT.clamp01` / `TT.num.fmt` / `TT.env.fade|reveal` / `TT.rng`（数值与包络）、`TT.text`（中文优先断行 + 量测 + 墨迹框）、`TT.font`（recipe 顶层 `fonts` 查询，`font().css` 的族名恒等于 `resources[].name`），以及场景 kit `TT.chart` / `TT.pen` / `TT.mark` / `TT.transition` / `TT.board` / `TT.geom` / `TT.flash`。code 场额外注入 `FONTS` 与 `RULES`；params 模板在顶层定义 `function draw(g, p)`，每帧由 emit 传入整帧 `G0` 与 `scene.params`，模板资源来自 `template.resources`，字体来自 `template.needs.font`。params 模板不注入 `RULES`。
 
 ## Three layers
 
@@ -34,7 +34,7 @@ return (ctx, api) => {
 };
 ```
 
-- 用 `api.three()` 的场景必须在 `needs` 里写 `['three']`，否则宿主不注入 Three，`api.THREE` 是 `undefined`。
+- 用 `api.three()` 的 params 模板必须在 `template.needs.three` 写 `true`，否则宿主不注入 Three，`api.THREE` 是 `undefined`。
 - `rect` 同时决定位置和相机宽高比，所以「左边文字、右边模型」不需要第二块画布，也不需要手动偏相机。
 - 一个场景可以有多个图层，各自独立相机。
 - 3D 对象必须跨帧存在，所以场景函数体必须**返回一个 draw 函数**（两段式）。什么都不返回表示每帧执行，此时调用 `api.three()` 会直接报错。

@@ -1,10 +1,10 @@
 /**
- * 字幕带几何：verify 的 caption.noOverlapSubject 与 tt probe 共用。
+ * 字幕带几何：tt probe 与 QA 共用。
  *
  * 两个来源，优先级从高到低：
  *   1. caption receipt —— emit 在 code 场包住字幕绘制时记下的真实文字框（画布逻辑像素）；
  *      顶部字幕的带底就取它的下缘，不再靠字号猜；
- *   2. 估算 —— block 场没有 caption receipt，用字幕 metrics（字号、行高、top、margin）
+ *   2. 估算 —— 该帧没有 caption receipt 时，用字幕 metrics（字号、行高、top、margin）
  *      与 cue 文本估一个保守带宽。
  *
  * 字幕位置走 uses.captions.at：top 看屏幕上带，bottom 看屏幕下带；
@@ -64,7 +64,7 @@ export function bandFromCaptionInk(ink, placement, H) {
   return { y0: ink.y - pad, y1: ink.y + ink.h + pad, source: 'caption', placement };
 }
 
-/** 没有 caption receipt 时的保守估算（block 场 / 字幕未落帧）。 */
+/** 没有 caption receipt 时的保守估算（字幕未落帧）。 */
 export function estimatedCaptionBand({ format, caption, cue }) {
   const placement = captionPlacement(caption);
   const metrics = caption?.metrics || {};

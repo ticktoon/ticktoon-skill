@@ -3,8 +3,7 @@
  * 产物写入 output/caption-kit/project/out/composition.json，渲染仍走 scripts/render.mjs。
  *
  * 这不是正式 recipe 的 build 路径：它把 7 个单场工程合并成一条对照片，
- * 每个单场用 captionOverride 固定一种字幕样式。`scene.caption-demo` 是 _lab
- * 实验 block，正式 recipe 不用它，所以 build 会保留一条 recipe forbid 建议；
+ * 每个单场用 captionOverride 固定一种字幕样式。画面本身是一段普通 scene.code，
  * 对照片只看字幕版式，不带 qa 硬门禁。
  */
 import { mkdirSync, writeFileSync } from 'node:fs';
@@ -45,14 +44,11 @@ for (let index = 0; index < demos.length; index += 1) {
     scenes: [{
       id: `caption-${demo.label}`,
       narration: NARRATION,
-      elements: [{
-        block: 'scene.caption-demo',
-        slot: 'full',
-        rect: [0, 0, 1, 1],
-        label: demo.label,
-        note: demo.note,
-        index,
-      }],
+      code: [
+        "ctx.fillStyle = '#F3EFE6'; ctx.fillRect(0, 0, W, H);",
+        `TT.text(ctx, ${JSON.stringify(`字幕样式 · ${demo.label}`)}, W * 0.5, H * 0.24, 64, { role: 'display', color: '#2B2A25', align: 'center', maxWidth: W * 0.8 });`,
+        `TT.text(ctx, ${JSON.stringify(demo.note)}, W * 0.5, H * 0.32, 34, { role: 'body', color: '#6B6458', align: 'center', maxWidth: W * 0.72 });`,
+      ].join('\n'),
     }],
   };
   writeFileSync(path.join(dir, 'storyboard.json'), `${JSON.stringify(storyboard, null, 2)}\n`);

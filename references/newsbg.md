@@ -1,6 +1,6 @@
 # 新闻背景 kit `TT.newsBg`
 
-公共实现位于 `platform/kit/newsbg.js`，由 `platform/kit/index.json` 注入为 `TT.newsBg`。它只画新闻底：径向蓝底、世界地图、120px 网格与十条种子流动线；不画标题、来源、品牌或任何正文。`scene.news` 用它实现固定竖版新闻模板，其他新闻 recipe 也可以复用同一套底。
+公共实现位于 `platform/kit/newsbg.js`，由 `platform/kit/index.json` 注入为 `TT.newsBg`。它只画新闻底：径向蓝底、世界地图、120px 网格与十条种子流动线；不画标题、来源、品牌或任何正文。`news-broadcast` 的 `template.js` 用它实现固定竖版新闻模板，其他新闻 recipe 也可以复用同一套底。
 
 ## API
 
@@ -10,7 +10,7 @@ TT.newsBg.paint(ctx, {
   H,
   image,      // api.img('news-world-map') 或 null
   time: 0,    // 流动线时间；必须逐帧推进才会流动，传常量则静止
-  alpha: 1,   // 整层透明度，与 element 的 g.a 相乘
+  alpha: 1,   // 整层透明度，与模板的 g.a 相乘
   mapAlpha: 0.3,
   grid: 120,
   seed: 7,
@@ -28,9 +28,9 @@ TT.newsBg.paint(ctx, {
 - 网格间距 `120px`（按画幅缩放），`rgba(255,255,255,0.2)`，线宽 1。
 - 十条流动线长度 400–600、速度 80–380、角度 ±0.7、透明度 0.35–0.65、线宽 1.8；所有数值按 `min(W,H)/1080` 缩放。固定 seed 只固定起点与参数，位置由 `time` 驱动，传常量时画面静止。
 
-## 在 block 里复用
+## 在 params 模板里复用
 
-`block.json` 现在支持块自带固定资源，emit 会把它们直接放进本场 `resources[]`。`scene.news` 的声明：
+recipe 的 `template.resources` 声明固定资源，emit 会把它们直接放进本场 `resources[]`。`news-broadcast` 的声明：
 
 ```json
 "resources": [
@@ -38,11 +38,11 @@ TT.newsBg.paint(ctx, {
 ]
 ```
 
-draw.js 里用 `g.api.img('news-world-map')` 查询，不需要作者在 storyboard 里再传路径。
+`template.js` 里用 `g.api.img('news-world-map')` 查询，不需要作者在 storyboard 里再传路径。
 
 ## 在 `scene.code` 里复用
 
-code 场没有 block 元数据，资源必须在 storyboard 的 `scene.resources` 里声明：
+code 场没有模板资源，资源必须在 storyboard 的 `scene.resources` 里声明：
 
 ```json
 "resources": [

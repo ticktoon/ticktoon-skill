@@ -1,6 +1,6 @@
 {
   "id": "whiteboard-explainer",
-  "abi": "8",
+  "abi": "9",
   "name": "白板手写",
   "keywords": [
     "白板",
@@ -11,9 +11,6 @@
     "讲解"
   ],
   "when": "需要让整幅画面逐笔长出来、观众看着答案被画出来时",
-  "blocks": [
-    "scene.code"
-  ],
   "fonts": {
     "display": "sans-400",
     "body": "sans-400",
@@ -50,10 +47,11 @@
       "default": "paper"
     },
     "forbid": [
-      "整幅场景与卡片块混排",
+      "整幅场景与卡片混排",
       "同一幕出现两种字幕样式",
-      "元素墨迹越出 safeMargin",
-      "把讲解内容塞进 lesson 参数（叙事写在 storyboard 里）"
+      "墨迹越出 safeMargin",
+      "把讲解内容塞进 recipe 参数（叙事写在 storyboard 的 code 里）",
+      "在同一场景写 scene.params；本 recipe 只收 scene.code"
     ]
   },
   "captions": {
@@ -75,25 +73,5 @@
       "edge": 0.22
     }
   },
-  "verify": [
-    {
-      "at": 0.15,
-      "assert": "ink.insideSafe",
-      "args": {
-        "margin": 0.06
-      }
-    },
-    {
-      "at": 0.9,
-      "assert": "element.count.gte",
-      "args": {
-        "n": 1
-      }
-    },
-    {
-      "at": 0.9,
-      "assert": "caption.noOverlapSubject",
-      "args": {}
-    }
-  ]
+  "mode": "code"
 }

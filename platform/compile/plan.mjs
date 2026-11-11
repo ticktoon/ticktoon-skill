@@ -1,13 +1,11 @@
 /**
  * ③ plan —— 时间链上唯一的权威。
  *
- * 三件事，顺序不能换：
+ * 两件事，顺序不能换：
  *   1. 定每场时长与起点（旁白场 = leadIn + speech + hold，静默场用作者给的 duration）
- *   2. 把 element 的 `at` 解析成场景相对秒（秒直通，beat 名查表）
- *   3. 切字幕 cue，并把逐字时间摊进去
+ *   2. 切字幕 cue，并把逐字时间摊进去
  *
- * 第 2 步的 beat 只允许指向本场：允许跨场之后，改一场的时长会让另一场的元素悄悄消失，
- * 而画面上只表现为"少了一行字"。报错逼人把 beat 写进正确的场，是唯一能在编译期暴露它的时机。
+ * params 场只有一个内部单元 template，覆盖整场；它不改变时间链。
  */
 import { round3 } from './diag.mjs';
 
@@ -222,67 +220,9 @@ export function planStoryboard({ storyboard, resolved, format, bag, captionPx = 
       speech,
       speechStart,
       cues,
-      elements: [],
+      unit: scene.params !== null ? { id: 'template', at: 0, dur: duration } : null,
     });
     cursor = round3(cursor + duration);
-  });
-
-  // 第二遍：element 的 at / dur 依赖场景起点与时长
-  storyboard.scenes.forEach((scene, si) => {
-    const target = scenes[si];
-    scene.elements.forEach((el, ei) => {
-      const path = `scenes[${si}].elements[${ei}]`;
-      let at;
-
-      if (typeof el.at === 'number') {
-        at = el.at;
-      } else {
-        const beat = storyboard.beats[el.at];
-        if (beat === undefined) {
-          bag.error('BEAT_UNKNOWN', `${path}.at`,
-            `未定义的 beat "${el.at}"；可用：${Object.keys(storyboard.beats).join(' / ') || '（storyboard 没有 beats）'}`);
-          at = 0;
-        } else {
-          const rel = beat - target.start;
-          if (rel < -1e-3 || rel >= target.duration + 1e-3) {
-            bag.error('BEAT_CROSS_SCENE', `${path}.at`,
-              `beat "${el.at}" = ${beat}s 落在 ${target.start}–${round3(target.start + target.duration)}s（场景 ${target.id}）之外。` +
-              `beats 只能指向本场；跨场引用会在改时长时让元素静默消失`);
-            at = 0;
-          } else if (rel < 0) {
-            at = 0;
-            bag.warn('should', 'BEAT_SNAPPED', `${path}.at`, `beat "${el.at}" 与场景起点相差 ${Math.abs(rel).toFixed(4)}s，已吸附到 0`);
-          } else {
-            at = Math.min(rel, target.duration - 1e-3);
-          }
-        }
-      }
-
-      if (at < 0) {
-        bag.error('ELEMENT_AT_NEGATIVE', `${path}.at`, `at 不能是负数`);
-        at = 0;
-      }
-      if (at >= target.duration) {
-        bag.error('ELEMENT_OUT_OF_SCENE', `${path}.at`,
-          `at=${at}s 已经到场景 ${target.id} 的末尾（时长 ${target.duration}s），这个元素永远不会出现`);
-        at = 0;
-      }
-
-      const avail = round3(target.duration - at);
-      const dur = el.dur == null ? avail : Math.min(round3(el.dur), avail);
-      if (el.dur != null && el.dur > avail) {
-        bag.warn('should', 'ELEMENT_DUR_CLIPPED', `${path}.dur`,
-          `dur=${el.dur}s 超出本场剩余 ${avail}s，已截断到场景末尾`);
-      }
-
-      target.elements.push({
-        ...el,
-        at: round3(at),
-        dur,
-        // 音效的落地时刻：element 起点 + sfxAt（缺省等于入场时长，即"物件落地那一刻"）
-        sfxAt: round3(at + (el.sfxAt == null ? (el.meta?.motion?.enter ?? 0.5) : el.sfxAt)),
-      });
-    });
   });
 
   return { scenes, duration: cursor };

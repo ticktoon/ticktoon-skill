@@ -1,25 +1,26 @@
 /**
- * recipe v8 —— 视觉规范包的校验、注入与 forbid 检查。
+ * recipe —— 一类成片的视觉规范与模板契约。
  *
- * v8 配方只装"LLM 推不出来、不统一就会散、能机器验收"的视觉规范：
- *   fonts  字体角色（资源 / 授权契约）
- *   rules  数值区间 / 维度默认值 / 禁止清单
- *   captions / audio  字幕与声音的配方级默认值
- *   verify 可执行断言（由 tt qa 跑）
- *   blocks 本视觉实际提供的 block
+ * 两种模式：
+ *   code   recipe 只给 visual.md / ref-shots / rules / fonts / captions / audio，
+ *          storyboard 写 scene.code。
+ *   params recipe 自带 template（draw / params / resources / needs / defaultSfx /
+ *          sfxTrack / motion / inkless），storyboard 写 scene.params。
  *
  * fonts 直接写在 recipe 顶层，没有 style 包装。颜色由 kit 自带默认值或
- * scene.code 直接写，背景由 scene.code / block 自己铺满；recipe 不再承载
- * 每一片的用色决策。
+ * scene.code 直接写，背景由 scene.code / 模板自己铺满；recipe 不承载用色决策。
  */
+import { existsSync, readFileSync } from 'node:fs';
+import path from 'node:path';
 import { isPlainObject } from './diag.mjs';
 
 const DIMENSION_MODES = new Set(['fixed', 'enum', 'auto', 'random']);
-const NUMERIC_RULE_KEYS = new Set(['safeMargin', 'scale', 'stroke', 'forbid']);
 const RULE_KEYS = new Set(['safeMargin', 'scale', 'stroke', 'pen', 'board', 'forbid']);
-const NUMERIC_RULES = ['safeMargin', 'scale', 'stroke'];
 const FONT_ROLES = new Set(['display', 'body', 'num', 'hand', 'caption', 'brand', 'serif', 'round', 'poster', 'cutout']);
-const RECIPE_KEYS = new Set(['id', 'abi', 'name', 'keywords', 'when', 'blocks', 'fonts', 'rules', 'captions', 'audio', 'verify', 'signature']);
+const RECIPE_KEYS = new Set(['id', 'abi', 'name', 'keywords', 'when', 'mode', 'template', 'fonts', 'rules', 'captions', 'audio']);
+const RECIPE_MODES = new Set(['code', 'params']);
+const TEMPLATE_KEYS = new Set(['draw', 'params', 'resources', 'needs', 'defaultSfx', 'sfxTrack', 'motion', 'inkless']);
+const NEEDS_KEYS = new Set(['font', 'image', 'video', 'three']);
 const CAPTION_STYLE_KEYS = new Set([
   'style', 'font', 'baseSize', 'lineHeight', 'top', 'at', 'band', 'size', 'color',
   'background', 'accent', 'highlight', 'palette', 'avoid', 'maxWidth', 'maxHeight',
@@ -27,43 +28,54 @@ const CAPTION_STYLE_KEYS = new Set([
 ]);
 const AUDIO_KEYS = new Set(['mood', 'volume', 'fadeIn', 'fadeOut', 'duck']);
 const DUCK_KEYS = new Set(['level', 'edge']);
+const RESOURCE_TYPES = new Set(['image', 'video', 'font']);
+const SFX_TRACK_KEYS = new Set(['type', 'textParam', 'cps', 'cpsParam', 'start', 'lineGap', 'every', 'linePrefix', 'sfx', 'loop']);
+const SFX_LOOP_KEYS = new Set(['sfx', 'fadeOut']);
 
 const isFiniteNumber = (value) => typeof value === 'number' && Number.isFinite(value);
 
 /** 返回 [{ code, path, msg }]；msg 里始终带 recipe id 与字段路径。 */
-export function validateRecipeV8(recipe, blocks, manifest) {
+export function validateRecipe(recipe, manifest, recipeDir) {
   const errors = [];
   const id = recipe?.id ?? '<unknown>';
-  const fail = (code, path, msg) => errors.push({ code, path, msg: `recipe ${id}: ${path} — ${msg}` });
+  const fail = (code, at, msg) => errors.push({ code, path: at, msg: `recipe ${id}: ${at} — ${msg}` });
 
-  if (recipe?.abi !== '8') {
+  if (recipe?.abi !== '9') {
     fail('RECIPE_ABI_UNSUPPORTED', 'abi',
-      `只支持 abi "8"；旧配方请把 theme 拆成 fonts / captions / audio，把 rules.caption、rules.bgm 移到对应字段（收到 ${JSON.stringify(recipe?.abi)}）`);
+      `只支持 abi "9"（收到 ${JSON.stringify(recipe?.abi)}）；旧配方请迁移为 mode + template`);
     return errors;
   }
 
   for (const key of Object.keys(recipe)) {
     if (RECIPE_KEYS.has(key)) continue;
-    const hint = key === 'style'
-      ? '（v8 已移除 style 包装：字体角色直接写在 recipe 顶层 fonts）'
-      : key === 'theme' || key === 'uses' || key === 'pacing'
-        ? '（v8 已移除 theme / uses / pacing：字体直接写在 recipe 顶层 fonts）'
-        : '';
-    fail('RECIPE_UNKNOWN_KEY', key, `v8 配方不认识字段 "${key}"${hint}`);
+    fail('RECIPE_UNKNOWN_KEY', key, `recipe 不认识字段 "${key}"`);
+  }
+
+  if (!RECIPE_MODES.has(recipe.mode)) {
+    fail('RECIPE_MODE_INVALID', 'mode', `mode 只能是 code / params，收到 ${JSON.stringify(recipe.mode)}`);
   }
 
   validateFonts(recipe.fonts, manifest, fail);
   validateRules(recipe.rules, fail);
   validateCaptions(recipe.captions, recipe.fonts, fail);
   validateAudio(recipe.audio, fail);
-  validateBlocks(recipe, blocks, fail);
-  validateVerify(recipe.verify, fail);
+
+  if (recipe.mode === 'params') {
+    if (!recipe.template) {
+      fail('RECIPE_TEMPLATE_MISSING', 'template', 'params 模式必须有 template');
+    } else {
+      validateTemplate(recipe.template, recipe, recipeDir, fail);
+    }
+  } else if (recipe.mode === 'code' && recipe.template !== undefined) {
+    fail('RECIPE_TEMPLATE_UNEXPECTED', 'template', 'code 模式不允许声明 template');
+  }
+
   return errors;
 }
 
 function validateFonts(fontMap, manifest, fail) {
   if (!isPlainObject(fontMap)) {
-    fail('RECIPE_FONTS_MISSING', 'fonts', 'v8 配方必须有顶层 fonts 对象（角色 → manifest 键）');
+    fail('RECIPE_FONTS_MISSING', 'fonts', 'recipe 必须有顶层 fonts 对象（角色 → manifest 键）');
     return;
   }
   for (const role of ['display', 'body']) {
@@ -86,7 +98,7 @@ function validateFonts(fontMap, manifest, fail) {
 
 function validateRules(rules, fail) {
   if (!isPlainObject(rules)) {
-    fail('RECIPE_RULES_MISSING', 'rules', 'v8 配方必须有 rules 对象');
+    fail('RECIPE_RULES_MISSING', 'rules', 'recipe 必须有 rules 对象');
     return;
   }
   for (const key of Object.keys(rules)) {
@@ -137,32 +149,32 @@ function validateRules(rules, fail) {
   }
 }
 
-function validateDimension(spec, path, fail) {
+function validateDimension(spec, at, fail) {
   if (!isPlainObject(spec)) {
-    fail('RECIPE_RULE_ITEM_INVALID', path, '维度项必须是 { mode, ... } 对象');
+    fail('RECIPE_RULE_ITEM_INVALID', at, '维度项必须是 { mode, ... } 对象');
     return;
   }
   if (!DIMENSION_MODES.has(spec.mode)) {
-    fail('RECIPE_MODE_INVALID', `${path}.mode`,
+    fail('RECIPE_MODE_INVALID', `${at}.mode`,
       `mode 必须是 fixed / enum / auto / random，收到 ${JSON.stringify(spec.mode)}`);
     return;
   }
   if (spec.mode === 'enum') {
     if (!Array.isArray(spec.choices) || !spec.choices.length) {
-      fail('RECIPE_ENUM_CHOICES_EMPTY', `${path}.choices`, 'enum 必须有非空 choices');
+      fail('RECIPE_ENUM_CHOICES_EMPTY', `${at}.choices`, 'enum 必须有非空 choices');
     } else if (!spec.choices.includes(spec.default)) {
-      fail('RECIPE_ENUM_DEFAULT_INVALID', `${path}.default`,
+      fail('RECIPE_ENUM_DEFAULT_INVALID', `${at}.default`,
         `default ${JSON.stringify(spec.default)} 不在 choices ${JSON.stringify(spec.choices)} 里`);
     }
   } else if (spec.mode === 'fixed') {
-    if (spec.value === undefined) fail('RECIPE_FIXED_VALUE_MISSING', `${path}.value`, 'fixed 必须有 value');
+    if (spec.value === undefined) fail('RECIPE_FIXED_VALUE_MISSING', `${at}.value`, 'fixed 必须有 value');
   } else if (spec.mode === 'auto') {
     if (typeof spec.from !== 'string' || !spec.from.trim()) {
-      fail('RECIPE_AUTO_FROM_MISSING', `${path}.from`, 'auto 必须有非空 from');
+      fail('RECIPE_AUTO_FROM_MISSING', `${at}.from`, 'auto 必须有非空 from');
     }
   } else if (spec.mode === 'random') {
     if (!Array.isArray(spec.choices) || !spec.choices.length) {
-      fail('RECIPE_RANDOM_CHOICES_EMPTY', `${path}.choices`, 'random 必须有非空 choices');
+      fail('RECIPE_RANDOM_CHOICES_EMPTY', `${at}.choices`, 'random 必须有非空 choices');
     }
   }
 }
@@ -230,7 +242,7 @@ function validateAudio(audio, fail) {
       fail('RECIPE_AUDIO_DUCK_INVALID', 'audio.duck', 'duck 必须是 { level, edge } 对象');
     } else {
       for (const key of Object.keys(audio.duck)) {
-        if (!DUCK_KEYS.has(key)) fail('RECIPE_AUDIO_DUCK_KEY_UNKNOWN', `audio.duck.${key}`, `duck 只允许 level / edge`);
+        if (!DUCK_KEYS.has(key)) fail('RECIPE_AUDIO_DUCK_KEY_UNKNOWN', `audio.duck.${key}`, 'duck 只允许 level / edge');
       }
       for (const key of ['level', 'edge']) {
         if (audio.duck[key] !== undefined && !(isFiniteNumber(audio.duck[key]) && audio.duck[key] >= 0)) {
@@ -241,130 +253,149 @@ function validateAudio(audio, fail) {
   }
 }
 
-function validateBlocks(recipe, blocks, fail) {
-  if (!Array.isArray(recipe.blocks) || !recipe.blocks.length
-    || !recipe.blocks.every((item) => typeof item === 'string' && item.trim())) {
-    fail('RECIPE_BLOCKS_MISSING', 'blocks', 'blocks 必须是非空字符串数组');
+function validateTemplate(template, recipe, recipeDir, fail) {
+  if (!isPlainObject(template)) {
+    fail('RECIPE_TEMPLATE_TYPE', 'template', 'template 必须是对象');
     return;
   }
-  const requiredRoles = new Set();
-  recipe.blocks.forEach((blockId, index) => {
-    // `scene.code` 是内容载体标记：本视觉一块 block 都不用，内容全在 storyboard 的 scene.code 里。
-    if (blockId === 'scene.code') return;
-    if (!blocks.has(blockId)) {
-      fail('RECIPE_BLOCK_UNKNOWN', `blocks[${index}]`,
-        `未注册的 block "${blockId}"；可用：${[...blocks.keys()].join(' / ')}`);
-      return;
-    }
-    for (const role of blocks.get(blockId).needs?.font || []) requiredRoles.add(role);
-  });
-  for (const role of requiredRoles) {
-    if (!recipe.fonts?.[role]) {
-      fail('RECIPE_BLOCK_FONT_ROLE_MISSING', `fonts.${role}`,
-        `block 需要字体角色 "${role}"，但 recipe 顶层 fonts 没有声明`);
+  for (const key of Object.keys(template)) {
+    if (!TEMPLATE_KEYS.has(key)) {
+      fail('RECIPE_TEMPLATE_KEY_UNKNOWN', `template.${key}`,
+        `template 不认识字段 "${key}"；可用：${[...TEMPLATE_KEYS].join(' / ')}`);
     }
   }
-}
 
-function validateVerify(verify, fail) {
-  if (!Array.isArray(verify) || verify.length < 2) {
-    fail('RECIPE_VERIFY_EMPTY', 'verify', 'verify 必须是至少 2 条的数组');
-    return;
+  if (typeof template.draw !== 'string' || !template.draw.trim()) {
+    fail('TEMPLATE_DRAW_MISSING', 'template.draw', 'draw 必须是 recipe 目录内相对 .js 路径');
+  } else {
+    const rel = template.draw.trim();
+    const bad = path.isAbsolute(rel) || rel.split(/[\\/]/).includes('..') || !rel.endsWith('.js');
+    const abs = path.join(recipeDir, rel);
+    if (bad) {
+      fail('TEMPLATE_DRAW_PATH', 'template.draw',
+        `draw 只允许 recipe 目录内的相对 .js 路径，收到 ${JSON.stringify(rel)}`);
+    } else if (!existsSync(abs)) {
+      fail('TEMPLATE_DRAW_NOT_FOUND', 'template.draw', `找不到模板文件 ${rel}`);
+    } else {
+      const source = readFileSync(abs, 'utf-8');
+      if (/^\s*(?:export|import)\b/m.test(source)) {
+        fail('TEMPLATE_MODULE_SYNTAX', 'template.draw', '模板不是模块，不允许 export / import');
+      }
+      if (!/\bfunction\s+draw\s*\(/.test(source)) {
+        fail('TEMPLATE_DRAW_FUNCTION', 'template.draw', '模板必须定义顶层 function draw(g, p)');
+      }
+    }
   }
-  verify.forEach((item, index) => {
-    const path = `verify[${index}]`;
-    if (!isPlainObject(item)) {
-      fail('RECIPE_VERIFY_ITEM_INVALID', path, '断言必须是 { at, assert, args } 对象');
-      return;
-    }
-    if (!isFiniteNumber(item.at) || item.at < 0) {
-      fail('RECIPE_VERIFY_AT_INVALID', `${path}.at`, `at 必须是 ≥0 的数字，收到 ${JSON.stringify(item.at)}`);
-    }
-    if (typeof item.assert !== 'string' || !item.assert.trim()) {
-      fail('RECIPE_VERIFY_ASSERT_INVALID', `${path}.assert`, 'assert 必须是非空字符串');
-    }
-    if (item.args !== undefined && !isPlainObject(item.args)) {
-      fail('RECIPE_VERIFY_ARGS_INVALID', `${path}.args`, 'args 必须是对象');
-    }
-  });
-}
 
-/** 给 recipe 声明的 block element 注入维度默认值与数值规范；返回 build 期警告。 */
-export function applyRecipeRules({ recipe, storyboard }) {
-  const warnings = [];
-  if (recipe?.abi !== '8' || !isPlainObject(recipe.rules)) return warnings;
+  if (!isPlainObject(template.params)) {
+    fail('TEMPLATE_PARAMS_MISSING', 'template.params', 'params 必须是对象');
+  }
 
-  const rules = recipe.rules;
-  const allowed = new Set(Array.isArray(recipe.blocks) ? recipe.blocks : []);
-
-  for (const scene of storyboard.scenes) {
-    for (const el of scene.elements) {
-      if (allowed.size && !allowed.has(el.block)) {
-        // v8：forbid 不在装配前拦截，但要在 build 报告里点名，qa 阶段再升级为 error。
-        warnings.push({
-          level: 'should', code: 'RECIPE_FORBID_VIOLATION',
-          path: `scenes.${scene.id}.${el.id}`,
-          msg: forbidMessage(recipe, el.block),
-        });
-        continue;
+  if (!isPlainObject(template.needs)) {
+    fail('TEMPLATE_NEEDS_MISSING', 'template.needs', 'needs 必须是 { font, image, video, three } 对象');
+  } else {
+    for (const key of Object.keys(template.needs)) {
+      if (!NEEDS_KEYS.has(key)) {
+        fail('TEMPLATE_NEEDS_KEY_UNKNOWN', `template.needs.${key}`,
+          `needs 只允许 font / image / video / three`);
       }
-
-      const given = new Set(Array.isArray(el.given) ? el.given : []);
-      const declared = el.meta?.params || {};
-
-      // 维度默认值：enum 用 default，fixed 用 value；element 显式给了就以 element 为准。
-      for (const [key, spec] of Object.entries(rules)) {
-        if (NUMERIC_RULE_KEYS.has(key) || !isPlainObject(spec)) continue;
-        if (spec.mode !== 'enum' && spec.mode !== 'fixed') continue;
-        if (given.has(key) || !(key in declared)) continue;
-        const value = spec.mode === 'enum' ? spec.default : spec.value;
-        if (value !== undefined) el.params[key] = cloneJson(value);
+    }
+    if (!Array.isArray(template.needs.font)
+      || !template.needs.font.every((role) => typeof role === 'string' && role.trim())) {
+      fail('TEMPLATE_NEEDS_FONT', 'template.needs.font', 'needs.font 必须是字体角色数组');
+    } else {
+      for (const role of template.needs.font) {
+        if (!recipe.fonts?.[role]) {
+          fail('TEMPLATE_FONT_ROLE_MISSING', `fonts.${role}`,
+            `模板需要字体角色 "${role}"，但 recipe 顶层 fonts 没有声明`);
+        }
       }
+    }
+    for (const key of ['image', 'video', 'three']) {
+      if (template.needs[key] !== undefined && typeof template.needs[key] !== 'boolean') {
+        fail('TEMPLATE_NEEDS_BOOL', `template.needs.${key}`, `${key} 必须是 true/false`);
+      }
+    }
+  }
 
-      // 数值规范：只对 scene.* 生效，作为同名参数的兜底；element 显式值优先级最高。
-      if (el.block.startsWith('scene.')) {
-        for (const key of NUMERIC_RULES) {
-          if (rules[key] === undefined || given.has(key)) continue;
-          el.params[key] = cloneJson(rules[key]);
+  if (template.resources !== undefined) {
+    if (!Array.isArray(template.resources)) {
+      fail('TEMPLATE_RESOURCES_TYPE', 'template.resources', 'resources 必须是 {type,name,src} 数组');
+    } else {
+      for (const [index, res] of template.resources.entries()) {
+        const at = `template.resources[${index}]`;
+        if (!isPlainObject(res) || !RESOURCE_TYPES.has(res.type)
+          || typeof res.name !== 'string' || !res.name.trim()
+          || typeof res.src !== 'string' || !res.src.trim()) {
+          fail('TEMPLATE_RESOURCE_INVALID', at,
+            '资源必须是 {type: image|video|font, name: 非空字符串, src: 非空字符串}');
         }
       }
     }
   }
 
-  return warnings;
-}
+  if (template.defaultSfx !== undefined
+    && (typeof template.defaultSfx !== 'string' || !template.defaultSfx.trim())) {
+    fail('TEMPLATE_DEFAULT_SFX', 'template.defaultSfx', 'defaultSfx 必须是非空音效名');
+  }
 
-/** qa 阶段把"用了 recipe 没声明的 block"升级为 must。 */
-export function recipeForbidViolations({ recipe, planned }) {
-  const issues = [];
-  if (recipe?.abi !== '8') return issues;
-  const allowed = new Set(Array.isArray(recipe.blocks) ? recipe.blocks : []);
-  if (!allowed.size) return issues;
+  if (template.sfxTrack !== undefined) validateSfxTrack(template.sfxTrack, fail);
 
-  for (const scene of planned.scenes) {
-    for (const el of scene.elements) {
-      if (allowed.has(el.block)) continue;
-      issues.push({
-        level: 'must', code: 'RECIPE_FORBID_VIOLATION',
-        scene: scene.id, element: el.id, t: 0,
-        msg: forbidMessage(recipe, el.block),
-      });
+  if (template.motion !== undefined) {
+    if (!isPlainObject(template.motion)) {
+      fail('TEMPLATE_MOTION_TYPE', 'template.motion', 'motion 必须是 { enter, exitRatio } 对象');
+    } else {
+      for (const key of Object.keys(template.motion)) {
+        if (key !== 'enter' && key !== 'exitRatio') {
+          fail('TEMPLATE_MOTION_KEY_UNKNOWN', `template.motion.${key}`, 'motion 只允许 enter / exitRatio');
+        }
+      }
+      if (template.motion.enter !== undefined && !(isFiniteNumber(template.motion.enter) && template.motion.enter >= 0)) {
+        fail('TEMPLATE_MOTION_ENTER', 'template.motion.enter', 'enter 必须是 ≥0 的秒数');
+      }
+      if (template.motion.exitRatio !== undefined
+        && !(isFiniteNumber(template.motion.exitRatio) && template.motion.exitRatio >= 0 && template.motion.exitRatio <= 1)) {
+        fail('TEMPLATE_MOTION_EXIT', 'template.motion.exitRatio', 'exitRatio 必须在 0–1');
+      }
     }
   }
-  return issues;
+
+  if (template.inkless !== undefined && typeof template.inkless !== 'boolean') {
+    fail('TEMPLATE_INKLESS_TYPE', 'template.inkless', 'inkless 必须是 true/false');
+  }
 }
 
-function forbidMessage(recipe, blockId) {
-  const list = Array.isArray(recipe.rules?.forbid) ? recipe.rules.forbid : [];
-  const wanted = blockId.startsWith('scene.')
-    ? /场景|scene|叠放|两个/i
-    : /混排|卡片|文字|text|chart/i;
-  const rule = list.find((item) => wanted.test(item)) || list[0];
-  const allowed = (recipe.blocks || []).join(' / ');
-  return `recipe ${recipe.id} 只允许 ${allowed}；元素用了 ${blockId}` + (rule ? `，违反 forbid「${rule}」` : '');
-}
-
-/** 只用于冻结值，避免 recipe 的 rules 对象被 element 参数反向修改。 */
-function cloneJson(value) {
-  return JSON.parse(JSON.stringify(value));
+function validateSfxTrack(track, fail) {
+  if (!isPlainObject(track)) {
+    fail('TEMPLATE_SFX_TRACK_TYPE', 'template.sfxTrack', 'sfxTrack 必须是对象');
+    return;
+  }
+  for (const key of Object.keys(track)) {
+    if (!SFX_TRACK_KEYS.has(key)) {
+      fail('TEMPLATE_SFX_TRACK_KEY_UNKNOWN', `template.sfxTrack.${key}`,
+        `sfxTrack 不认识字段 "${key}"`);
+    }
+  }
+  if (track.type !== 'typing') {
+    fail('TEMPLATE_SFX_TRACK_TYPE_NAME', 'template.sfxTrack.type', 'sfxTrack.type 目前只支持 typing');
+  }
+  for (const key of ['start', 'lineGap', 'cps']) {
+    if (track[key] !== undefined && !(isFiniteNumber(Number(track[key])) && Number(track[key]) >= 0)) {
+      fail('TEMPLATE_SFX_TRACK_NUMBER', `template.sfxTrack.${key}`, `${key} 必须是非负数`);
+    }
+  }
+  if (track.loop !== undefined) {
+    if (!isPlainObject(track.loop) || typeof track.loop.sfx !== 'string' || !track.loop.sfx.trim()) {
+      fail('TEMPLATE_SFX_LOOP', 'template.sfxTrack.loop', 'loop 必须是 { sfx, fadeOut } 对象');
+    } else {
+      for (const key of Object.keys(track.loop)) {
+        if (!SFX_LOOP_KEYS.has(key)) {
+          fail('TEMPLATE_SFX_LOOP_KEY_UNKNOWN', `template.sfxTrack.loop.${key}`, 'loop 只允许 sfx / fadeOut');
+        }
+      }
+      if (track.loop.fadeOut !== undefined && !(isFiniteNumber(track.loop.fadeOut) && track.loop.fadeOut >= 0)) {
+        fail('TEMPLATE_SFX_LOOP_FADE', 'template.sfxTrack.loop.fadeOut', 'fadeOut 必须是非负数');
+      }
+    }
+  }
 }

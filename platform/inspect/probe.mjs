@@ -3,8 +3,8 @@
  *
  * 目的不是"再出一张静帧"，而是让人和 LLM 在改图时能直接问：
  * "这一秒画面里到底有哪些东西、各自离安全框多远、挤不挤"。
- * 因此输出保留 kind / block / label / bbox / 四边距离 / 字幕带判定，
- * 与 verify 共用同一套 caption-zone 几何，不另算一份。
+ * 因此输出保留 kind / unit / source / bbox / 四边距离 / 字幕带判定，
+ * 与 QA 共用同一套 caption-zone 几何，不另算一份。
  */
 import { buildProject } from '../project/build.mjs';
 import { sampleFilm } from './sample.mjs';
@@ -85,8 +85,8 @@ export async function probeFrame({ root, dir, t, tts = null, captionOverride = n
     return {
       kind: item.kind,
       scene: item.scene,
-      element: item.element,
-      block: item.block,
+      unit: item.unit,
+      source: item.source,
       label: item.label ?? null,
       idx: item.idx ?? null,
       aggregate: item.aggregate === true,

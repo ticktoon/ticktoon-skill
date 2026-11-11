@@ -1,6 +1,6 @@
 {
   "id": "shadow-play",
-  "abi": "8",
+  "abi": "9",
   "name": "皮影戏",
   "keywords": [
     "皮影",
@@ -11,9 +11,100 @@
     "透光"
   ],
   "when": "需要用透光幕布上的关节剪影演一段动作、靠姿态与操纵杆讲戏时",
-  "blocks": [
-    "scene.shadow"
-  ],
+  "mode": "params",
+  "template": {
+    "draw": "template.js",
+    "params": {
+      "title": {
+        "type": "string",
+        "required": true,
+        "maxChars": 12
+      },
+      "subtitle": {
+        "type": "string",
+        "maxChars": 24,
+        "default": ""
+      },
+      "plaques": {
+        "type": "array",
+        "maxItems": 2,
+        "maxChars": 12,
+        "default": []
+      },
+      "characters": {
+        "type": "objects",
+        "maxItems": 4,
+        "fields": {
+          "kind": {
+            "enum": [
+              "adult",
+              "child",
+              "animal",
+              "object"
+            ],
+            "default": "adult"
+          },
+          "pose": {
+            "enum": [
+              "stand",
+              "walk",
+              "wave",
+              "raise",
+              "sit"
+            ],
+            "default": "stand"
+          },
+          "x": {
+            "type": "number",
+            "default": 0.78
+          },
+          "scale": {
+            "type": "number",
+            "default": 1
+          },
+          "color": {
+            "type": "string",
+            "default": "#a8432e"
+          },
+          "prop": {
+            "enum": [
+              "none",
+              "staff",
+              "fan",
+              "lantern",
+              "blade"
+            ],
+            "default": "none"
+          }
+        },
+        "default": [
+          {
+            "kind": "adult",
+            "pose": "stand",
+            "x": 0.78,
+            "scale": 1,
+            "color": "#a8432e",
+            "prop": "none"
+          }
+        ]
+      }
+    },
+    "needs": {
+      "font": [
+        "display",
+        "body"
+      ],
+      "image": false,
+      "video": false,
+      "three": false
+    },
+    "defaultSfx": "impact-soft",
+    "motion": {
+      "enter": 0.58,
+      "exitRatio": 0.5
+    },
+    "inkless": true
+  },
   "fonts": {
     "display": "sans-900",
     "body": "sans-400",
@@ -21,21 +112,13 @@
   },
   "rules": {
     "safeMargin": 0.06,
-    "scale": {
-      "title": 1,
-      "label": 0.8,
-      "note": 0.6
-    },
-    "stroke": [
-      3,
-      6
-    ],
     "forbid": [
-      "把故事或人物身份写进 block 参数；title / subtitle / plaques 只写文本，characters[] 只写骨架与姿态",
+      "把故事或人物身份写进 params；title / subtitle / plaques 只写文本，characters[] 只写骨架与姿态",
       "在 characters[] 之外再画一个人物，或让同一场出现两种幕布底色",
-      "给 scene.shadow 加卡片 rect；戏台必须满幅 rect=[0,0,1,1]",
+      "给模板加卡片参数；戏台必须铺满整帧",
       "在皮影上再叠一层字幕；画面文字即 title，字幕必须为 none",
-      "用具体故事名做 kind / pose / prop 的枚举值"
+      "用具体故事名做 kind / pose / prop 的枚举值",
+      "在同一场景写 scene.code；本 recipe 只收 scene.params"
     ]
   },
   "captions": {
@@ -50,37 +133,5 @@
       "level": 0.045,
       "edge": 0.18
     }
-  },
-  "signature": {
-    "name": "透光关节剪影",
-    "how": [
-      "scene.shadow: characters[] 给骨架与姿态，幕布只由 TT.board.stage 画",
-      "scene.shadow: 关节铆钉与垂向操纵杆说明它是可活动的纸片"
-    ],
-    "verify": {
-      "t": 1.2,
-      "expect": "首帧已有剪影与名牌凭据"
-    }
-  },
-  "verify": [
-    {
-      "at": 0.15,
-      "assert": "ink.insideSafe",
-      "args": {
-        "margin": 0.06
-      }
-    },
-    {
-      "at": 0.9,
-      "assert": "element.count.gte",
-      "args": {
-        "n": 1
-      }
-    },
-    {
-      "at": 0.9,
-      "assert": "caption.noOverlapSubject",
-      "args": {}
-    }
-  ]
+  }
 }

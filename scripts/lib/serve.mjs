@@ -20,7 +20,7 @@ const MIME = {
 };
 
 export function createStaticServer({ ENGINE_DIR, ASSETS_DIR, JOB_DIR, port = 0, onRequest }) {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     const server = http.createServer((req, res) => {
       const urlPath = decodeURIComponent(new URL(req.url, 'http://x').pathname);
       if (onRequest?.(req, res, urlPath)) return;
@@ -45,6 +45,11 @@ export function createStaticServer({ ENGINE_DIR, ASSETS_DIR, JOB_DIR, port = 0, 
       });
       res.end(readFileSync(file));
     });
-    server.listen(port, '127.0.0.1', () => resolve({ server, port: server.address().port }));
+    const onError = (error) => reject(error);
+    server.once('error', onError);
+    server.listen(port, '127.0.0.1', () => {
+      server.off('error', onError);
+      resolve({ server, port: server.address().port });
+    });
   });
 }

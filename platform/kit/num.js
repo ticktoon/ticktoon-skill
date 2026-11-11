@@ -1,7 +1,7 @@
 /**
  * TT.clamp01 / TT.num / TT.env / TT.rng —— 数值与包络。
  *
- * `env` 与 `rng` 放在这里而不是散在 block 里，是因为它们必须**全片同一条公式**：
+ * `env` 与 `rng` 放在这里而不是散在各场里，是因为它们必须**全片同一条公式**：
  * 入场包络一旦各写一份，同一片子里的元素就会有不同的淡入手感；
  * rng 一旦各写一份，同一帧两次渲染就可能不一致，确定性直接失效。
  */
@@ -23,13 +23,13 @@
   };
 
   TT.env = {
-    /** 入场淡入 + 出场淡出的最小值。`dur` 是本 element 的可见时长。 */
+    /** 入场淡入 + 出场淡出的最小值。`dur` 是本场景的可见时长。 */
     fade(t, dur, inDur, outDur) {
       const a = inDur > 0 ? clamp01(t / inDur) : 1;
       const b = outDur > 0 ? clamp01((dur - t) / outDur) : 1;
       return a < b ? a : b;
     },
-    /** 0…1 的线性入场进度；曲线由 block 自己从 TT.ease 里选。 */
+    /** 0…1 的线性入场进度；曲线由调用方自己从 TT.ease 里选。 */
     reveal(t, inDur) {
       return inDur > 0 ? clamp01(t / inDur) : 1;
     },

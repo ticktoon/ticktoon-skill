@@ -12,6 +12,7 @@ import { fileURLToPath } from 'node:url';
 import { loadCatalog } from './compile/schema.mjs';
 import { buildProject } from './project/build.mjs';
 import { newProject } from './project/new.mjs';
+import { recipeRegressionInput } from './project/ref-shots.mjs';
 import { createTts } from './compile/tts.mjs';
 import { renderStills } from './inspect/stills.mjs';
 import { probeFrame } from './inspect/probe.mjs';
@@ -58,7 +59,8 @@ function printReport(report) {
   line('状态', report.ok ? (report.status === 'warning' ? '通过（有建议）' : '通过') : '失败');
   if (report.duration !== undefined) {
     line('时长', `${Number(report.duration).toFixed(2)}s`);
-    line('场景 / 元素', `${report.scenes} / ${report.elements}`);
+    line('场景 / 单元', `${report.scenes} / ${report.units}`);
+    if (report.codeScenes !== undefined) line('code / params', `${report.codeScenes} / ${report.paramsScenes}`);
     if (report.captionCues) line('字幕条', report.captionCues);
   }
   if (report.timings) line('耗时', `${report.timings.totalMs}ms`);
@@ -148,7 +150,7 @@ async function cmdStills() {
       ? (item.aggregate === true || item.idx == null ? 'agg' : `i${item.idx}`)
       : '');
     for (const item of [...(report.receipts || []), ...result.receipts]) {
-      merged.set(`${item.t}/${item.scene}/${item.element}/${item.kind || 'ink'}/${textTag(item)}`, item);
+      merged.set(`${item.t}/${item.scene}/${item.unit}/${item.kind || 'ink'}/${textTag(item)}`, item);
     }
     report.receipts = [...merged.values()];
     const { writeFileSync } = await import('node:fs');
@@ -219,19 +221,12 @@ async function cmdProbe() {
         ? (item.aggregate ? ' （全部文字并集）' : ` 「${item.label || '（空）'}」`)
         : '';
       const bbox = item.ink ? `[${item.ink.join(', ')}]` : '无墨迹';
-      console.log(`    [${item.kind}] [${item.scene}] ${item.block}${label}  bbox ${bbox}  ${distText(item.safe)}  ${bandText(item.captionBand)}`);
+      console.log(`    [${item.kind}] [${item.scene}] ${item.source}${label}  bbox ${bbox}  ${distText(item.safe)}  ${bandText(item.captionBand)}`);
     }
   }
   console.log(`\n  覆盖 ${result.coverage.covered}/${result.coverage.declared}`);
   console.log('');
   process.exit(0);
-}
-
-/** block 契约里声明 inkless 的集合：qa 对它们跳过空墨迹检查（scene.crayon 这类整幅底图） */
-function inklessBlocks(catalog) {
-  const set = new Set();
-  for (const [id, block] of catalog.blocks) if (block.inkless) set.add(id);
-  return set;
 }
 
 function saveArtifact(name, data) {
@@ -281,7 +276,6 @@ async function cmdQa() {
     count,
     gridCount: 12,
     cols: Number(flagValue('cols', 4)),
-    inkless: inklessBlocks(loadCatalog(ROOT)),
     log: json ? () => {} : (line) => console.log(line),
   });
   if (!result.built.ok) {
@@ -297,10 +291,8 @@ async function cmdQa() {
     console.log(`\n  质量检查 ${quality.ok ? '通过' : '未通过'}（must ${quality.summary.must} / should ${quality.summary.should}）`);
     for (const issue of quality.issues) {
       if (issue.level === 'nice') continue;
-      console.log(`  ${icon[issue.level]} [${issue.code}] ${issue.scene || ''}${issue.element ? '.' + issue.element : ''} t=${issue.t} — ${issue.msg}`);
+      console.log(`  ${icon[issue.level]} [${issue.code}] ${issue.scene || ''}${issue.unit ? '.' + issue.unit : ''} t=${issue.t} — ${issue.msg}`);
     }
-    const checks = quality.checks;
-    console.log(`  verify ${checks.verify.pass} 通过 / ${checks.verify.fail} 失败 / ${checks.verify.skip} 跳过`);
     if (quality.coverage) console.log(`  覆盖 ${quality.coverage.covered}/${quality.coverage.declared}`);
     if (quality.sheet) console.log(`  联系表 ${quality.sheet}（${quality.sampling.review} 格 / ${quality.sampling.cols} 列）`);
     console.log('');
@@ -320,7 +312,8 @@ async function cmdRecipeAudit() {
   } else {
     console.log('');
     for (const result of results) {
-      console.log(`${result.ok ? '✓' : '✗'} ${result.id}  ${result.duration}s / ${result.scenes} 场 / 元素 ${result.elements}`);
+      const tail = result.mode === 'code' ? `镜头参考 ${result.refShots}` : `单元 ${result.units}`;
+      console.log(`${result.ok ? '✓' : '✗'} ${result.id}  ${result.mode}  ${result.duration}s / ${result.scenes} 场 / ${tail}`);
       for (const check of result.checks) {
         if (!check.pass) console.log(`   ✗ [${check.code}] ${check.msg}`);
       }
@@ -330,7 +323,8 @@ async function cmdRecipeAudit() {
   process.exit(ok ? 0 : 1);
 }
 
-async function cmdNew() {  const target = positional()[0];
+async function cmdNew() {
+  const target = positional()[0];
   const recipe = flagValue('recipe');
   if (!target || !recipe) {
     console.error('用法：tt new <目录> --recipe whiteboard-explainer');
@@ -338,10 +332,38 @@ async function cmdNew() {  const target = positional()[0];
   }
   const catalog = loadCatalog(ROOT);
   try {
-    const { target: file } = newProject({ dir: path.resolve(target), recipe, catalog });
+    const { target: file, mode } = newProject({ dir: path.resolve(target), recipe, catalog });
     console.log(`已创建 ${file}`);
-    console.log(`下一步：改 storyboard.json，然后 tt build --dir ${target}`);
+    if (mode === 'code') {
+      console.log('下一步：读 recipe 的 brief.md / visual.md / ref-shots/，然后在 storyboard.json 里写 scene.code');
+    } else {
+      console.log('下一步：改 storyboard.json 的 scene.params');
+    }
+    console.log(`然后 tt build --dir ${target}`);
     console.log(`出片前加旁白：tt build --dir ${target} --tts edge`);
+  } catch (error) {
+    console.error(`✗ ${error.message}`);
+    process.exit(1);
+  }
+}
+
+async function cmdLab() {
+  const portFlag = flagValue('port');
+  const port = portFlag == null ? 5125 : Number(portFlag);
+  if (!Number.isInteger(port) || port < 0 || port > 65535) {
+    console.error('✗ --port 必须是 0–65535 的整数');
+    process.exit(1);
+  }
+  const onlyRecipe = flagValue('recipe');
+  const { startLab } = await import('./lab/server.mjs');
+  try {
+    const info = await startLab({
+      root: ROOT,
+      port,
+      recipe: onlyRecipe,
+      log: json ? () => {} : (line) => console.log(line),
+    });
+    if (json) console.log(JSON.stringify({ ok: true, url: info.url, port: info.port }, null, 2));
   } catch (error) {
     console.error(`✗ ${error.message}`);
     process.exit(1);
@@ -499,30 +521,6 @@ function cmdAnnotations() {
   console.log('');
 }
 
-function cmdBlockList() {
-  const catalog = loadCatalog(ROOT);
-  const rows = [...catalog.blocks.values()].map((meta) => ({
-    id: meta.id,
-    group: meta.group,
-    energy: meta.energy?.level || '',
-    needs: [
-      ...(meta.needs?.font || []).map((f) => `font:${f}`),
-      ...(meta.needs?.three ? ['three'] : []),
-      ...(meta.needs?.video ? ['video'] : []),
-      ...(meta.needs?.cache ? ['cache'] : []),
-    ].join(','),
-    when: meta.when || '',
-  }));
-  if (json) {
-    console.log(JSON.stringify(rows, null, 2));
-    return;
-  }
-  for (const row of rows) {
-    console.log(`${row.id.padEnd(14)} ${row.group.padEnd(7)} ${row.energy.padEnd(5)} ${row.needs.padEnd(18)} ${row.when}`);
-  }
-}
-
-
 /**
  * 全量回归：CI 的唯一入口。退出码非 0 就是挂了，别让人读日志找结论。
  *
@@ -548,38 +546,35 @@ async function cmdCi() {
       if (!ok) row.ok = false;
     };
     const audit = await auditRecipe({ root: ROOT, catalog, id });
-    add('audit', audit.ok, `${audit.duration}s / ${audit.scenes} 场 / 元素 ${audit.elements}`);
+    const auditTail = audit.mode === 'code' ? `镜头参考 ${audit.refShots}` : `单元 ${audit.units}`;
+    add('audit', audit.ok, `${audit.mode} / ${audit.duration}s / ${audit.scenes} 场 / ${auditTail}`);
 
     if (audit.ok) {
-      const demo = path.join(ROOT, 'recipes', ...id.split('/'), 'demo.storyboard.json');
-      const first = await buildProject({ root: ROOT, dir: ROOT, file: demo, write: false, tts: null });
-      const second = await buildProject({ root: ROOT, dir: ROOT, file: demo, write: false, tts: null });
+      const input = recipeRegressionInput({ root: ROOT, recipe: catalog.recipes.get(id) });
+      const first = await buildProject({ root: ROOT, dir: ROOT, file: input.file, write: false, tts: null });
+      const second = await buildProject({ root: ROOT, dir: ROOT, file: input.file, write: false, tts: null });
       const stable = first.ok && second.ok && first.report.det.hash === second.report.det.hash;
       add('det', stable, stable ? first.report.det.hash : '两次编译指纹不一致');
     }
 
     if (deep && audit.ok) {
-      const demo = path.join(ROOT, 'recipes', ...id.split('/'), 'demo.storyboard.json');
+      const input = recipeRegressionInput({ root: ROOT, recipe: catalog.recipes.get(id) });
       const tmp = path.join(ROOT, 'output', 'ci', id.replaceAll('/', '-'));
       mkdirSync(tmp, { recursive: true });
       const quality = await runFilmQuality({
         root: ROOT,
         dir: tmp,
-        file: demo,
+        file: input.file,
         tts: null,
         count,
         gridCount: 12,
         cols: 4,
-        inkless: inklessBlocks(catalog),
         log: () => {},
       });
       if (quality.built.ok) {
         const summary = quality.result.summary;
-        const checks = quality.result.checks;
         add('qa', quality.result.ok,
           `must ${summary.must} / should ${summary.should}`);
-        add('verify', checks.verify.fail === 0,
-          `${checks.verify.pass} 通过 / ${checks.verify.fail} 失败 / ${checks.verify.skip} 跳过`);
       } else {
         add('qa', false, '编译失败');
       }
@@ -650,19 +645,20 @@ function cmdRecipeShow() {
     console.error(`未知 recipe "${id ?? ''}"；可用：${[...catalog.recipes.keys()].join(' / ')}`);
     process.exit(1);
   }
+  const { drawSource: _drawSource, ...template } = recipe.template || {};
   const view = {
     id: recipe.id,
-    abi: recipe.abi || '5',
+    abi: recipe.abi || null,
+    mode: recipe.mode || null,
     name: recipe.name,
     keywords: recipe.keywords || [],
     when: recipe.when,
-    blocks: recipe.blocks ?? recipe.needs?.blocks ?? [],
+    template: recipe.mode === 'params' ? template : null,
     fonts: recipe.fonts ?? null,
     rules: recipe.rules ?? null,
     captions: recipe.captions ?? null,
     audio: recipe.audio ?? null,
-    verify: recipe.verify ?? null,
-    v8Errors: recipe.v8Errors ?? [],
+    recipeErrors: recipe.recipeErrors ?? [],
   };
   if (json) {
     console.log(JSON.stringify(view, null, 2));
@@ -676,17 +672,18 @@ function cmdRecipeShow() {
   console.log('');
   console.log(`  ${view.id}  ${view.name || ''}`);
   console.log(`  abi     ${view.abi}`);
-  console.log(`  blocks  ${(view.blocks || []).join(' / ') || '-'}`);
+  console.log(`  mode    ${view.mode}`);
+  console.log(`  template ${view.template?.draw || '-'}`);
   if (view.keywords.length) console.log(`  keywords ${view.keywords.join(' / ')}`);
   if (view.when) console.log(`  when    ${view.when}`);
   pretty('fonts', view.fonts);
   pretty('rules', view.rules);
   pretty('captions', view.captions);
   pretty('audio', view.audio);
-  pretty('verify', view.verify);
-  if (view.v8Errors.length) {
-    console.log('\n  v8 校验错误');
-    for (const error of view.v8Errors) console.log(`    ✗ [${error.code}] ${error.msg}`);
+  pretty('template', view.template);
+  if (view.recipeErrors.length) {
+    console.log('\n  recipe 校验错误');
+    for (const error of view.recipeErrors) console.log(`    ✗ [${error.code}] ${error.msg}`);
   }
   console.log('');
 }
@@ -694,20 +691,20 @@ function cmdRecipeShow() {
 function usage() {
   console.log(`tt —— Ticktoon 创作入口
 
-  tt new <目录> --recipe <id>     建工程（从 demo 预填 storyboard）
+  tt new <目录> --recipe <id>     建工程（从 skeleton 预填 storyboard）
   tt build [--dir <工程>] [--tts <provider>]   编译出 out/composition.json + report.json
   tt assets fetch --project <工程> [--provider pexels] [--orientation landscape|portrait]
                 [--strict]                  检索、下载、署名并回写 job:media；默认失败时明确降级 bundled
   tt stills <t…> [--dir <工程>]   静帧 + 布局凭据（receipts）
-  tt probe --t <秒> [--dir <工程>] 该时刻全部凭据（kind/block/label/bbox/安全框/字幕带）
-  tt qa [--count N] [--cols C]    轻量渲染校验（空墨迹/verify/forbid）+ 12 格联系表，must=0
+  tt probe --t <秒> [--dir <工程>] 该时刻全部凭据（kind/单元/label/bbox/安全框/字幕带）
+  tt qa [--count N] [--cols C]    轻量渲染校验（渲染异常/空墨迹）+ 12 格联系表，must=0
   tt det [--twice] [--verify H]   确定性指纹
   tt preview [--port N]           只读预览（复用引擎面板）；批注在页面内多帧累积，发送后落盘并关闭
+  tt lab [--port N] [--recipe <id>]   code recipe 镜头参考实验室：真实编译 + 引擎预览，可改代码重跑
   tt annotations [--all] [--ack [id]]  读取批注批次：默认最新未处理批次；--ack 标记整批已处理
-  tt block list                   列出 block 与其契约
-  tt recipe list / show <id> / audit   recipe 货架（id/名称/关键词/when）/ 单条详情（fonts+rules+verify）/ 全量审计
+  tt recipe list / show <id> / audit   recipe 货架（id/名称/关键词/when）/ 单条详情（mode+fonts+rules+template）/ 全量审计（骨架 + 示例）
   tt ci [--deep] [--count N]      全量回归：audit + 逐条 det 两次；--deep 复用 tt qa 管线
-  tt ci --baseline [--write]       逐条 recipe demo 的编译指纹与构建状态基线（新 recipe 自动纳入）；--write 刷新基线
+  tt ci --baseline [--write]       recipe 骨架 / 示例合成片的编译指纹与构建状态基线（新 recipe 自动纳入）；--write 刷新基线
   tt pack [目标目录]              打干净分发包（Skill + 引擎 dist）
 
   通用参数：--json 输出机器可读结果；--dir 指定工程目录（默认当前目录）
@@ -726,13 +723,10 @@ switch (command) {
   case 'qa': await cmdQa(); break;
   case 'det': await cmdDet(); break;
   case 'preview': await cmdPreview(); break;
+  case 'lab': await cmdLab(); break;
   case 'annotations': cmdAnnotations(); break;
   case 'ci': await cmdCi(); break;
   case 'pack': await cmdPack(); break;
-  case 'block':
-    if (rest[0] === 'list') cmdBlockList();
-    else usage();
-    break;
   case 'recipe':
     if (rest[0] === 'list') cmdRecipeList();
     else if (rest[0] === 'show') cmdRecipeShow();

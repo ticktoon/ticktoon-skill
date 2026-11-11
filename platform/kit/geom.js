@@ -3,9 +3,9 @@
  *
  * code 场过去各自抄一套 SAFE / FRAME / ZOOM 与 256 点反像采样；符号抄错就会把
  * 内容推出安全框，而画面检查只能指出"越界"，说不出"相机算错"。这里把整条推导
- * 收成纯函数：不读写 ctx、不依赖绘制状态，block 与 code 场拿到同一套数值。
+ * 收成纯函数：不读写 ctx、不依赖绘制状态，所有场景拿到同一套数值。
  *
- * 坐标约定（与 whiteboard demo 的原实现逐值一致）：
+ * 坐标约定（与 whiteboard 样片的原实现逐值一致）：
  *   屏幕 = focus + (场景 - focus) * scale
  *   反像 = focus + (屏幕 - focus) / scale
  * 只有 scale > 1 的采样点参与收缩；scale <= 1 时安全框本身就是最大可行区。
@@ -38,7 +38,7 @@
     return null;
   };
 
-  /** RULES 只在 code 场注入；block 场没有 RULES 时退回 demo 的 0.06。 */
+  /** RULES 只在 code 场注入；params 模板没有 RULES 时退回样片的 0.06。 */
   const defaultMargin = () => {
     if (typeof RULES !== 'undefined' && RULES && finite(RULES.safeMargin)) return clamp01(RULES.safeMargin);
     return DEFAULT_MARGIN;
@@ -52,13 +52,13 @@
     const m = finite(opts.m) ? clamp01(opts.m) : defaultMargin();
     const x0 = W * m;
     const y0 = H * m;
-    // 与 demo 的 SAFE.x + SAFE.w 保持同一表达式顺序，避免最后一两个 ULP 漂移。
+    // 与样片的 SAFE.x + SAFE.w 保持同一表达式顺序，避免最后一两个 ULP 漂移。
     const x1 = W * (m + (1 - m * 2));
     const y1 = H * (m + (1 - m * 2));
     return { x0, y0, x1, y1, w: x1 - x0, h: y1 - y0 };
   }
 
-  /** 把 {mode,from,to,focus,beats} 展开成关键帧；与 demo 的 zoomKeyframes 逐值一致。 */
+  /** 把 {mode,from,to,focus,beats} 展开成关键帧；与样片的 zoomKeyframes 逐值一致。 */
   function keyframes(zoom, dur) {
     const raw = objectOf(zoom);
     const mode = ['none', 'in', 'out', 'pan'].includes(raw.mode) ? raw.mode : 'in';
@@ -100,7 +100,7 @@
     return frames;
   }
 
-  /** 关键帧在 now 时刻的相机：返回归一化 {scale,fx,fy}；与 demo 的 zoomAt 逐值一致。 */
+  /** 关键帧在 now 时刻的相机：返回归一化 {scale,fx,fy}；与样片的 zoomAt 逐值一致。 */
   function camera(frames, now) {
     const list = Array.isArray(frames) ? frames : [];
     if (!list.length) return { scale: 1, fx: 0.5, fy: 0.5 };
@@ -168,7 +168,7 @@
     }
     const box = { x: safe.x, y: safe.y, w: safe.w, h: safe.h };
 
-    // 采样点顺序与 demo 一致：端点 → 每个关键帧的起止 → 均匀 256 点。
+    // 采样点顺序与样片一致：端点 → 每个关键帧的起止 → 均匀 256 点。
     const times = new Set([0, duration]);
     for (const frame of list) {
       if (!frame || !finite(frame.at)) continue;

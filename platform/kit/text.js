@@ -3,7 +3,7 @@
  *
  * 断行规则是中文优先：CJK 逐字可断，西文按词，空格是唯一允许被丢弃的断点。
  * 这不是通用排版引擎，是"播报字幕级"的排版：不处理标点悬挂、不做两端对齐，
- * 因为这两件事在 1080p 短片上肉眼不可辨，却会让量测结果与 block 的绘制对不上。
+ * 因为这两件事在 1080p 短片上肉眼不可辨，却会让量测结果与实际绘制对不上。
  */
 (() => {
   const CJK = /[\u2e80-\u303f\u3040-\u9fff\uac00-\ud7af\uf900-\ufaff\ufe30-\ufe4f\uff00-\uffef]/;
@@ -220,7 +220,7 @@
     /**
      * 从显式的最大像素字号往下试，直到整段能塞进 rect。
      * 返回 `{ font, lines }`；到 minPx 仍塞不下时返回最小字号的结果，
-     * 由调用方（或 check）决定是截断还是换 block。
+     * 由调用方（或 check）决定是截断还是改文案。
      */
     fit(ctx, str, rect, fonts, role, maxPx, minPx) {
       const from = maxPx;
@@ -238,14 +238,14 @@
 
     /**
      * 真实墨迹包围盒，供 receipts 用。`input` 可以是字符串（内部再断行）
-     * 或已排好的行数组——block 已经算过行时传数组，省一次量测且保证与绘制一致。
+     * 或已排好的行数组——调用方已经算过行时传数组，省一次量测且保证与绘制一致。
      */
     inkBox(ctx, input, rect, font, align) {
       const lines = Array.isArray(input) ? input : layout(ctx, input, rect.w);
       const prevFont = ctx.font;
       ctx.font = font.css;
-      const blockH = lines.length * font.lineHeight;
-      const top = align === 'middle' ? rect.y + (rect.h - blockH) / 2 : rect.y;
+      const linesH = lines.length * font.lineHeight;
+      const top = align === 'middle' ? rect.y + (rect.h - linesH) / 2 : rect.y;
 
       let left = Infinity;
       let right = -Infinity;

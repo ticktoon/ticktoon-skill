@@ -1,6 +1,6 @@
 {
   "id": "crayon-guide",
-  "abi": "8",
+  "abi": "9",
   "name": "蜡笔图解",
   "keywords": [
     "蜡笔",
@@ -11,9 +11,96 @@
     "亲子"
   ],
   "when": "用暖米纸与蜡笔斜纹把步骤、清单或小知识画成手账时",
-  "blocks": [
-    "scene.crayon"
-  ],
+  "mode": "params",
+  "template": {
+    "draw": "template.js",
+    "params": {
+      "title": {
+        "type": "string",
+        "required": true,
+        "maxChars": 10
+      },
+      "subtitle": {
+        "type": "string",
+        "maxChars": 14,
+        "default": ""
+      },
+      "bubble": {
+        "type": "string",
+        "maxChars": 14,
+        "default": ""
+      },
+      "badge": {
+        "type": "string",
+        "maxChars": 6,
+        "default": "3步搞定"
+      },
+      "ingredients": {
+        "type": "array",
+        "maxItems": 4,
+        "maxChars": 6,
+        "default": [],
+        "feel": "旧版纯文本清单；新配方优先用 items[] 图标槽"
+      },
+      "steps": {
+        "type": "array",
+        "maxItems": 3,
+        "maxChars": 10,
+        "default": []
+      },
+      "times": {
+        "type": "array",
+        "maxItems": 3,
+        "maxChars": 8,
+        "default": []
+      },
+      "note": {
+        "type": "string",
+        "maxChars": 24,
+        "default": ""
+      },
+      "items": {
+        "type": "objects",
+        "maxItems": 4,
+        "fields": {
+          "kind": {
+            "enum": [
+              "bowl",
+              "plate",
+              "pot",
+              "egg",
+              "veg",
+              "meat",
+              "spice",
+              "spoon"
+            ],
+            "default": "bowl"
+          },
+          "label": {
+            "type": "string",
+            "default": "",
+            "maxChars": 8
+          }
+        },
+        "default": []
+      }
+    },
+    "needs": {
+      "font": [
+        "display",
+        "hand",
+        "num"
+      ],
+      "image": false,
+      "video": false,
+      "three": false
+    },
+    "motion": {
+      "enter": 0.66,
+      "exitRatio": 0.52
+    },
+    "inkless": true
+  },
   "fonts": {
     "display": "ZTZiYouTi",
     "body": "sans-400",
@@ -23,20 +110,11 @@
   },
   "rules": {
     "safeMargin": 0.06,
-    "scale": {
-      "title": 1,
-      "label": 0.8,
-      "note": 0.6
-    },
-    "stroke": [
-      2,
-      4.6
-    ],
     "forbid": [
-      "整幅场景与卡片块混排",
-      "scene.crayon 缩成卡片（必须 rect=[0,0,1,1] 满幅）",
+      "把 params 模板缩成卡片；模板必须铺满整帧",
       "steps 与 times 数量不一致",
-      "字幕压住步骤卡或右下角手写注"
+      "字幕压住步骤卡或右下角手写注",
+      "在同一场景写 scene.code；本 recipe 只收 scene.params"
     ]
   },
   "captions": {
@@ -57,26 +135,5 @@
       "level": 0.04,
       "edge": 0.22
     }
-  },
-  "verify": [
-    {
-      "at": 0.15,
-      "assert": "ink.insideSafe",
-      "args": {
-        "margin": 0.06
-      }
-    },
-    {
-      "at": 0.9,
-      "assert": "element.count.gte",
-      "args": {
-        "n": 1
-      }
-    },
-    {
-      "at": 0.9,
-      "assert": "caption.noOverlapSubject",
-      "args": {}
-    }
-  ]
+  }
 }

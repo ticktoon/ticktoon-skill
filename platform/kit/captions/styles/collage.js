@@ -61,8 +61,8 @@
         tileW,
         tileH,
         angle,
-        slotW: aabbW + jitterX * 2,
-        slotH: aabbH + jitterY * 2,
+        cellW: aabbW + jitterX * 2,
+        cellH: aabbH + jitterY * 2,
         jx: (n(1) - 0.5) * 2 * jitterX,
         jy: (n(2) - 0.5) * 2 * jitterY,
         bg: palette[(index + seed) % palette.length],
@@ -70,7 +70,7 @@
       index += 1;
     }
 
-    // 2) 按槽位流式折行：推进量 = 槽位宽 + tracking，超 maxWidth 就换行，不挤压
+    // 2) 按格子流式折行：推进量 = 格子宽 + tracking，超 maxWidth 就换行，不挤压
     const safeWidth = c.W * (1 - 2 * (c.metrics?.margin ?? 0.055));
     const maxWidth = Math.min(safeWidth, dimension(o.maxWidth, c.W, safeWidth)) - PAD_X * 2;
     const rows = [[]];
@@ -79,18 +79,18 @@
     const noLineStart = /^[，。！？；：、,.!?;:）】》」』…—]/;
     for (const it of items) {
       if (it.forcedBreak) { rows.push([]); rowW = 0; continue; }
-      const advance = it.slotW + (rows[rows.length - 1].length ? tracking : 0);
+      const advance = it.cellW + (rows[rows.length - 1].length ? tracking : 0);
       if (rows[rows.length - 1].length && rowW + advance > maxWidth && !noLineStart.test(it.text)) {
         rows.push([]);
         rowW = 0;
       }
       const row = rows[rows.length - 1];
       row.push(it);
-      rowW += row.length === 1 ? it.slotW : it.slotW + tracking;
+      rowW += row.length === 1 ? it.cellW : it.cellW + tracking;
     }
     const rowInfo = rows.map((row) => ({
-      w: row.reduce((sum, it, i) => sum + it.slotW + (i ? tracking : 0), 0),
-      h: Math.max(0, ...row.map((it) => it.slotH)),
+      w: row.reduce((sum, it, i) => sum + it.cellW + (i ? tracking : 0), 0),
+      h: Math.max(0, ...row.map((it) => it.cellH)),
     }));
     const contentW = Math.max(1, ...rowInfo.map((info) => info.w));
     const contentH = rowInfo.reduce((sum, info) => sum + info.h, 0) + lineGap * Math.max(0, rows.length - 1);
@@ -98,15 +98,15 @@
     // 3) 盒型位置仍交给 kit：安全区、at、auto 避障规则与其它样式一致
     const rect = TT.captionKit.place(c, contentW + PAD_X * 2, contentH + PAD_Y * 2);
 
-    // 4) 逐字弹出；槽位之间恒有 tracking / lineGap 间隙，back(1.4) 的过冲也填不满
+    // 4) 逐字弹出；格子之间恒有 tracking / lineGap 间隙，back(1.4) 的过冲也填不满
     let rowTop = rect.y + PAD_Y;
     rows.forEach((row, rowIndex) => {
       const info = rowInfo[rowIndex];
       let cursor = rect.x + (rect.w - info.w) / 2;
       const centerY = rowTop + info.h / 2;
       for (const it of row) {
-        const cx = cursor + it.slotW / 2;
-        cursor += it.slotW + tracking;
+        const cx = cursor + it.cellW / 2;
+        cursor += it.cellW + tracking;
         const p = TT.captionKit.clamp((c.sceneT - it.start) / 0.24, 0, 1);
         if (p <= 0) continue;
         const pop = TT.ease.back(1.4)(p);

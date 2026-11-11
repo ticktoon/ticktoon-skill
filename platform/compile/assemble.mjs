@@ -19,17 +19,17 @@ function srtTime(t) {
 }
 
 export function buildSrt(scenes) {
-  const blocks = [];
+  const chunks = [];
   let index = 1;
   for (const scene of scenes) {
     for (const cue of scene.cues || []) {
-      blocks.push(
+      chunks.push(
         `${index}\n${srtTime(scene.start + cue.start)} --> ${srtTime(scene.start + cue.end)}\n${cue.text}\n`,
       );
       index += 1;
     }
   }
-  return blocks.join('\n');
+  return chunks.join('\n');
 }
 
 /**
@@ -109,7 +109,7 @@ export function assemble({ scenes, resolved, format, bag }) {
     }
   }
 
-  // --- SFX：element 落地声 + block 编译期展开的多次事件，运行时不再产生事件 ---
+  // --- SFX：模板落地声 + 模板编译期展开的多次事件，运行时不再产生事件 ---
   const pushSfxEvent = (entry, at, length, { fadeIn = 0.005, fadeOut = 0.06, where } = {}) => {
     const safeLength = round3(Math.min(length, duration - at));
     if (!(safeLength > 0)) {
@@ -129,40 +129,40 @@ export function assemble({ scenes, resolved, format, bag }) {
   };
 
   scenes.forEach((scene) => {
-    for (const el of scene.meta.elements) {
-      const cues = [
-        ...(el.sfx ? [{ sfx: el.sfx, at: el.sfxAt }] : []),
-        ...(el.sfxEvents || []),
-      ];
-      for (const cue of cues) {
-        const entry = resolved.sfx.get(cue.sfx);
-        if (!entry) continue;
-        const at = round3(scene.start + cue.at);
-        pushSfxEvent(entry, at, entry.duration || 0.3, {
-          where: `scenes.${scene.id}.${el.id}`,
-        });
-      }
+    const sfxMeta = scene.meta.sfx;
+    if (!sfxMeta) return;
+    const cues = [
+      ...(sfxMeta.sfx ? [{ sfx: sfxMeta.sfx, at: sfxMeta.sfxAt }] : []),
+      ...(sfxMeta.sfxEvents || []),
+    ];
+    for (const cue of cues) {
+      const entry = resolved.sfx.get(cue.sfx);
+      if (!entry) continue;
+      const at = round3(scene.start + cue.at);
+      pushSfxEvent(entry, at, entry.duration || 0.3, {
+        where: `scenes.${scene.id}.template`,
+      });
+    }
 
-      // 循环音频片段：引擎 sfx 只支持单次触发，按素材时长铺成首尾相接的瓦片。
-      // 实录素材本身在零电平处接缝（首段静音、末尾淡出），内部瓦片不加淡入淡出，
-      // 避免每秒一次的周期性电平凹陷；只有首瓦 5ms 淡入、末瓦按声明 60ms 淡出。
-      if (el.sfxLoop) {
-        const entry = resolved.sfx.get(el.sfxLoop.sfx);
-        if (entry) {
-          const tileDur = entry.duration || 1;
-          const span = el.sfxLoop.duration;
-          const origin = round3(scene.start + el.sfxLoop.at);
-          const tiles = Math.max(1, Math.ceil(span / tileDur));
-          for (let k = 0; k < tiles; k += 1) {
-            const at = round3(origin + k * tileDur);
-            const length = round3(Math.min(tileDur, origin + span - at));
-            if (!(length > 0)) continue;
-            pushSfxEvent(entry, at, length, {
-              fadeIn: k === 0 ? 0.005 : 0,
-              fadeOut: k === tiles - 1 ? el.sfxLoop.fadeOut : 0,
-              where: `scenes.${scene.id}.${el.id}`,
-            });
-          }
+    // 循环音频片段：引擎 sfx 只支持单次触发，按素材时长铺成首尾相接的瓦片。
+    // 实录素材本身在零电平处接缝（首段静音、末尾淡出），内部瓦片不加淡入淡出，
+    // 避免每秒一次的周期性电平凹陷；只有首瓦 5ms 淡入、末瓦按声明 60ms 淡出。
+    if (sfxMeta.sfxLoop) {
+      const entry = resolved.sfx.get(sfxMeta.sfxLoop.sfx);
+      if (entry) {
+        const tileDur = entry.duration || 1;
+        const span = sfxMeta.sfxLoop.duration;
+        const origin = round3(scene.start + sfxMeta.sfxLoop.at);
+        const tiles = Math.max(1, Math.ceil(span / tileDur));
+        for (let k = 0; k < tiles; k += 1) {
+          const at = round3(origin + k * tileDur);
+          const length = round3(Math.min(tileDur, origin + span - at));
+          if (!(length > 0)) continue;
+          pushSfxEvent(entry, at, length, {
+            fadeIn: k === 0 ? 0.005 : 0,
+            fadeOut: k === tiles - 1 ? sfxMeta.sfxLoop.fadeOut : 0,
+            where: `scenes.${scene.id}.template`,
+          });
         }
       }
     }

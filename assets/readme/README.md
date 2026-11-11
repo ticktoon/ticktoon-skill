@@ -2,7 +2,7 @@
 
 Case screenshots and GIFs for the top-level `README.md` go here.
 
-Suggested names, matching the commented example block in both READMEs:
+Suggested names, matching the commented example in both READMEs:
 
 - `whiteboard-explainer.png`
 - `crayon-guide.png`

@@ -1,0 +1,22 @@
+{
+  "recipe": "whiteboard-explainer",
+  "format": {
+    "w": 1920,
+    "h": 1080,
+    "fps": 30
+  },
+  "meta": {
+    "title": "未命名影片"
+  },
+  "scenes": [
+    {
+      "id": "s01",
+      "duration": 3,
+      "code": [
+        "// 场景骨架：在下面写本场内容。",
+        "// 规范读 visual.md，写法看 ref-shots/；可用 W / H / ctx / api / TT / RULES。",
+        "TT.board.paper(ctx, api);"
+      ]
+    }
+  ]
+}

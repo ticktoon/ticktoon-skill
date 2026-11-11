@@ -4,7 +4,7 @@
 
 ## 1 载体
 
-- `blocks: ["scene.code"]`，舞台只用 `TT.board.wash(ctx, api, { bleed: true })`。宣纸的长纤维与四周淡墨晕由它一次给足，**不许再铺第二层底色**。
+- code 场只写 `scene.code`；舞台只用 `TT.board.wash(ctx, api, { bleed: true })`。宣纸的长纤维与四周淡墨晕由它一次给足，**不许再铺第二层底色**。
 - 笔迹只走 `TT.pen.stroke` / `TT.pen.track`，`pen: 'inkbrush'`；文字走 `TT.text`；印章走 `TT.mark.seal`。
 - 镜头用 `TT.geom` 做反像采样，但保持静态（`ZOOM.from === to`）：推镜会让 ink 并集框每帧微涨，画面读起来像持续落笔；观感看 12 格联系表与人审。
 

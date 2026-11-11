@@ -1,5 +1,5 @@
 {
-  "note": "音效表。block 的 defaultSfx 与 element 的 sfx 都从这里取；缺项时报 SFX_MISSING 并跳过，不让编译失败。",
+  "note": "音效表。recipe 的 defaultSfx / sfxTrack 都从这里取；缺项时报 SFX_MISSING 并跳过，不让编译失败。",
   "impact-soft": {
     "src": "skill:assets/sfx/impact-soft.wav",
     "duration": 0.36,

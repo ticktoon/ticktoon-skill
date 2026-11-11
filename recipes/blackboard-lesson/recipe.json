@@ -1,6 +1,6 @@
 {
   "id": "blackboard-lesson",
-  "abi": "8",
+  "abi": "9",
   "name": "黑板教学",
   "keywords": [
     "黑板",
@@ -11,9 +11,6 @@
     "公式"
   ],
   "when": "需要把一堂课的推导过程按书写节拍逐笔写在黑板上时",
-  "blocks": [
-    "scene.code"
-  ],
   "fonts": {
     "display": "sans-400",
     "body": "sans-400",
@@ -42,11 +39,12 @@
       "value": "blackboard"
     },
     "forbid": [
-      "把讲课内容写成 block 的题材枚举参数（例如用课题选项选择讲哪一课）",
+      "把讲课内容写成固定模板参数；讲哪一课由 storyboard 的 code 决定",
       "在 code 里用 Math.random、Date 等墙钟随机，板书必须确定性",
-      "黑板与卡片块混排，或同一幕出现两种字幕样式",
+      "黑板与卡片混排，或同一幕出现两种字幕样式",
       "墨迹或文字越出 safeMargin",
-      "把整段旁白原样抄进 code 当板书；code 只写推导与标注"
+      "把整段旁白原样抄进 code 当板书；code 只写推导与标注",
+      "在同一场景写 scene.params；本 recipe 只收 scene.code"
     ]
   },
   "captions": {
@@ -69,25 +67,5 @@
       "edge": 0.22
     }
   },
-  "verify": [
-    {
-      "at": 0.15,
-      "assert": "ink.insideSafe",
-      "args": {
-        "margin": 0.06
-      }
-    },
-    {
-      "at": 0.9,
-      "assert": "element.count.gte",
-      "args": {
-        "n": 1
-      }
-    },
-    {
-      "at": 0.9,
-      "assert": "caption.noOverlapSubject",
-      "args": {}
-    }
-  ]
+  "mode": "code"
 }

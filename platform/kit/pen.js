@@ -1,7 +1,7 @@
 /**
  * TT.pen —— 公共笔迹与笔具预设。
  *
- * block 只提交路径和时间，不在这里之外实现笔尖跟随、显隐或纸张纹理。
+ * 调用方只提交路径和时间，不在这里之外实现笔尖跟随、显隐或纸张纹理。
  * 所有扰动都是路径、序号与 seed 的纯函数；同一帧重复 seek 不会抖动。
  */
 (() => {
@@ -48,7 +48,7 @@
 
   /**
    * 墨迹框累计：把笔迹中心线经当前 ctx 变换映射到画布坐标后并入 bbox，再按线宽补半径。
-   * 只在 TT.pen 的绘制通道里累计，所以 block 自己画的底色/道具不会被算成笔迹。
+   * 只在 TT.pen 的绘制通道里累计，所以调用方自己画的底色/道具不会被算成笔迹。
    * code 场由 emit 每帧 resetBBox，帧末读 bbox 上报 __ttReceipt。
    */
   let inkBBox = null;
@@ -404,7 +404,7 @@
     const matrix = typeof ctx.getTransform === 'function' ? ctx.getTransform() : null;
     const outerScale = matrix ? Math.sqrt(Math.abs(matrix.a * matrix.d - matrix.b * matrix.c)) || 1 : 1;
     // 导出器会把 canvas backing store 与 ctx 一起放大；只按逻辑画布定量，避免 HiDPI 二次放大。
-    // sceneScale 是 block 自己施加的场景变换（边距 fit × 镜头 zoom）：笔在纸上，
+    // sceneScale 是调用方施加的场景变换（边距 fit × 镜头 zoom）：笔在纸上，
     // 这部分缩放必须原样保留，只扣除 HiDPI 这一层。
     const sceneScale = Number.isFinite(opts.sceneScale) && opts.sceneScale > 0 ? opts.sceneScale : 1;
     const scale = Math.min(canvas.width, canvas.height) / 1080 / outerScale * sceneScale;
@@ -435,7 +435,7 @@
 
     /**
      * 把一块填充区域并入本帧墨迹框。highlight 这类填充没有中心线，不经过
-     * drawTrace，若不记账就会在 qa/verify 里变成隐形墨水。box 用当前用户坐标，
+     * drawTrace，若不记账就会在 qa 里变成隐形墨水。box 用当前用户坐标，
      * 经 ctx 变换映射到画布坐标；负宽高会自动归一化。
      */
     addBox(ctx, box) {
@@ -466,7 +466,7 @@
      * 时间轴批量绘制。每笔可写 { pts, at, dur, pen, color, width, seed, dash, ease, rotate }。
      * rotate 默认 fixed；并笔只跟「最早排定、尚未收笔」的那一笔（index 最小），
      * 笔身按落笔顺序单向前进，不会在多笔之间来回瞬移；没有未完笔才做 80ms 收笔淡出。
-     * 第 4 参 opts.sceneScale：block 外层 ctx 变换的总倍率（如白板的边距 fit × 镜头 zoom），
+     * 第 4 参 opts.sceneScale：外层 ctx 变换的总倍率（如白板的边距 fit × 镜头 zoom），
      * 笔身按该倍率随画面一起缩放，默认 1 = 旧行为。
      * opts.penBody === false：只落墨、不画笔身（见 stroke）。
      */

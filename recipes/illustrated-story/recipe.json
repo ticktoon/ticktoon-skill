@@ -1,6 +1,6 @@
 {
   "id": "illustrated-story",
-  "abi": "8",
+  "abi": "9",
   "name": "插画剪报",
   "keywords": [
     "插画",
@@ -11,9 +11,6 @@
     "夏天"
   ],
   "when": "一段小故事或观察随笔，交给满幅米色拼贴纸与逐字剪贴字幕时",
-  "blocks": [
-    "scene.code"
-  ],
   "fonts": {
     "display": "sans-400",
     "body": "sans-400",
@@ -38,11 +35,12 @@
       "value": "cream"
     },
     "forbid": [
-      "把故事题材写成枚举参数或用模板选讲哪一则；内容必须实时写在 scene.code 里",
+      "把故事题材写成枚举参数；内容必须实时写在 scene.code 里",
       "在同一幅拼贴上叠两种字幕样式；剪贴字只能有一层",
       "在 code 里再铺一层底色；米色纸只来自 TT.board.cream",
       "用整块平涂色域代替纸片；纸片边缘必须是手绘撕边或排线",
-      "字幕压住主体；主体集中在画面上半，字幕带留在下半"
+      "字幕压住主体；主体集中在画面上半，字幕带留在下半",
+      "在同一场景写 scene.params；本 recipe 只收 scene.code"
     ]
   },
   "captions": {
@@ -65,25 +63,5 @@
       "edge": 0.22
     }
   },
-  "verify": [
-    {
-      "at": 0.15,
-      "assert": "ink.insideSafe",
-      "args": {
-        "margin": 0.06
-      }
-    },
-    {
-      "at": 0.9,
-      "assert": "element.count.gte",
-      "args": {
-        "n": 1
-      }
-    },
-    {
-      "at": 0.9,
-      "assert": "caption.noOverlapSubject",
-      "args": {}
-    }
-  ]
+  "mode": "code"
 }

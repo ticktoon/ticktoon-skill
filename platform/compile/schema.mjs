@@ -2,30 +2,29 @@
  * ① schema —— 结构校验与规范化。
  *
  * 只做"能不能往下走"的判断，不碰时间、不碰画面：
- *   - 文件存在性（block / recipe / font / sfx）
+ *   - recipe 契约（含 template 的 8 字段）
  *   - 键的合法性：未知键直接报错，不静默忽略
- *   - 参数合法性：按 block.json 的 params 逐个判，缺省值在这里补齐
+ *   - scene.params 按 recipe.template.params 逐个判，缺省值在这里补齐
  *   - 结构互斥：`narration` 与 `duration` 只能有一个
  *
- * 缺省值必须在这里补齐，而不是留给 block 用 `p.x || 默认值`：
+ * params 的缺省值必须在这里补齐，而不是留给模板用 `p.x || 默认值`：
  * 补齐之后 emit 出来的参数对象就是完整的，receipts 与 report 里的字段才不会时有时无。
  */
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { Bag, isPlainObject } from './diag.mjs';
 import { normalizeCaption } from './captions.mjs';
-import { validateRecipeV8 } from './recipe.mjs';
+import { validateRecipe } from './recipe.mjs';
 import { scanSceneCode } from './code-scan.mjs';
 import { PACING, estimateSpeech } from './resolve.mjs';
 
-export const RESERVED_ELEMENT_KEYS = ['block', 'slot', 'rect', 'at', 'dur', 'sfx', 'sfxAt'];
-// `code` 是 scene 的另一种内容形态：它和 elements 可以共存，二者都不改变时间链。
-export const SCENE_KEYS = ['id', 'narration', 'duration', 'camera', 'elements', 'code', 'resources', 'note', 'transitionIn', 'transitionOut'];
+// code 与 params 是两种内容形态，由 recipe.mode 决定，同一场不能同时出现。
+export const SCENE_KEYS = ['id', 'narration', 'duration', 'camera', 'code', 'params', 'resources', 'note', 'transitionIn', 'transitionOut'];
 export const TRANSITION_OUT_TYPES = ['cut', 'dip-to-color', 'wipe', 'push', 'page', 'zoom-out', 'glitch'];
 export const TRANSITION_IN_TYPES = ['cut', 'fade-in', 'iris', 'zoom-punch', 'glitch-in'];
 export const TRANSITION_KEYS = ['type', 'dur', 'dir', 'color', 'at'];
 const HEX_COLOR = /^#(?:[0-9a-f]{3}|[0-9a-f]{4}|[0-9a-f]{6}|[0-9a-f]{8})$/i;
-export const ROOT_KEYS = ['recipe', 'format', 'meta', 'beats', 'scenes', 'uses'];
+export const ROOT_KEYS = ['recipe', 'format', 'meta', 'scenes', 'uses'];
 export const SUPPORTED_FORMATS = [
   { w: 1920, h: 1080, fps: 30 },
   { w: 1080, h: 1920, fps: 30 },
@@ -47,34 +46,14 @@ function readJson(file) {
 
 /**
  * 载入全部静态契约。一次读盘、全程复用；`tt build` 是多 pass 的，
- * 每 pass 重读 block.json 会让 <2s 的预算白花在 IO 上。
+ * 每 pass 重读 recipe 会让 <2s 的预算白花在 IO 上。
  */
 export function loadCatalog(root) {
   const platform = path.join(root, 'platform');
-  const blocks = new Map();
   const captions = new Map();
   const recipes = new Map();
   const fontManifestPath = path.join(root, 'assets', 'fonts', 'manifest.json');
   const fonts = existsSync(fontManifestPath) ? readJson(fontManifestPath) : {};
-
-  for (const file of walk(path.join(platform, 'blocks'))) {
-    if (path.basename(file) !== 'block.json') continue;
-    const dir = path.dirname(file);
-    const meta = readJson(file);
-    const drawPath = path.join(dir, 'draw.js');
-    if (!existsSync(drawPath)) throw new Error(`block ${meta.id} 缺少 draw.js: ${dir}`);
-    const draw = readFileSync(drawPath, 'utf-8');
-    const demoPath = path.join(dir, 'demo.json');
-    blocks.set(meta.id, {
-      ...meta,
-      dir,
-      draw,
-      demo: existsSync(demoPath) ? readJson(demoPath) : null,
-      // 词法级事实，供 ⑥ check 对账：block 有没有注册 setup、有没有用字体
-      hasSetup: /\bSETUP\[/.test(draw),
-      usesFont: /\bfont\s*\(/.test(draw),
-    });
-  }
 
   // captions/core.js 不是样式；只有 captions/styles/*.js 会注册成用户可选 id。
   const captionsDir = path.join(platform, 'kit', 'captions');
@@ -96,8 +75,15 @@ export function loadCatalog(root) {
       brief: existsSync(path.join(dir, 'brief.md')) ? readFileSync(path.join(dir, 'brief.md'), 'utf-8') : '',
     };
     // 读入时校验视觉规范；错误挂在条目上，选中该 recipe 时才升级为 build error。
-    // 校验只看 recipe.json 本身，dir / brief 是载入期附带的运行上下文。
-    entry.v8Errors = validateRecipeV8(recipe, blocks, fonts);
+    // 校验只看 recipe.json 本身，dir / brief / drawSource 是载入期附带的运行上下文。
+    entry.recipeErrors = validateRecipe(recipe, fonts, dir);
+    if (recipe.mode === 'params' && typeof recipe.template?.draw === 'string') {
+      const drawPath = path.join(dir, recipe.template.draw);
+      entry.template = {
+        ...recipe.template,
+        drawSource: existsSync(drawPath) ? readFileSync(drawPath, 'utf-8') : '',
+      };
+    }
     recipes.set(recipe.id || rel, entry);
   }
 
@@ -107,7 +93,6 @@ export function loadCatalog(root) {
   return {
     root,
     platform,
-    blocks,
     captions,
     captionKit,
     recipes,
@@ -198,26 +183,24 @@ function normalizeSceneCode(raw, bag, at) {
   return text;
 }
 
-function checkParams(element, meta, bag, at) {
-  const spec = meta.params || {};
+function checkParams(values, spec, recipeId, bag, at) {
   const params = {};
   const known = new Set(Object.keys(spec));
 
-  for (const key of Object.keys(element)) {
-    if (RESERVED_ELEMENT_KEYS.includes(key)) continue;
+  for (const key of Object.keys(values)) {
     if (!known.has(key)) {
-      bag.error('BLOCK_PARAM_UNKNOWN', `${at}.${key}`,
-        `${meta.id} 不认识参数 "${key}"，可用参数：${Object.keys(spec).join(' / ') || '（无）'}`);
+      bag.error('PARAM_UNKNOWN', `${at}.${key}`,
+        `${recipeId} 不认识参数 "${key}"，可用参数：${Object.keys(spec).join(' / ') || '（无）'}`);
     }
   }
 
   for (const [key, rule] of Object.entries(spec)) {
-    const raw = element[key];
+    const raw = values[key];
     const missing = raw === undefined || raw === null || raw === '';
 
     if (missing) {
       if (rule.required) {
-        bag.error('BLOCK_PARAM_REQUIRED', `${at}.${key}`, `${meta.id} 需要参数 "${key}"`);
+        bag.error('PARAM_REQUIRED', `${at}.${key}`, `${recipeId} 需要参数 "${key}"`);
         continue;
       }
       if (rule.default !== undefined) params[key] = rule.default;
@@ -228,7 +211,7 @@ function checkParams(element, meta, bag, at) {
       case 'number': {
         const n = Number(raw);
         if (!Number.isFinite(n)) {
-          bag.error('BLOCK_PARAM_TYPE', `${at}.${key}`, `"${key}" 必须是数字，收到 ${JSON.stringify(raw)}`);
+          bag.error('PARAM_TYPE', `${at}.${key}`, `"${key}" 必须是数字，收到 ${JSON.stringify(raw)}`);
           continue;
         }
         params[key] = n;
@@ -236,7 +219,7 @@ function checkParams(element, meta, bag, at) {
       }
       case 'boolean': {
         if (typeof raw !== 'boolean') {
-          bag.error('BLOCK_PARAM_TYPE', `${at}.${key}`, `"${key}" 必须是 true/false`);
+          bag.error('PARAM_TYPE', `${at}.${key}`, `"${key}" 必须是 true/false`);
           continue;
         }
         params[key] = raw;
@@ -245,17 +228,17 @@ function checkParams(element, meta, bag, at) {
       case 'array': {
         // 字符串数组：要点列表、引语行。JSON 里直接写数组，schema 在这里拦形状。
         if (!Array.isArray(raw) || !raw.every((item) => typeof item === 'string')) {
-          bag.error('BLOCK_PARAM_TYPE', `${at}.${key}`, `"${key}" 必须是字符串数组`);
+          bag.error('PARAM_TYPE', `${at}.${key}`, `"${key}" 必须是字符串数组`);
           continue;
         }
         if (rule.maxItems && raw.length > rule.maxItems) {
-          bag.error('BLOCK_PARAM_MAXITEMS', `${at}.${key}`,
-            `${meta.id} 的 "${key}" 上限 ${rule.maxItems} 项，收到 ${raw.length} 项`);
+          bag.error('PARAM_MAXITEMS', `${at}.${key}`,
+            `${recipeId} 的 "${key}" 上限 ${rule.maxItems} 项，收到 ${raw.length} 项`);
         }
         const limit = rule.maxChars || 24;
         for (const item of raw) {
           if ([...item].length > limit) {
-            bag.error('BLOCK_PARAM_MAXCHARS', `${at}.${key}`,
+            bag.error('PARAM_MAXCHARS', `${at}.${key}`,
               `"${key}" 每项上限 ${limit} 字，收到 "${[...item].length > 30 ? item.slice(0, 30) + '…' : item}"`);
           }
         }
@@ -263,16 +246,16 @@ function checkParams(element, meta, bag, at) {
         break;
       }
       case 'objects': {
-        // 结构化对象数组：版式型 block 的姿态槽 / 图标槽。
+        // 结构化对象数组：模板里的姿态槽 / 图标槽。
         // fields 描述每个键的 enum / type / default，编译期填默认值并拦未知枚举，
-        // 让 block 不再需要写死题材，也不用到处做运行期兜底。
+        // 让模板不必写死题材，也不用到处做运行期兜底。
         if (!Array.isArray(raw) || !raw.every(isPlainObject)) {
-          bag.error('BLOCK_PARAM_TYPE', `${at}.${key}`, `"${key}" 必须是对象数组`);
+          bag.error('PARAM_TYPE', `${at}.${key}`, `"${key}" 必须是对象数组`);
           continue;
         }
         if (rule.maxItems && raw.length > rule.maxItems) {
-          bag.error('BLOCK_PARAM_MAXITEMS', `${at}.${key}`,
-            `${meta.id} 的 "${key}" 上限 ${rule.maxItems} 项，收到 ${raw.length} 项`);
+          bag.error('PARAM_MAXITEMS', `${at}.${key}`,
+            `${recipeId} 的 "${key}" 上限 ${rule.maxItems} 项，收到 ${raw.length} 项`);
         }
         const fields = rule.fields || {};
         params[key] = raw.map((item, i) => {
@@ -284,7 +267,7 @@ function checkParams(element, meta, bag, at) {
               continue;
             }
             if (Array.isArray(fr.enum) && !fr.enum.includes(value)) {
-              bag.error('BLOCK_PARAM_TYPE', `${at}.${key}[${i}].${fk}`,
+              bag.error('PARAM_TYPE', `${at}.${key}[${i}].${fk}`,
                 `"${fk}" 只能是 ${fr.enum.join(' / ')}，收到 "${value}"`);
               if (fr.default !== undefined) out[fk] = fr.default;
               continue;
@@ -292,7 +275,7 @@ function checkParams(element, meta, bag, at) {
             if (fr.type === 'number') {
               const n = Number(value);
               if (!Number.isFinite(n)) {
-                bag.error('BLOCK_PARAM_TYPE', `${at}.${key}[${i}].${fk}`, `"${fk}" 必须是数字`);
+                bag.error('PARAM_TYPE', `${at}.${key}[${i}].${fk}`, `"${fk}" 必须是数字`);
                 continue;
               }
               out[fk] = n;
@@ -309,21 +292,21 @@ function checkParams(element, meta, bag, at) {
         const ok = Array.isArray(raw) && raw.length > 0
           && raw.every((item) => isPlainObject(item) && typeof item.label === 'string' && Number.isFinite(Number(item.value)));
         if (!ok) {
-          bag.error('BLOCK_PARAM_TYPE', `${at}.${key}`,
+          bag.error('PARAM_TYPE', `${at}.${key}`,
             `"${key}" 必须是 [{ label, value }] 数组，如 [{"label":"火灾","value":200}]`);
           continue;
         }
         if (rule.minItems && raw.length < rule.minItems) {
-          bag.error('BLOCK_PARAM_MINITEMS', `${at}.${key}`,
-            `${meta.id} 的 "${key}" 至少需要 ${rule.minItems} 行，收到 ${raw.length} 行`);
+          bag.error('PARAM_MINITEMS', `${at}.${key}`,
+            `${recipeId} 的 "${key}" 至少需要 ${rule.minItems} 行，收到 ${raw.length} 行`);
         }
         if (rule.maxItems && raw.length > rule.maxItems) {
-          bag.error('BLOCK_PARAM_MAXITEMS', `${at}.${key}`,
-            `${meta.id} 的 "${key}" 上限 ${rule.maxItems} 行，收到 ${raw.length} 行（图表超过 6 行就该换 stat）`);
+          bag.error('PARAM_MAXITEMS', `${at}.${key}`,
+            `${recipeId} 的 "${key}" 上限 ${rule.maxItems} 行，收到 ${raw.length} 行（图表超过 6 行就该换 stat）`);
         }
         for (const item of raw) {
           if ([...item.label].length > 12) {
-            bag.error('BLOCK_PARAM_MAXCHARS', `${at}.${key}`, `"${key}" 的 label 上限 12 字`);
+            bag.error('PARAM_MAXCHARS', `${at}.${key}`, `"${key}" 的 label 上限 12 字`);
           }
         }
         params[key] = raw.map((item) => ({ label: item.label, value: Number(item.value) }));
@@ -331,24 +314,24 @@ function checkParams(element, meta, bag, at) {
       }
       case 'string': {
         if (typeof raw !== 'string') {
-          bag.error('BLOCK_PARAM_TYPE', `${at}.${key}`, `"${key}" 必须是字符串`);
+          bag.error('PARAM_TYPE', `${at}.${key}`, `"${key}" 必须是字符串`);
           continue;
         }
         params[key] = raw;
         if (rule.maxChars && [...raw].length > rule.maxChars) {
-          bag.error('BLOCK_PARAM_MAXCHARS', `${at}.${key}`,
-            `${meta.id} 的 "${key}" 上限 ${rule.maxChars} 字，收到 ${[...raw].length} 字（放不下就是放不下，不是警告）`);
+          bag.error('PARAM_MAXCHARS', `${at}.${key}`,
+            `${recipeId} 的 "${key}" 上限 ${rule.maxChars} 字，收到 ${[...raw].length} 字（放不下就是放不下，不是警告）`);
         }
         // 多行字符串的可见行数限制。空行是段落间距，不计入行数。
         if (rule.minLines || rule.maxLines) {
           const lineCount = raw.split('\n').filter((line) => line.trim()).length;
           if (rule.minLines && lineCount < rule.minLines) {
-            bag.error('BLOCK_PARAM_MINLINES', `${at}.${key}`,
-              `${meta.id} 的 "${key}" 至少 ${rule.minLines} 个可见行（空行不计），收到 ${lineCount} 行`);
+            bag.error('PARAM_MINLINES', `${at}.${key}`,
+              `${recipeId} 的 "${key}" 至少 ${rule.minLines} 个可见行（空行不计），收到 ${lineCount} 行`);
           }
           if (rule.maxLines && lineCount > rule.maxLines) {
-            bag.error('BLOCK_PARAM_MAXLINES', `${at}.${key}`,
-              `${meta.id} 的 "${key}" 上限 ${rule.maxLines} 个可见行（空行不计），收到 ${lineCount} 行`);
+            bag.error('PARAM_MAXLINES', `${at}.${key}`,
+              `${recipeId} 的 "${key}" 上限 ${rule.maxLines} 个可见行（空行不计），收到 ${lineCount} 行`);
           }
         }
         break;
@@ -357,7 +340,7 @@ function checkParams(element, meta, bag, at) {
         // enum 型（无 type 字段，只有 enum）
         if (Array.isArray(rule.enum)) {
           if (!rule.enum.includes(raw)) {
-            bag.error('BLOCK_PARAM_ENUM', `${at}.${key}`,
+            bag.error('PARAM_ENUM', `${at}.${key}`,
               `"${key}" 只能是 ${rule.enum.join(' / ')}，收到 ${JSON.stringify(raw)}`);
             continue;
           }
@@ -462,7 +445,7 @@ function normalizeTransition(raw, direction, bag, at, sceneDuration, estimated =
 
 export function normalizeStoryboard(input, catalog, captionOverride = null) {
   const bag = new Bag();
-  const out = { recipe: null, format: null, meta: {}, beats: {}, scenes: [] };
+  const out = { recipe: null, format: null, meta: {}, scenes: [] };
 
   if (!isPlainObject(input)) {
     bag.error('ROOT_TYPE', '', 'storyboard 必须是一个对象');
@@ -486,7 +469,7 @@ export function normalizeStoryboard(input, catalog, captionOverride = null) {
   if (recipe) {
     out.recipe = recipe.id;
     // loadCatalog 的结构错误在这里变成 build 的硬失败。
-    for (const error of recipe.v8Errors || []) bag.error(error.code, error.path, error.msg);
+    for (const error of recipe.recipeErrors || []) bag.error(error.code, error.path, error.msg);
   }
 
   // 工程级覆盖：storyboard 顶层 `uses` 只放行字幕选择，用来让同一条 recipe
@@ -522,24 +505,11 @@ export function normalizeStoryboard(input, catalog, captionOverride = null) {
   }
   out.format = fmt;
 
-  // --- meta / beats ---
+  // --- meta ---
   if (input.meta !== undefined) {
     if (!isPlainObject(input.meta)) bag.error('META_TYPE', 'meta', 'meta 必须是对象');
     else out.meta = input.meta;
   }
-  if (input.beats !== undefined) {
-    if (!isPlainObject(input.beats)) bag.error('BEATS_TYPE', 'beats', 'beats 必须是 { 名称: 秒 } 的对象');
-    else {
-      for (const [name, value] of Object.entries(input.beats)) {
-        if (!Number.isFinite(Number(value))) {
-          bag.error('BEAT_TYPE', `beats.${name}`, `beat "${name}" 必须是秒数，收到 ${JSON.stringify(value)}`);
-        } else {
-          out.beats[name] = Number(value);
-        }
-      }
-    }
-  }
-
   // --- scenes ---
   if (!Array.isArray(input.scenes) || !input.scenes.length) {
     bag.error('SCENES_EMPTY', 'scenes', 'scenes 必须是非空数组');
@@ -564,12 +534,48 @@ export function normalizeStoryboard(input, catalog, captionOverride = null) {
     else if (seen.has(id)) bag.error('SCENE_ID_DUPLICATE', `${at}.id`, `场景 id 重复：${id}`);
     else seen.add(id);
 
-    const code = normalizeSceneCode(raw.code, bag, at);
-    const sceneResources = normalizeSceneResources(raw.resources, bag, at);
-    if (code !== null) {
-      const scan = scanSceneCode(code, { sceneId: id || at, resources: sceneResources });
-      for (const error of scan.errors) bag.error(error.code, `${at}.code`, error.msg);
-      for (const warning of scan.warnings) bag.warn(warning.level || 'should', warning.code, `${at}.code`, warning.msg);
+    const recipeId = recipe?.id || input.recipe || '<recipe>';
+    const mode = recipe?.mode || null;
+    let code = null;
+    let params = null;
+    let sceneResources = [];
+
+    if (raw.code !== undefined && raw.params !== undefined) {
+      bag.error('SCENE_CONTENT_CONFLICT', at,
+        '同一场不能同时写 code 与 params；由 recipe.mode 决定唯一内容形态');
+    }
+
+    if (mode === 'code' || (!mode && raw.code !== undefined)) {
+      if (raw.params !== undefined) {
+        bag.error('SCENE_PARAMS_IN_CODE_MODE', `${at}.params`,
+          `recipe ${recipeId} 是 code 模式：内容写在 scene.code，scene.params 不收`);
+      }
+      code = normalizeSceneCode(raw.code, bag, at);
+      if (raw.code === undefined) {
+        bag.error('SCENE_CODE_REQUIRED', `${at}.code`, `recipe ${recipeId} 是 code 模式：每场必须写 code`);
+      }
+      sceneResources = normalizeSceneResources(raw.resources, bag, at);
+      if (code !== null) {
+        const scan = scanSceneCode(code, { sceneId: id || at, resources: sceneResources });
+        for (const error of scan.errors) bag.error(error.code, `${at}.code`, error.msg);
+        for (const warning of scan.warnings) bag.warn(warning.level || 'should', warning.code, `${at}.code`, warning.msg);
+      }
+    } else if (mode === 'params' || (!mode && raw.params !== undefined)) {
+      if (raw.code !== undefined) {
+        bag.error('SCENE_CODE_IN_PARAMS_MODE', `${at}.code`,
+          `recipe ${recipeId} 是 params 模式：内容写在 scene.params，scene.code 不收`);
+      }
+      if (raw.resources !== undefined) {
+        bag.error('SCENE_RESOURCES_IN_PARAMS_MODE', `${at}.resources`,
+          `recipe ${recipeId} 的资源声明在 recipe.template.resources，scene.resources 只属于 code 模式`);
+      }
+      if (!isPlainObject(raw.params)) {
+        bag.error('SCENE_PARAMS_REQUIRED', `${at}.params`, `recipe ${recipeId} 是 params 模式：每场必须写 params 对象`);
+      } else {
+        params = checkParams(raw.params, recipe?.template?.params || {}, recipeId, bag, `${at}.params`);
+      }
+    } else {
+      bag.error('SCENE_CONTENT_MISSING', at, '每场必须写 code 或 params，内容形态由 recipe.mode 决定');
     }
 
     const hasNarration = typeof raw.narration === 'string' && raw.narration.trim() !== '';
@@ -618,82 +624,13 @@ export function normalizeStoryboard(input, catalog, captionOverride = null) {
       }
     }
 
-    const elements = [];
-    if (!Array.isArray(raw.elements) || !raw.elements.length) {
-      if (!code) {
-        bag.warn('should', 'SCENE_EMPTY', at, '没有 elements 的场景是一帧纯背景；除非刻意为空，否则至少放一个元素');
-      }
-    } else {
-      raw.elements.forEach((el, ei) => {
-        const ep = `${at}.elements[${ei}]`;
-        if (!isPlainObject(el)) {
-          bag.error('ELEMENT_TYPE', ep, 'element 必须是对象');
-          return;
-        }
-        if (typeof el.block !== 'string') {
-          bag.error('ELEMENT_BLOCK_MISSING', `${ep}.block`, 'element 必须有 block');
-          return;
-        }
-        const meta = catalog.blocks.get(el.block);
-        if (!meta) {
-          bag.error('BLOCK_UNKNOWN', `${ep}.block`,
-            `未注册的 block "${el.block}"；可用：${[...catalog.blocks.keys()].join(' / ')}`);
-          return;
-        }
-
-        const slot = el.slot || meta.defaultSlot;
-        if (!slot) {
-          bag.error('ELEMENT_SLOT_MISSING', `${ep}.slot`, `${meta.id} 需要 slot`);
-        } else if (!meta.layout?.[slot]) {
-          bag.error('SLOT_UNKNOWN', `${ep}.slot`,
-            `${meta.id} 没有版位 "${slot}"，可用：${Object.keys(meta.layout || {}).join(' / ')}`);
-        } else if (Array.isArray(meta.slots) && meta.slots.length && !meta.slots.includes(slot)) {
-          bag.warn('should', 'SLOT_OFF_LABEL', `${ep}.slot`,
-            `${meta.id} 推荐版位是 ${meta.slots.join(' / ')}，这里用了 ${slot}（可以，但要确认构图）`);
-        }
-
-        let rect = null;
-        if (el.rect !== undefined) {
-          const ok = Array.isArray(el.rect) && el.rect.length === 4 && el.rect.every((v) => Number.isFinite(Number(v)));
-          if (!ok) bag.error('ELEMENT_RECT_INVALID', `${ep}.rect`, 'rect 必须是 [x, y, w, h]（归一化 0–1）');
-          else rect = el.rect.map(Number);
-        }
-
-        if (el.at !== undefined && typeof el.at !== 'number' && typeof el.at !== 'string') {
-          bag.error('ELEMENT_AT_TYPE', `${ep}.at`, 'at 必须是秒数或 beats 名称');
-        }
-        if (el.dur !== undefined && !(Number(el.dur) > 0)) {
-          bag.error('ELEMENT_DUR_INVALID', `${ep}.dur`, `dur 必须是正数，收到 ${JSON.stringify(el.dur)}`);
-        }
-
-        const params = checkParams(el, meta, bag, ep);
-
-        elements.push({
-          id: `el${ei}`,
-          block: meta.id,
-          slot,
-          rect,
-          at: el.at === undefined ? 0 : el.at,
-          dur: el.dur === undefined ? null : Number(el.dur),
-          sfx: el.sfx || null,
-          sfxAt: el.sfxAt === undefined ? null : Number(el.sfxAt),
-          params,
-          meta,
-          // 记住作者显式给了哪些参数，resolve 注入 recipe 默认值时要让 element 优先。
-          ...(recipe?.abi === '8'
-            ? { given: Object.keys(el).filter((key) => !RESERVED_ELEMENT_KEYS.includes(key)) }
-            : {}),
-        });
-      });
-    }
-
     out.scenes.push({
       id,
       narration: hasNarration ? String(raw.narration) : null,
       duration: hasDuration ? Number(raw.duration) : null,
       camera,
-      elements,
       code,
+      params,
       resources: sceneResources,
       note: raw.note || null,
       transitionIn,

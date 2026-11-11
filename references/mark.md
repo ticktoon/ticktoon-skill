@@ -2,7 +2,7 @@
 
 公共实现位于 `platform/kit/mark.js`，由 `platform/kit/index.json` 注入为 `TT.mark`。场景 code 里画箭头、圈、波浪线、涂底色**一律用 `TT.mark`，禁止手写贝塞尔控制点和自己的抖动**。
 
-第一原则：所有线条类词条都走 `TT.pen.stroke` 出笔，自动继承笔的质感（粉粒、墨晕）、手绘抖动（确定性）、笔身跟随与墨迹框上报。填充类（`highlight`）不走笔画，但通过 `TT.pen.addBox` 并入墨迹框，qa/verify 照样能判它越界。
+第一原则：所有线条类词条都走 `TT.pen.stroke` 出笔，自动继承笔的质感（粉粒、墨晕）、手绘抖动（确定性）、笔身跟随与墨迹框上报。填充类（`highlight`）不走笔画，但通过 `TT.pen.addBox` 并入墨迹框，qa / probe 照样能读到它。
 
 ## 统一参数
 

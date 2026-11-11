@@ -1,7 +1,7 @@
 /**
- * `tt ci --baseline`：配方 demo 的编译指纹与构建状态基线。
+ * `tt ci --baseline`：配方骨架 / 示例合成片的编译指纹与构建状态基线。
  *
- * 只证明“同一条 recipe demo 在两次运行之间是否保持同一份编译产物”，
+ * 只证明“同一条 recipe 的回归输入在两次运行之间是否保持同一份编译产物”，
  * 不做像素采样、不存审美分数。指纹变化不是自动失败的理由，而是人审后
  * `--write` 刷新基线的提示；构建失败才是硬失败。
  */
@@ -9,6 +9,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { loadCatalog } from '../compile/schema.mjs';
 import { buildProject } from '../project/build.mjs';
+import { recipeRegressionInput } from '../project/ref-shots.mjs';
 
 export async function runBaseline({ root, write = false, log = console.log }) {
   // 枚举直接扫 recipes/ 目录，和 tt recipe list / audit 同源；新增 recipe 无需再改任何索引。
@@ -18,14 +19,21 @@ export async function runBaseline({ root, write = false, log = console.log }) {
   const rows = [];
 
   for (const id of [...catalog.recipes.keys()].sort()) {
-    const demo = path.join(catalog.recipes.get(id).dir, 'demo.storyboard.json');
-    const built = await buildProject({
-      root, dir: root, file: demo, write: false, tts: null,
-    });
+    const input = recipeRegressionInput({ root, recipe: catalog.recipes.get(id) });
+    let hash = '';
+    let reason = input.errors.map((error) => error.code).join(' / ');
+    if (input.file && !input.errors.length) {
+      const built = await buildProject({
+        root, dir: root, file: input.file, write: false, tts: null,
+      });
+      if (built.ok) hash = built.report.det.hash;
+      else reason = built.report.errors.map((error) => error.code).join(' / ');
+    }
     rows.push({
       id,
-      hash: built.ok ? built.report.det.hash : '',
-      status: built.ok ? 'ok' : 'failed',
+      hash,
+      status: hash ? 'ok' : 'failed',
+      ...(reason ? { reason } : {}),
     });
   }
 
@@ -35,7 +43,7 @@ export async function runBaseline({ root, write = false, log = console.log }) {
   for (const row of rows) {
     const old = oldById.get(row.id);
     if (row.status !== 'ok') {
-      regressions.push(`${row.id}: 构建失败`);
+      regressions.push(`${row.id}: 构建失败${row.reason ? `（${row.reason}）` : ''}`);
       continue;
     }
     if (!old) continue;

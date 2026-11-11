@@ -12,7 +12,6 @@
  */
 import { existsSync } from 'node:fs';
 import path from 'node:path';
-import { applyRecipeRules } from './recipe.mjs';
 
 /** 播报语速。中文按字算，标点不发音只制造停顿。 */
 export const CHARS_PER_SECOND = 4.6;
@@ -37,10 +36,6 @@ export function estimateSpeech(text) {
 export async function resolveStoryboard({ storyboard, fonts: fontRoles, recipe, catalog, tts }) {
   const warnings = [];
   const ttsUsed = !!tts;
-
-  // 把 recipe.rules 的维度默认值与数值规范注入到已声明的 block element。
-  // 注入是纯函数，同一 storyboard + 同一 recipe 两次 build 得到同一份参数。
-  if (recipe?.abi === '8') warnings.push(...applyRecipeRules({ recipe, storyboard }));
 
   const scenes = [];
   for (const scene of storyboard.scenes) {
@@ -74,11 +69,13 @@ export async function resolveStoryboard({ storyboard, fonts: fontRoles, recipe, 
     });
   }
 
-  // --- 字体：只解析 recipe.fonts 里真被 block 用到的角色 ---
+  // --- 字体：code 场注入 recipe 的全部字体；params 场只解析 template.needs.font ---
   const roles = new Set();
   for (const scene of storyboard.scenes) {
-    for (const el of scene.elements) {
-      for (const role of el.meta.needs?.font || []) roles.add(role);
+    if (scene.code !== null) {
+      for (const role of Object.keys(fontRoles || {})) roles.add(role);
+    } else if (scene.params !== null) {
+      for (const role of recipe?.template?.needs?.font || []) roles.add(role);
     }
   }
   const fonts = [];
@@ -88,7 +85,7 @@ export async function resolveStoryboard({ storyboard, fonts: fontRoles, recipe, 
     if (!name || !entry) {
       warnings.push({
         level: 'should', code: 'FONT_FALLBACK', path: `fonts.${role}`,
-        msg: `字体角色 "${role}" 没有对应的 manifest 条目，该 block 会回落到系统字体`,
+        msg: `字体角色 "${role}" 没有对应的 manifest 条目，画面会回落到系统字体`,
       });
       continue;
     }
@@ -97,34 +94,33 @@ export async function resolveStoryboard({ storyboard, fonts: fontRoles, recipe, 
     if (!existsSync(abs)) {
       warnings.push({
         level: 'should', code: 'FONT_FILE_MISSING', path: `assets/fonts/manifest.json`,
-        msg: `字体 ${name} 指向的 ${entry.src} 不存在，该 block 会回落到系统字体`,
+        msg: `字体 ${name} 指向的 ${entry.src} 不存在，画面会回落到系统字体`,
       });
       continue;
     }
     fonts.push({ role, name, src: entry.src });
   }
 
-  // --- 音效：element 显式给的优先，否则用 block 的 defaultSfx；另收 block 的编译期音效轨 ---
+  // --- 音效：params 场的模板音效（defaultSfx / sfxTrack）；code 场不自带门禁音效 ---
   const sfx = new Map();
-  for (const scene of storyboard.scenes) {
-    for (const el of scene.elements) {
-      const names = new Set([
-        el.sfx || el.meta.defaultSfx,
-        el.meta.sfxTrack?.sfx,
-        el.meta.sfxTrack?.loop?.sfx,
-      ]);
-      for (const name of names) {
-        if (!name) continue;
-        const entry = catalog.sfx[name];
-        if (!entry) {
-          warnings.push({
-            level: 'should', code: 'SFX_MISSING', path: `scenes.${scene.id}.${el.id}`,
-            msg: `音效 "${name}" 不在 assets/sfx/manifest.json 里，这一下会被静默跳过`,
-          });
-          continue;
-        }
-        sfx.set(name, entry);
+  const templateSfx = recipe?.mode === 'params' ? recipe.template : null;
+  if (templateSfx) {
+    const names = new Set([
+      templateSfx.defaultSfx,
+      templateSfx.sfxTrack?.sfx,
+      templateSfx.sfxTrack?.loop?.sfx,
+    ]);
+    for (const name of names) {
+      if (!name) continue;
+      const entry = catalog.sfx[name];
+      if (!entry) {
+        warnings.push({
+          level: 'should', code: 'SFX_MISSING', path: 'recipe.template',
+          msg: `音效 "${name}" 不在 assets/sfx/manifest.json 里，这一下会被静默跳过`,
+        });
+        continue;
       }
+      sfx.set(name, entry);
     }
   }
 
@@ -149,5 +145,5 @@ export async function resolveStoryboard({ storyboard, fonts: fontRoles, recipe, 
       }
     : null;
 
-  return { scenes, bgm, fonts, sfx, warnings, ttsUsed, pacing: recipe?.pacing || PACING };
+  return { scenes, bgm, fonts, sfx, warnings, ttsUsed, pacing: PACING };
 }

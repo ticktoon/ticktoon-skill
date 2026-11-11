@@ -1,6 +1,6 @@
 # TT.pen 公共笔库
 
-公共实现位于 `platform/kit/pen.js`，由 `platform/kit/index.json` 注入为 `TT.pen`。场景 block 只提交路径、时间与笔种，不另写笔尖跟随、笔具显隐或笔迹纹理。
+公共实现位于 `platform/kit/pen.js`，由 `platform/kit/index.json` 注入为 `TT.pen`。场景代码只提交路径、时间与笔种，不另写笔尖跟随、笔具显隐或笔迹纹理。
 
 ## 内置笔种
 
@@ -46,4 +46,4 @@ TT.pen.track(ctx, [
 - 多笔并发时，只显示 `at` 最新的未完笔；同一 `at` 取数组后项。
 - 没有未完笔时才选择收笔淡出的笔，因此后续空档和片尾不会残留笔具。
 
-六种笔的效果由 `TT.pen` 的 `style` 参数直接控制；`scene.pen-demo` 是开发对照用的 _lab block，不进入正式 recipe。
+六种笔的效果由 `TT.pen` 的 `style` 参数直接控制；要对照笔种，直接在 `scene.code` 里并排写几段 `TT.pen.stroke`。

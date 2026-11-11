@@ -1,0 +1,210 @@
+/* @ticktoon-ref-shot
+{
+  "title": "一元二次方程求根公式",
+  "note": "黑板推导：配方、开方、得出公式，再代入一个例子；一整场约 28 秒",
+  "duration": 27.974,
+  "resources": [],
+  "tags": [
+    "推导",
+    "代数",
+    "黑板"
+  ]
+}
+*/
+// 黑板教学 · 示例：一元二次方程求根公式的推导
+// 内容（方程、步骤、例子）全部写在本段 code 里；板面与粉笔槽由 TT.board 画，
+// 粉笔笔迹只走 TT.pen，字号与线宽从 recipe 注入的 RULES 读。
+const t = api.t;
+const D = Math.max(0.001, api.d);
+const clamp01 = TT.clamp01;
+const ease = TT.ease;
+const TAU = Math.PI * 2;
+
+// ---- 视觉规范：边距、字号阶梯、线宽区间都由 recipe.rules 决定 ----
+const SCALE = RULES.scale || { title: 1, label: 0.8, note: 0.6 };
+const STROKE = Array.isArray(RULES.stroke) ? RULES.stroke : [3, 6];
+const M = Number.isFinite(RULES.safeMargin) ? RULES.safeMargin : 0.06;
+const thin = STROKE[0];
+const mid = (STROKE[0] + STROKE[1]) / 2;
+const bold = STROKE[1];
+const titlePx = 84 * SCALE.title;
+const stepPx = 36 * SCALE.label;
+const eqPx = 56 * SCALE.label;
+const formulaPx = 74 * SCALE.label;
+const resultPx = 62 * SCALE.label;
+const notePx = 40 * SCALE.note;
+
+// 节拍以片长比例排：换一段旁白、片长变了，书写顺序也不会散。
+const B = (f) => f * D;
+const prog = (value, at, dur) => ease.inOutCubic(clamp01((value - at) / Math.max(0.001, dur)));
+const show = (atFrac, durFrac) => prog(t, B(atFrac), B(durFrac));
+const ellipse = (cx, cy, rx, ry, start = -1.9, n = 76) => Array.from({ length: n + 1 }, (_, i) => {
+  const a = start + TAU * i / n;
+  const wob = Math.sin(i * 2.17) * 1.6 + Math.sin(i * 5.3) * 0.7;
+  return [cx + Math.cos(a) * (rx + wob), cy + Math.sin(a) * (ry + wob * 0.32)];
+});
+
+// ---- 镜头与安全框：TT.geom 统一 zoom 路径与反像采样 ----
+const enterDur = 0.62;
+const exitDur = 0.3472;
+const alpha = TT.env.fade(t, api.d, enterDur, exitDur);
+
+ctx.save();
+ctx.globalAlpha = alpha;
+// 深绿板面、粉笔槽与板擦只由 TT.board 提供，内容层不重复画板。
+TT.board.blackboard(ctx, api);
+
+const FRAME = { x: -40, y: 40, w: 2000, h: 840 };
+const ZOOM = { mode: 'in', from: 1.0, to: 1.035, focus: [0.5, 0.49] };
+const frames = TT.geom.keyframes(ZOOM, api.d);
+const safe = TT.geom.safeBox({ W, H, m: M });
+const pre = TT.geom.preimage({ frames, dur: api.d, W, H, safe });
+const framing = TT.geom.fit(FRAME, pre);
+const fit = framing.scale;
+const z = TT.geom.camera(frames, t);
+const scale = Math.min(2, Math.max(0.01, z.scale));
+const fx = clamp01(z.fx) * W;
+const fy = clamp01(z.fy) * H;
+
+ctx.save();
+ctx.translate(fx, fy);
+ctx.scale(scale, scale);
+ctx.translate(-fx, -fy);
+ctx.translate(framing.dx, framing.dy);
+ctx.scale(framing.scale, framing.scale);
+
+// 黑板上只用五种粉笔色：白、米黄、浅蓝、浅红、浅绿。
+const ink = '#f2eee0';
+const yellow = '#e8d29a';
+const blue = '#b8d9dd';
+const red = '#efb09a';
+const green = '#a9d2bd';
+const muted = '#d2d8ce';
+const strokes = [];
+const stroke = (pts, atFrac, durFrac, color = ink, width = mid, dash = []) => {
+  strokes.push({
+    pts, at: B(atFrac), dur: Math.max(0.12, B(durFrac)),
+    pen: 'chalk', color, width, dash, seed: strokes.length + 1,
+  });
+};
+const arrow = (pts, atFrac, durFrac, color, width = mid) => {
+  stroke(pts, atFrac, durFrac, color, width);
+  const last = pts[pts.length - 1];
+  const before = pts[pts.length - 2];
+  const angle = Math.atan2(last[1] - before[1], last[0] - before[0]);
+  const point = (x, y) => [
+    last[0] + x * Math.cos(angle) - y * Math.sin(angle),
+    last[1] + x * Math.sin(angle) + y * Math.cos(angle),
+  ];
+  const headAt = atFrac + durFrac * 0.79;
+  const headDur = durFrac * 0.21;
+  stroke([point(-20, -10), point(0, 0)], headAt, headDur, color, width);
+  stroke([point(-20, 10), point(0, 0)], headAt, headDur, color, width);
+};
+const label = (value, x, y, size, color, k, align = 'left', rotate = -0.008) => {
+  if (k <= 0) return;
+  ctx.save();
+  ctx.translate(x, y + (1 - k) * 10);
+  ctx.rotate(rotate);
+  ctx.globalAlpha = clamp01(k) * alpha;
+  TT.text(ctx, value, 0, 0, size, { color, align, role: 'body' });
+  ctx.restore();
+};
+
+// ---- 第 1 拍：标题与副题 ----
+label('求根公式', 960, 142, titlePx, ink, show(0.015, 0.045), 'center', -0.012);
+stroke([[815, 169], [905, 172], [1030, 168], [1115, 171]], 0.052, 0.024, yellow, bold);
+label('从一般式到两个根，只需要五步', 960, 204, notePx, muted, show(0.062, 0.028), 'center', 0.006);
+
+// ---- 第 2 拍：一般式 ----
+label('①', 150, 268, stepPx, yellow, show(0.082, 0.018));
+label('ax² + bx + c = 0', 232, 270, eqPx, ink, show(0.088, 0.03));
+label('a ≠ 0', 930, 270, notePx, blue, show(0.108, 0.018));
+label('先看清方程的样子', 232, 300, notePx, muted, show(0.112, 0.02), 'left', 0.004);
+
+// ---- 第 3 拍：同除以 a ----
+label('②', 150, 350, stepPx, yellow, show(0.152, 0.018));
+label('x² + (b/a)x + c/a = 0', 232, 352, eqPx, ink, show(0.158, 0.03));
+label('两边同除以 a', 930, 352, notePx, blue, show(0.178, 0.018));
+arrow([[880, 322], [820, 318], [780, 316]], 0.185, 0.018, blue, thin);
+
+// ---- 第 4 拍：移项与配方 ----
+label('③', 150, 432, stepPx, yellow, show(0.222, 0.018));
+label('x² + (b/a)x = -c/a', 232, 434, eqPx, ink, show(0.228, 0.03));
+label('(x + b/2a)² = (b² - 4ac) / 4a²', 232, 507, eqPx, ink, show(0.258, 0.036));
+label('两边加上 (b/2a)²', 930, 434, notePx, blue, show(0.248, 0.018));
+stroke([[492, 452], [540, 455], [596, 451]], 0.268, 0.016, yellow, thin);
+label('左边凑成完全平方', 232, 537, notePx, muted, show(0.298, 0.018), 'left', 0.004);
+
+// ---- 第 5 拍：开方 ----
+label('④', 150, 586, stepPx, yellow, show(0.332, 0.018));
+label('x + b/2a = ± √(b² - 4ac) / 2a', 232, 588, eqPx, ink, show(0.338, 0.032));
+label('两边开方，注意正负', 930, 588, notePx, blue, show(0.362, 0.018));
+arrow([[870, 558], [820, 554], [780, 552]], 0.370, 0.016, blue, thin);
+
+// ---- 第 6 拍：求根公式 ----
+label('⑤', 150, 690, stepPx, yellow, show(0.408, 0.018));
+label('x = (-b ± √(b² - 4ac)) / 2a', 232, 690, formulaPx, red, show(0.418, 0.04));
+const circleK = show(0.470, 0.03);
+if (circleK > 0) {
+  ctx.save();
+  ctx.strokeStyle = red;
+  ctx.lineWidth = bold;
+  ctx.globalAlpha *= Math.min(1, circleK * 3);
+  const ring = ellipse(632, 674, 430, 38, -1.72).map(([x, y], i) => {
+    const k = Math.max(0, Math.min(1, circleK * 1.45 - i / 160));
+    return [632 + (x - 632) * k, 674 + (y - 674) * k];
+  });
+  ctx.beginPath();
+  ctx.moveTo(ring[0][0], ring[0][1]);
+  for (let i = 1; i < ring.length; i += 1) ctx.lineTo(ring[i][0], ring[i][1]);
+  ctx.stroke();
+  ctx.restore();
+}
+label('这就是求根公式', 232, 730, notePx, muted, show(0.492, 0.02), 'left', 0.006);
+label('判别式 Δ = b² - 4ac', 232, 770, notePx, yellow, show(0.512, 0.022));
+stroke([[388, 782], [452, 785], [520, 781]], 0.522, 0.016, yellow, thin);
+
+// ---- 第 7 拍：右边代入一个例子 ----
+stroke([[1188, 244], [1192, 410], [1189, 590], [1193, 838]], 0.432, 0.05, muted, thin, [16, 12]);
+label('代入检验', 1274, 280, 40 * SCALE.label, yellow, show(0.540, 0.022));
+label('x² - 5x + 6 = 0', 1274, 340, eqPx, ink, show(0.552, 0.03));
+label('a = 1，b = -5，c = 6', 1274, 386, notePx, muted, show(0.578, 0.02));
+label('Δ = 25 - 24 = 1', 1274, 446, 48 * SCALE.label, blue, show(0.602, 0.022));
+label('x = (5 ± 1) / 2', 1274, 506, 48 * SCALE.label, blue, show(0.628, 0.022));
+label('x₁ = 2，x₂ = 3', 1274, 576, resultPx, green, show(0.660, 0.028));
+stroke([[1280, 590], [1370, 593], [1470, 589], [1560, 592]], 0.678, 0.02, green, mid);
+label('两个根都让原式等于零', 1274, 626, notePx, muted, show(0.696, 0.02), 'left', 0.004);
+
+// ---- 第 8 拍：抛物线把两个根落在 x 轴上 ----
+// 只画 u ∈ [1.3, 3.72] 这一段：抛物线两端落在设计框底边以内，
+// 画面外不留下墨迹，最后两个交点仍在 x 轴上。
+const axisY = 752;
+const axisX = 1542;
+const curveX = (u) => axisX + (u - 2.5) * 96;
+const curveY = (u) => axisY + 64 * (u - 2) * (u - 3);
+arrow([[1290, axisY], [1430, axisY + 1], [1580, axisY - 1], [1800, axisY + 1]], 0.716, 0.03, ink, thin);
+arrow([[axisX, 826], [axisX - 1, 750], [axisX + 1, 690], [axisX, 630]], 0.732, 0.026, ink, thin);
+const curve = Array.from({ length: 58 }, (_, i) => {
+  const u = 1.3 + (2.42 * i) / 57;
+  return [curveX(u), curveY(u)];
+});
+stroke(curve, 0.748, 0.045, blue, mid);
+const tick = (value) => {
+  const x = curveX(value);
+  stroke([[x, axisY - 7], [x, axisY + 8]], 0.790, 0.012, ink, thin);
+  label(String(value), x, axisY + 42, notePx, muted, show(0.792, 0.012), 'center');
+};
+tick(2);
+tick(3);
+// 轴名与函数名在交点亮起前先到位，读者能把图形和右边的代数式对上。
+label('y', 1520, 700, notePx, muted, show(0.744, 0.012), 'right', 0.004);
+label('x', 1812, 768, notePx, muted, show(0.752, 0.012), 'left', 0.004);
+label('y = x² - 5x + 6', 1288, 690, notePx, blue, show(0.760, 0.02), 'left', -0.004);
+label('两个交点就是两个根', 1544, 858, notePx, green, show(0.778, 0.02), 'center', 0.004);
+stroke([[1466, 866], [1500, 869], [1544, 866], [1590, 869], [1622, 866]], 0.780, 0.010, green, thin);
+
+// ---- 收笔：粉笔放回槽里，最后 15% 只留板书 ----
+TT.pen.track(ctx, strokes, t, { sceneScale: fit * scale });
+ctx.restore(); // 镜头 + fit 变换
+ctx.restore(); // 场景淡入淡出

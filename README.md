@@ -18,7 +18,7 @@
 
 An LLM writes one `storyboard.json`. The platform compiles it into protocol v1.0 `composition.json`; the engine renders every frame synchronously with `tick(t)`; Chrome exports an ordinary MP4.
 
-The authoring model is deliberately narrow: one storyboard file, one compile chain, one synchronous render path. The storyboard is the only authored file; recipes provide the production rules, blocks provide reusable layouts, and the kit provides drawing vocabulary.
+The authoring model is deliberately narrow: one storyboard file, one compile chain, one synchronous render path. The storyboard is the only authored file; recipes provide the production rules, a params recipe carries its own fixed template, and the kit provides drawing vocabulary.
 
 <!--
 Demo: drop a short GIF/WebP in assets/readme/ and uncomment.
@@ -31,11 +31,11 @@ Demo: drop a short GIF/WebP in assets/readme/ and uncomment.
 ```text
 user request
    ↓
-SKILL.md ── selects a recipe, reads its brief / demo
+SKILL.md ── selects a recipe, reads its brief / skeleton
    ↓
 storyboard.json                  ← the only file the agent writes
-   ├─ scene.code                 whole-frame canvas content
-   └─ elements[]                 parameterized blocks
+   ├─ scene.code                 code recipe: whole-frame canvas content
+   └─ scene.params               params recipe: fields for the recipe template
    ↓
 schema → resolve → plan → emit → check → assemble
    ↓
@@ -54,27 +54,26 @@ The runtime has four layers, deliberately small:
 | Layer | Lives in | Responsibility | The agent reads it |
 |---|---|---|---|
 | Operating contract | `SKILL.md` | routing, authoring loop, red lines, delivery checks | every task |
-| Recipe spec | `recipes/<id>/` | `recipe.json`, `brief.md`, demo, and for code recipes `visual.md` / `examples/` | one selected recipe |
+| Recipe spec | `recipes/<id>/` | `recipe.json`, `brief.md`, `skeleton.storyboard.json`; code recipes add `visual.md` / `ref-shots/`, params recipes add `template.js` | one selected recipe |
 | Runtime reference | `references/` | API manual for `scene.code` and public kit | one page when needed |
-| Content | `<project>/storyboard.json` | this film's scenes, narration, captions, assets, code | **writes** |
+| Content | `<project>/storyboard.json` | this film's scenes, narration, captions, assets, code, params | **writes** |
 
-Below the authoring layers sit the implementation layers: `platform/kit/` (public kit and caption styles), `platform/blocks/` (scene blocks), the six-stage compiler in `platform/compile/`, the quality pipeline in `platform/inspect/`, and the Ticktoon engine.
+Below the authoring layers sit the implementation layers: `platform/kit/` (public kit and caption styles), the six-stage compiler in `platform/compile/`, the quality pipeline in `platform/inspect/`, and the Ticktoon engine.
 
-Three units carry everything:
+Two units carry everything:
 
 | Unit | Where | It owns | It does not own |
 |---|---|---|---|
-| **recipe** | `recipes/` | the rules for one kind of film: `blocks`, `fonts`, `rules`, `captions`, `audio`, `verify` | content, narrative, drawing |
-| **block** | `platform/blocks/` | an exhaustible, parameterized layout or visual unit | topic enums, story structure |
+| **recipe** | `recipes/` | the rules for one kind of film: `mode`, `fonts`, `rules`, `captions`, `audio`; a params recipe also owns `template` (`draw / params / resources / needs / defaultSfx / sfxTrack / motion / inkless`) | content, narrative, drawing |
 | **kit** | `platform/kit/` | reusable drawing vocabulary: text, pen, mark, board, camera, transition, captions, news background | composition, subject matter |
 
-`recipe.json`'s top-level `fonts` is the machine contract shared by the compiler and QA: font roles only, with no `style` wrapper. Colors come from kit defaults or hex written directly in code scenes; backgrounds are painted by code scenes or blocks. It carries no sizes, line heights, layouts, or motion; those belong to code scenes or block-local metadata. All values are static and traceable.
+A recipe is either `mode: "code"` (scenes write `scene.code` against the public kit) or `mode: "params"` (scenes write `scene.params`, and the recipe's own `template.js` draws a fixed full-frame layout). The two modes never mix inside one recipe. `recipe.json`'s top-level `fonts` is the machine contract shared by the compiler and QA: font roles only, with no `style` wrapper. Colors come from kit defaults or hex written directly in code scenes; backgrounds are painted by code scenes or templates. It carries no sizes, line heights, layouts, or motion; those belong to code scenes or template-local metadata. All values are static and traceable.
 
-Compilation is deterministic: the same storyboard and inputs produce the same `composition.json`, which `tt det` verifies. Progressive disclosure is part of the design too: `SKILL.md` routes, a recipe's `brief.md` and demo are the only documents read before writing, and `references/` are consulted one page at a time.
+Compilation is deterministic: the same storyboard and inputs produce the same `composition.json`, which `tt det` verifies. Progressive disclosure is part of the design too: `SKILL.md` routes; a recipe's `brief.md` and `skeleton.storyboard.json` are read first, code recipes then read `visual.md` and one or two `ref-shots/`, and `references/` are consulted one page at a time.
 
 ## What it can do
 
-Recipes cover explainers, stories, fast cuts, breaking news, and real footage. A recipe either carries content in a whole-frame `scene.code` or is a parameterized `scene.*` layout. `tt recipe list` is the authoritative, always-current shelf; the table below is the set bundled with this repo.
+Recipes cover explainers, stories, fast cuts, breaking news, and real footage. A recipe either carries content in a whole-frame `scene.code` or is a fixed template driven by `scene.params`. `tt recipe list` is the authoritative, always-current shelf; the table below is the set bundled with this repo.
 
 | Recipe | Picture | Content path | Best for |
 |---|---|---|---|
@@ -83,10 +82,10 @@ Recipes cover explainers, stories, fast cuts, breaking news, and real footage. A
 | `ink-painting` | Ink lines, washes, and large negative space | `scene.code` | Eastern aesthetics, poetry, culture |
 | `illustrated-story` | Paper collage, cut-out lettering | `scene.code` | short stories, observations, essays |
 | `flash-cut` | Hard cuts, oversized type, one sentence per scene | `scene.code` | punchy opinions, conclusions, promo beats |
-| `crayon-guide` | Warm paper, crayon hatching, hand-drawn labels | `scene.crayon` | recipes, checklists, kids' explainers |
-| `shadow-play` | Backlit screen, articulated silhouettes | `scene.shadow` | fables, folk tales, gesture-led scenes |
-| `news-broadcast` | Fixed vertical news card: blue radial background, world map, flowing lines | `scene.news` | breaking-news cards, title / body / source |
-| `footage-cut` | Full-frame real footage with short overlay lines | `scene.footage` | Pexels or local footage montage |
+| `crayon-guide` | Warm paper, crayon hatching, hand-drawn labels | `scene.params` | recipes, checklists, kids' explainers |
+| `shadow-play` | Backlit screen, articulated silhouettes | `scene.params` | fables, folk tales, gesture-led scenes |
+| `news-broadcast` | Fixed vertical news card: blue radial background, world map, flowing lines | `scene.params` | breaking-news cards, title / body / source |
+| `footage-cut` | Full-frame real footage with short overlay lines | `scene.params` | Pexels or local footage montage |
 
 Also included:
 
@@ -95,17 +94,61 @@ Also included:
 - **Narration and sound** — zero-key edge-tts by default, optional Volc TTS, BGM/SFX with ducking and fades.
 - **Stock footage** — Pexels search, download, attribution, caching, and bundled fallback.
 - **Preview and review** — read-only preview, stills, probe receipts, and per-frame pen annotations accumulated into a send list; sending writes the whole batch with screenshots into `<project>/annotations/` and closes the preview, read back with `tt annotations`.
-- **Quality gates** — `tt qa` with an empty-ink must-check, recipe `verify` / `forbid`, and a 12-cell contact sheet; `tt det` for compile determinism.
+- **Quality gates** — `tt qa` with render-error and empty-ink must-checks plus a 12-cell contact sheet; `tt det` for compile determinism.
 - **Direct MP4** — H.264 + AAC through WebCodecs and Mediabunny; no external FFmpeg executable.
 - **Formats** — 1920×1080@30 and 1080×1920@30.
 
 <!--
-Case images: put screenshots or GIFs in assets/readme/, then uncomment and adjust this block.
+Case images: put screenshots or GIFs in assets/readme/, then uncomment and adjust this section.
 
 ![Whiteboard explainer](assets/readme/whiteboard-explainer.png)
 ![Crayon guide](assets/readme/crayon-guide.png)
 ![News broadcast](assets/readme/news-broadcast.png)
 -->
+
+## QA: one browser session, captured frames, receipts, and contact sheet
+
+`tt qa` is not a loop of screenshots. It builds once, opens a single local Chrome session over CDP, samples 24–30 frames across the film, and asks the engine's own capture path for each frame:
+
+```text
+pause → seek(t) → await video.settle(t) → synchronous tick(t) redraw → PNG
+```
+
+Frame readiness is decided by the engine, not by a fixed sleep. A fast machine does not wait idly; a slow machine or a heavy video does not sample a black or stale frame before the video has settled.
+
+The same in-page callback computes a 32×18 luminance probe and paints the frame into the 12-cell contact sheet. The frame's real receipts (ink boxes / text / captions) are read right after the capture. The sheet is composed in the page—no second render pass and no shipping N PNGs back to Node just to tile them.
+
+Sampling is scene-aware: every scene gets at least one frame; a single frame sits at 55% of the scene, multiple frames spread from 18% to 82%, avoiding entrances and exits. The contact sheet takes the first frame at 6% and the last at 94%. The sheet is visual evidence, not a scorecard.
+
+The machine gate is deliberately light: `RENDER_PAGE_ERROR` and `QA_INK_EMPTY` (a scene unit executed but left no visible ink). Safe areas, collisions, text overlap, caption bands, contrast, and hold time are not scored—the contact sheet and a human / agent judge those. Reports contain only issues that actually fired; demoted checks are not kept around.
+
+**Why it is fast** (local measurement, 27-frame flash-cut, including build):
+
+| | Old Playwright path | Now |
+|---|---|---|
+| Browser start | 2.57s | 0.51s |
+| Per-frame wait | 2 RAF + 140ms fixed sleep | engine `video.settle(t)` |
+| Fixed wait, 27 frames | 4.2–4.7s | 0 |
+| Full `tt qa` | — | 4.1s |
+| npm dependency | playwright + core: ~4.1MB download / ~18.7MB on disk, Node ≥20 | reuses existing `ws`, Node ≥18 |
+
+At 60–120Hz the old path's fixed waits alone were 4.2–4.7s—comparable to the current whole QA run. Across 9 recipes in `tt ci --deep`, browser startup alone saves about 18s; the current full run is 42.2s locally. QA, stills, snapshot, and render share the same local-Chrome CDP driver, so there is no extra automation framework layer to install.
+
+## Live preview and annotations: from review to revision
+
+`tt preview --dir my-video` opens a local read-only preview. The picture is played by the same engine `compositor.tick(t)` used by export—there is no second renderer and no visual editor. After editing the storyboard, run `tt build`; the page watches `composition.json`'s mtime and refreshes itself.
+
+When something looks wrong, draw on the frame and leave a note in the bottom annotation dock:
+
+1. Click **画笔批注** (pen annotation); the preview pauses at the current frame, and you can circle or mark the problem area with the pen.
+2. Write the description and click **完成批注** (finish annotation). It enters the in-page send list. You can jump to another timestamp, add more, or remove a draft.
+3. Click **发送批注** (send annotations). The whole batch is POSTed to the local preview server and written to `<project>/annotations/<batch>/`. Each item carries the description, time, matching scene clip, and three PNGs: the original frame, the ink-only layer, and the composed annotated frame.
+4. The preview closes itself after a successful send, returning control to the agent session that launched it. If the agent launched the preview, the batch is handed back on exit; otherwise `tt annotations` reads the latest unhandled batch. The agent opens `annotatedFrame` to see the marks, and uses `desc` / `t` / `clip` to find the scene to change.
+5. Edit `storyboard.json` → `tt build` → `tt preview` again. When done, `tt annotations --dir my-video --ack <batch-id>` marks the batch handled.
+
+The loop is closed: the agent no longer has to guess which frame or scene unit the user means. The annotation and screenshot are the locating evidence. `annotations/` holds user input, is not written to `out/`, and survives rebuilds. The single source of truth stays the storyboard; no second runtime or visual editor is introduced.
+
+> The preview does not play audio; export an MP4 to hear the narration.
 
 ## How to use
 
@@ -118,13 +161,13 @@ npm install
 node scripts/doctor.mjs
 ```
 
-`doctor` checks Node, the Ticktoon engine artifacts, npm dependencies, Chrome, WebGL2, and optional TTS/asset providers. If it reports missing `deps`, run `npm install` in the skill directory; Playwright only drives the locally installed Chrome (≥120) and does not download its own browsers. On a headless server, set `DH_VIDEO_WEBGL=swiftshader`.
+`doctor` checks Node, the Ticktoon engine artifacts, npm dependencies, Chrome, WebGL2, and optional TTS/asset providers. If it reports missing `deps`, run `npm install` in the skill directory; the skill drives the locally installed Chrome (≥120) directly over CDP and does not download its own browser. On a headless server, set `DH_VIDEO_WEBGL=swiftshader`.
 
 The default path needs no API keys: edge-tts plus bundled demo assets. Optional Volc TTS and Pexels upgrades are configured with `node scripts/auth.mjs set <KEY> <value>`; credentials are read from environment variables or `~/.dh-video/credentials.json` and never stored in a storyboard or project.
 
 ### From an agent
 
-Place this repository, or the clean distribution produced by `tt pack`, in your agent's skills directory (for Claude Code, something like `~/.claude/skills/ticktoon`), with [`SKILL.md`](SKILL.md) at its root. The agent selects a recipe from `recipes/`, reads its brief and demo, then writes and compiles a storyboard.
+Place this repository, or the clean distribution produced by `tt pack`, in your agent's skills directory (for Claude Code, something like `~/.claude/skills/ticktoon`), with [`SKILL.md`](SKILL.md) at its root. The agent selects a recipe from `recipes/`, reads its brief and skeleton, then writes and compiles a storyboard. Code recipes also read `visual.md` and `ref-shots/`.
 
 Example request:
 
@@ -133,15 +176,15 @@ Example request:
 ### From the CLI
 
 ```bash
-node platform/cli.mjs new demo --recipe whiteboard-explainer   # scaffold a project
-node platform/cli.mjs build --dir demo                          # fast compile (estimated timing, no voice)
-node platform/cli.mjs stills 0.6 3.1 9.4 --dir demo             # stills + layout receipts
-node platform/cli.mjs preview --dir demo --port 5123            # read-only preview
-node platform/cli.mjs annotations --dir demo                    # read the batch sent from the preview
-node platform/cli.mjs qa --dir demo                             # must-gate + 12-cell contact sheet
-node platform/cli.mjs det --twice --dir demo                    # compile-determinism check
-node platform/cli.mjs build --dir demo --tts edge               # recompile with real narration
-node scripts/render.mjs demo/out/composition.json -o demo/video.mp4
+node platform/cli.mjs new my-video --recipe whiteboard-explainer   # scaffold a project
+node platform/cli.mjs build --dir my-video                          # fast compile (estimated timing, no voice)
+node platform/cli.mjs stills 0.6 3.1 9.4 --dir my-video             # stills + layout receipts
+node platform/cli.mjs preview --dir my-video --port 5123            # read-only preview
+node platform/cli.mjs annotations --dir my-video                    # read the batch sent from the preview
+node platform/cli.mjs qa --dir my-video                             # must-gate + 12-cell contact sheet
+node platform/cli.mjs det --twice --dir my-video                    # compile-determinism check
+node platform/cli.mjs build --dir my-video --tts edge               # recompile with real narration
+node scripts/render.mjs my-video/out/composition.json -o my-video/video.mp4
 ```
 
 `tt` refers to `node platform/cli.mjs` (or `npm run tt --`). `storyboard.json` is the only file you write. Everything under `out/` is a build product; do not hand-edit it. Run `build` again after changes and the preview refreshes automatically. Export MP4 only when it is explicitly wanted; a build without `--tts` has no narration track.
@@ -150,11 +193,11 @@ Useful commands:
 
 | Command | Purpose |
 |---|---|
-| `tt recipe list / show <id> / audit` | list recipes, inspect one contract, audit all demos |
-| `tt block list` | list blocks with their contracts |
+| `tt recipe list / show <id> / audit` | list recipes, inspect one contract (mode / template), audit all skeletons and ref-shot sets |
 | `tt annotations [--all] [--ack [id]]` | read annotation batches sent from the preview (latest unacked by default); `--ack` marks the batch handled |
+| `tt lab [--recipe <id>] [--port N]` | code-recipe ref-shot lab: preview each `ref-shots/` file through real build + engine; edit code and rerun without writing back |
 | `tt ci [--deep]` | full regression: audit + double-build determinism; `--deep` runs QA for every recipe |
-| `tt ci --baseline [--write]` | compare demo compile fingerprints; refresh the baseline after review |
+| `tt ci --baseline [--write]` | compare skeleton / ref-shot-set compile fingerprints; refresh the baseline after review |
 | `tt pack [dir]` | build a clean distribution (Skill + engine dist) |
 
 ## Folder structure
@@ -162,21 +205,25 @@ Useful commands:
 ```text
 ticktoon-skill/
 ├── SKILL.md                     # agent entry: routing, loop, red lines
-├── recipes/                     # bundled recipes: rules, briefs, demos, examples
+├── recipes/                     # bundled recipes: rules, briefs, skeletons, ref-shots
 │   ├── whiteboard-explainer/
-│   │   ├── recipe.json          # blocks / fonts / rules / captions / audio / verify
+│   │   ├── recipe.json          # mode / fonts / rules / captions / audio
 │   │   ├── brief.md             # when to use, when not, visual numbers
-│   │   ├── demo.storyboard.json
+│   │   ├── skeleton.storyboard.json
 │   │   ├── visual.md            # code-recipe visual physics
-│   │   └── examples/*.js
+│   │   └── ref-shots/*.js
+│   ├── news-broadcast/
+│   │   ├── recipe.json          # mode: params + template contract
+│   │   ├── template.js         # fixed full-frame template: draw(g, p)
+│   │   ├── brief.md
+│   │   └── skeleton.storyboard.json
 │   └── ...
 ├── references/                  # runtime API manual: storyboard, scene code, kit
 ├── platform/
 │   ├── compile/                 # schema → resolve → plan → emit → check → assemble
-│   ├── inspect/                 # stills, probe, qa, verify, det
-│   ├── project/                 # new, build, audit
+│   ├── inspect/                 # stills, probe, qa, det
+│   ├── project/                 # new, build, audit, ref-shots
 │   ├── kit/                     # public kit namespaces + caption styles
-│   ├── blocks/                  # scene blocks + _lab demos
 │   └── preview/                 # read-only preview + pen annotation
 ├── scripts/                     # render, doctor, auth, snapshot, pack
 ├── assets/                      # fonts, BGM, SFX, demo media, README images

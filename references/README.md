@@ -7,7 +7,7 @@
 - `storyboard.md`：storyboard 唯一手写文件的契约
 - `ticktoon-authoring.md`：引擎级 scene API 与扩展契约
 - `authoring-code.md`：`scene.code` 写作、注入与验收
-- 具体 recipe 目录里的 `visual.md` / `examples/`：该 recipe 的物理规范与可运行范例，只在写该 recipe 的 `scene.code` 时读
+- 具体 recipe 目录里的 `visual.md` / `ref-shots/`：该 recipe 的物理规范与可运行范例，只在写该 recipe 的 `scene.code` 时读
 - `qa.md`：交付前检查、12 格联系表读法
 - `iterate.md`：反馈、预览批注与 TTS 语义
 - `pexels.md`：实拍素材检索、缓存与降级

@@ -1,6 +1,6 @@
 {
   "id": "news-broadcast",
-  "abi": "8",
+  "abi": "9",
   "name": "突发新闻",
   "keywords": [
     "新闻",
@@ -12,9 +12,72 @@
     "键盘声"
   ],
   "when": "固定竖版突发新闻模板：径向蓝底 + 世界地图 + 流动线，只写标题、正文、来源与可选品牌；标题/正文可用行首 * 标黄重点行，无旁白、无字幕",
-  "blocks": [
-    "scene.news"
-  ],
+  "mode": "params",
+  "template": {
+    "draw": "template.js",
+    "params": {
+      "title": {
+        "type": "string",
+        "required": true,
+        "maxChars": 20,
+        "feel": "主标题；89px 文源宋体，\\n 至多两行，每行建议 ≤10 字；行首 * 改重点黄"
+      },
+      "content": {
+        "type": "string",
+        "required": true,
+        "maxChars": 140,
+        "minLines": 2,
+        "maxLines": 6,
+        "feel": "正文；65px 文源宋体，\\n 手动分行，2–6 个可见行、每行 ≤13 字；空行作段落间距；整体重心固定在版面上部，行首 * 改重点黄"
+      },
+      "source": {
+        "type": "string",
+        "required": true,
+        "maxChars": 24,
+        "feel": "来源机构；模板自动加「消息来源：」，40px 白字红底徽标，文字按真实墨迹上下居中"
+      },
+      "brand": {
+        "type": "string",
+        "default": "",
+        "maxChars": 16,
+        "feel": "可选台标/账号，默认空字符串不显示；底部居中，80% 不透明度"
+      }
+    },
+    "needs": {
+      "font": [
+        "display",
+        "body",
+        "brand"
+      ],
+      "image": false,
+      "video": false,
+      "three": false
+    },
+    "resources": [
+      {
+        "type": "image",
+        "name": "news-world-map",
+        "src": "skill:assets/image/world-map.png"
+      }
+    ],
+    "sfxTrack": {
+      "type": "typing",
+      "textParam": "content",
+      "cps": 10,
+      "start": 0.9,
+      "lineGap": 0.16,
+      "linePrefix": "*",
+      "loop": {
+        "sfx": "keyboard-loop",
+        "fadeOut": 0.06
+      }
+    },
+    "motion": {
+      "enter": 0.42,
+      "exitRatio": 0.44
+    },
+    "inkless": true
+  },
   "fonts": {
     "display": "WenYuanSerifSC-Bold",
     "body": "WenYuanSerifSC-Bold",
@@ -23,22 +86,13 @@
   },
   "rules": {
     "safeMargin": 0.055,
-    "scale": {
-      "title": 1,
-      "content": 1,
-      "source": 0.9,
-      "brand": 0.8
-    },
-    "stroke": [
-      1,
-      2
-    ],
     "forbid": [
-      "给 scene.news 传未声明字段；固定模板只接受 title / content / source / brand",
-      "让 scene.news 自动折行；分行只能由 title / content 里的 \\n 决定",
+      "给 params 传未声明字段；固定模板只接受 title / content / source / brand",
+      "让模板自动折行；分行只能由 title / content 里的 \n 决定",
       "在同一幕再叠一层字幕；本 recipe 画面文字即正文，字幕必须为 none",
       "给本 recipe 写 narration 或依赖 TTS；新闻卡只用打字机与 BGM",
-      "修改蓝底、地图、网格或流动线的版式；背景属于 TT.newsBg 公共 kit，其他新闻 recipe 复用而不是复制"
+      "修改蓝底、地图、网格或流动线的版式；背景属于 TT.newsBg 公共 kit，其他新闻 recipe 复用而不是复制",
+      "在同一场景写 scene.code；本 recipe 只收 scene.params"
     ]
   },
   "captions": {
@@ -53,26 +107,5 @@
       "level": 0.055,
       "edge": 0.15
     }
-  },
-  "verify": [
-    {
-      "at": 0.15,
-      "assert": "ink.insideSafe",
-      "args": {
-        "margin": 0.055
-      }
-    },
-    {
-      "at": 0.9,
-      "assert": "element.count.gte",
-      "args": {
-        "n": 1
-      }
-    },
-    {
-      "at": 0.9,
-      "assert": "caption.noOverlapSubject",
-      "args": {}
-    }
-  ]
+  }
 }

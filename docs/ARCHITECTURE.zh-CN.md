@@ -12,11 +12,11 @@
 ```text
 用户需求
    ↓
-SKILL.md：选 recipe，读对应 contract / demo
+SKILL.md：选 recipe，读对应 contract / skeleton
    ↓
 storyboard.json                       ← Agent 唯一需要手写的文件
-   ├─ scene.code：整幅内容由作者实时写
-   └─ elements[]：参数化 block 版式
+   ├─ scene.code：code 型 recipe，整幅内容由作者实时写
+   └─ scene.params：params 型 recipe，交给 recipe 模板的字段
    ↓
 schema → resolve → plan → emit → check → assemble
    ↓
@@ -24,7 +24,7 @@ composition.json / events.json / subs.srt / report.json
    ↓
 ticktoon CanvasCompositor.tick(t)
    ├─ 只读预览 / 画笔批注
-   ├─ stills / probe / qa（轻量空墨迹校验 + verify/forbid 与 12 格联系表）
+   ├─ stills / probe / qa（轻量渲染异常 + 空墨迹校验 + 12 格联系表）
    ├─ det
    └─ WebCodecs + Mediabunny → 普通 MP4（H.264 + AAC）
 ```
@@ -33,8 +33,8 @@ ticktoon CanvasCompositor.tick(t)
 
 | 项 | 实际数量 |
 |---|---|
-| recipe | **9**（ABI 8，内置 `fonts / rules / captions / audio`） |
-| 正式 block | **4**（`scene.*`，另有 2 个 `_lab` 实验件） |
+| recipe | **9**（ABI 9，每条声明 `mode: "code"` 或 `"params"`） |
+| params 模板 | **4**（crayon-guide / shadow-play / news-broadcast / footage-cut） |
 | 公共 kit 命名空间 | **11** 个 `TT.*` 入口 + 字幕 kit |
 | 字幕样式 | **7** 种，另有 `none` |
 | 允许画幅 | **1920×1080@30 / 1080×1920@30** |
@@ -46,13 +46,12 @@ ticktoon CanvasCompositor.tick(t)
 | 层 | 当前位置 | 职责 | Agent 是否直接读 |
 |---|---|---|---|
 | 操作契约 | `SKILL.md` | 路由、创作闭环、红线、交付自检 | 每次读 |
-| recipe 规范 | `recipes/*/recipe.json`、recipe 目录内 `visual.md` / `examples/` | `fonts / rules / captions / audio / forbid / verify` 与画法沉淀 | 只读选中的 1 份 |
-| 运行时参考 | `references/` | `scene.code` 与公共 kit 的 API 手册 | 需要时读对应 1 篇 |
-| 内容 | `<工程>/storyboard.json` | 本片叙事、场景、字幕、素材、code | **写** |
+| recipe 规范 | `recipes/*/recipe.json`、`brief.md`、`skeleton.storyboard.json`，以及 code 型的 `visual.md` / `ref-shots/`、params 型的 `template.js` | `mode / fonts / rules / captions / audio`；params 型另有 `template`（`draw / params / resources / needs / defaultSfx / sfxTrack / motion / inkless`） | 只读选中的 1 份 |
+| 运行时参考 | `references/` | `scene.code`、`scene.params` 与公共 kit 的 API 手册 | 需要时读对应 1 篇 |
+| 内容 | `<工程>/storyboard.json` | 本片叙事、场景、字幕、素材、code、params | **写** |
 | 公共 kit | `platform/kit/` | 舞台、笔、文字、标注、相机、转场、字幕等纯函数 | 通过注入使用 |
-| 版式件 | `platform/blocks/` | 可穷举、参数化的整幅版式 | 通过 elements 使用 |
 | 编译 | `platform/compile/` | 六阶段编译链与确定性哈希 | 不读 |
-| 检查 | `platform/inspect/` | 采样、receipts、轻量 qa、verify/forbid、统一质量管线 | 通过 `tt` 使用 |
+| 检查 | `platform/inspect/` | 采样、receipts、轻量 qa、统一质量管线 | 通过 `tt` 使用 |
 | 宿主工具 | `platform/project/`、`scripts/` | 建工程、审计、预览、导出、TTS、素材 | 通过 `tt` 使用 |
 | 引擎 | `ticktoon/dist/`（或显式源码仓） | protocol v1.0、Canvas/WebCodecs 渲染 | 不读 |
 | 人类/开发文档 | `docs/` | 架构、历史、基准、运维记录 | 不读 |
@@ -65,19 +64,19 @@ ticktoon CanvasCompositor.tick(t)
 
 以下为当前快照；实时清单以 `tt recipe list` 为准，本表随目录变化可能滞后。
 
-| recipe | 内容载体 | 自带视觉（block / code 内） |
+| recipe | 内容载体 | 自带视觉（code / template 内） |
 |---|---|---|
 | `whiteboard-explainer` | `scene.code` | 暖白纸 / 马克笔红 |
 | `blackboard-lesson` | `scene.code` | 绿黑板 / 粉笔白 |
 | `ink-painting` | `scene.code` | 近黑底 / 水墨浓淡 |
 | `illustrated-story` | `scene.code` | 米色纸 / 拼贴色 |
 | `flash-cut` | `scene.code` | 近黑底 / 橙与深蓝 |
-| `crayon-guide` | `scene.crayon` | 暖米纸 / 蜡笔色 |
-| `shadow-play` | `scene.shadow` | 深棕夜底 / 琥珀剪影 |
-| `news-broadcast` | `scene.news` | 径向深蓝 / 地图与网格 |
-| `footage-cut` | `scene.footage` | 深棕黑 / 暖白压屏字 |
+| `crayon-guide` | `scene.params` | 暖米纸 / 蜡笔色 |
+| `shadow-play` | `scene.params` | 深棕夜底 / 琥珀剪影 |
+| `news-broadcast` | `scene.params` | 径向深蓝 / 地图与网格 |
+| `footage-cut` | `scene.params` | 深棕黑 / 暖白压屏字 |
 
-内容形态取决于 `recipe.json` 的 `blocks`（code 型写 `scene.code`，layout 型用 `scene.*`）。新增 recipe 只需建目录并写 `recipe.json`，`tt recipe list / audit / ci --baseline` 都会自动纳入，不需要改任何索引文件。
+内容形态取决于 `recipe.json` 的 `mode`（`code` 型写 `scene.code`，`params` 型写 `scene.params`）。新增 recipe 只需建目录并写 `recipe.json`（params 型再加 `template.js`），`tt recipe list / audit / ci --baseline` 都会自动纳入，不需要改任何索引文件。
 
 **公共 kit（`platform/kit/index.json`）**
 
@@ -85,33 +84,37 @@ ticktoon CanvasCompositor.tick(t)
 
 字幕 kit 在 `platform/kit/captions/`：`core.js` 提供 `TT.captionKit`，`styles/*.js` 是七种可选样式。它随编译期选中的样式一起注入，不走 `index.json` 的命名空间机制。
 
-**正式 block（4）**
+**params 模板（4）**
 
-- `scene.crayon` / `scene.footage` / `scene.news` / `scene.shadow`
+每条 params recipe 在目录下自带一个 `template.js`，顶层只导出 `function draw(g, p)`：
 
-这也是当前 recipe 唯一允许的 block 集合；`tt block list` 会额外列出 2 个 `_lab` 实验件。
+- `crayon-guide/template.js`
+- `footage-cut/template.js`
+- `news-broadcast/template.js`
+- `shadow-play/template.js`
 
-`platform/blocks/_lab/` 还有 `scene.caption-demo` / `scene.pen-demo`。它们用于 kit 对照，不属于正式创作货架；`tt block list` 目前会一并列出。
+模板不进入公共货架；只有对应 recipe 的 params 场能用。`template` 的八个字段是 `draw / params / resources / needs / defaultSfx / sfxTrack / motion / inkless`，其余键在 `tt build` 时报错。
 
-**fonts 契约（ABI 8）**
+**fonts 契约（ABI 9）**
 
-recipe 顶层只有 `fonts`（角色 → manifest 字体键），没有 `style` 包装。颜色不属于 recipe：kit 自带默认调色板，调用方需要品牌色时直接传 hex；背景也不属于 recipe，由 `scene.code` / block 自己铺满整帧。字号、行高、版式、动效、图表参数同样不属于 `fonts`；它们归 recipe `rules` 的白名单字段或 block 本地配置。`fonts` 是 recipe 自带的静态字段，直接参与编译，不经过注册表或运行时合并。
+recipe 顶层只有 `fonts`（角色 → manifest 字体键），没有 `style` 包装。颜色不属于 recipe：kit 自带默认调色板，调用方需要品牌色时直接传 hex；背景也不属于 recipe，由 `scene.code` / params 模板自己铺满整帧。code 场可使用 `recipe.fonts` 的全部角色；params 场只带 `template.needs.font` 声明的角色。字号、行高、版式、动效、图表参数同样不属于 `fonts`；它们归 recipe `rules` 的白名单字段或模板本地配置。`fonts` 是 recipe 自带的静态字段，直接参与编译，不经过注册表或运行时合并。
 
 ---
 
 ## 2. storyboard 契约
 
-顶层只允许 `recipe / format / meta / beats / scenes / uses`。场景允许 `id / narration / duration / camera / elements / code / resources / note / transitionIn / transitionOut`。场景不再声明背景色：`scene.code` / block 负责铺满整帧。
+顶层只允许 `recipe / format / meta / scenes / uses`。场景允许 `id / narration / duration / camera / code / params / resources / note / transitionIn / transitionOut`。场景不再声明背景色：`scene.code` / params 模板负责铺满整帧。
 
 关键规则：
 
 - `format` 只接受两种：`1920×1080@30`、`1080×1920@30`；其他正数画幅是引擎能力，不是 Skill 的开放格式。
 - `narration` 与 `duration` 结构互斥：旁白场由 TTS 或估时求时长，静默场必须写 `duration`。
 - 没有 `start`、没有 `tracks`、没有顶层 `duration`；场景起点按数组顺序累加，总时长是场景时长之和。
-- `beats` 是场景相对命名时刻；只能指向本场，跨场报 `BEAT_CROSS_SCENE`。
-- `elements[]` 的保留键只有 `block / slot / rect / at / dur / sfx / sfxAt`；其余键按 block 参数校验，未知键直接报错。
+- `recipe.mode` 决定场景内容：`code` 只收 `scene.code`，`params` 只收 `scene.params`；两种互斥，另写会报 `SCENE_PARAMS_IN_CODE_MODE` / `SCENE_CODE_IN_PARAMS_MODE`。空场报 `SCENE_CONTENT_MISSING`。
 - `scene.code` 可以是字符串或字符串数组（数组按换行拼接），上限 20000 字符。
-- `scene.code` 与 `elements[]` 可以共存：code 先画，elements 作为叠加层。
+- `scene.params` 的键与类型由该 recipe 的 `template.params` 决定；未知键、缺必填、类型不符、超出 `maxChars` / `maxItems` 都在编译期报 `PARAM_*`。
+- `scene.resources` 只属于 code 场；params 场的媒体资源走 `template.resources` + `template.needs`，`params.src` 在编译期改写为 `${kind}-${scene.id}` 资源名。
+- 场景未知键直接报错。
 
 ---
 
@@ -139,11 +142,11 @@ out/{composition,events,subs.srt,report}.json
 
 | 阶段 | 当前行为 |
 |---|---|
-| schema | 载入 block/fonts/Caption/recipe 契约；补齐缺省；校验未知键与参数；同时执行 `scene.code` 静态扫描 |
-| resolve | 解析 TTS 时长与词级时间、素材路径、BGM、SFX manifest；TTS 为空时按 4.6 字/秒估算 |
-| plan | 求每场时长与起点；解析 `beats`；切 caption cue；生成场景相对逐字时间 |
-| emit | 按引用注入 kit/block/caption 源码；生成两段式场景函数；收集 resources/needs/cues；冻结 element 参数 |
-| check | 停留、slot 重叠、字幕区、对比度、能量连续、资源与 `CODE_*` 等静态规则 |
+| schema | 载入 recipe/fonts/Caption 契约并校验 ABI 9；校验 `mode` 与 `scene.code` / `scene.params` 的二选一；params 按 `template.params` 检查类型与上限；同时执行 `scene.code` 静态扫描 |
+| resolve | 解析 TTS 时长与词级时间、素材路径、BGM、SFX manifest；code 场带 recipe 全部字体角色，params 场带 `template.needs.font`；TTS 为空时按 4.6 字/秒估算 |
+| plan | 求每场时长与起点；切 caption cue；生成场景相对逐字时间；params 场生成唯一内部单元 `template` |
+| emit | 按引用注入 kit/caption 源码；params 场在顶层内联 `draw(g, p)` 并传入整帧 `G0` 与 `scene.params`；收集 resources/needs/cues；冻结 params 与媒体资源名 |
+| check | params 场的 `FONT_UNDECLARED`、模板资源形状、媒体 `params.src` 必填；code 场沿用 `CODE_*` 静态规则 |
 | assemble | 旁白/BGM/SFX 事件；BGM ducking；总时长；SRT 直接从 cues 生成 |
 
 编译产物：
@@ -164,8 +167,9 @@ out/{composition,events,subs.srt,report}.json
   "status": "ok",
   "duration": 22.34,
   "scenes": 8,
-  "elements": 31,
-  "codeScenes": 3,
+  "paramsScenes": 0,
+  "units": 0,
+  "codeScenes": 8,
   "captionCues": 14,
   "estimatedNarration": 0,
   "det": { "hash": "…", "scenes": [] },
@@ -185,14 +189,14 @@ receipts 不是 build 时产生的像素证据；它由 `stills / probe / qa` �
 
 ### 4.1 源码片段注入
 
-`TT`、`BLOCKS`、`CAPTIONS` 都不是 ES 模块，而是 IIFE 源码片段。引擎用 `new Function('ctx','api',code)` 编译整段场景代码，因此不存在 `import`。
+`TT`、`CAPTIONS` 都不是 ES 模块，而是 IIFE 源码片段。引擎用 `new Function('ctx','api',code)` 编译整段场景代码，因此不存在 `import`。
 
 emit 规则：
 
-- kit 按 `platform/kit/index.json` 的 `provides` 和 `requires` 递归解析，只注入当前场景引用到的命名空间。
-- block 只注入当前场景 `elements[]` 用到的条目。
-- code 场会把 `FONTS` 的全部字体角色带进本场 `resources`，因为无法静态穷举作者会调用哪些 `TT.font`。
-- `RULES` 只在含 `scene.code` 的场景注入。
+- kit 按 `platform/kit/index.json` 的 `provides` 和 `requires` 递归解析，只注入当前场景引用到的命名空间；params 场额外固定注入 `env` / `rng`。
+- params 场把 `recipe.template.draw` 的源码按顶层函数内联，并把 `template.resources` 带进本场 `resources`。
+- code 场会把 `FONTS` 的全部字体角色带进本场 `resources`，因为无法静态穷举作者会调用哪些 `TT.font`；params 场只带 `template.needs.font` 的角色。
+- `RULES` 只在含 `scene.code` 的场景注入；params 模板不接收 `RULES`。
 - `render receipts` 只在采样模式注入；正式 `composition.json` 不含调试钩子。
 
 ### 4.2 每个场景只有一个 draw
@@ -203,19 +207,20 @@ emit 固定生成：
 return (ctx, api) => {
   // 1. 重置 ink/text 回执
   // 2. scene.camera 线性缩放
-  // 3. scene.code（包一层 fillText 记账）
-  // 4. elements（复用冻结的 G{i} / P{i}）
-  // 5. captions
-  // 6. receipts（仅采样模式）
+  // 3. code 场：scene.code（包一层 fillText 记账）
+  //    params 场：draw(g, p)，g 是整帧 G0
+  // 4. captions
+  // 5. receipts（仅采样模式）
+  // 6. transition
 };
 ```
 
 因此当前 storyboard 里的 `scene.code` 是**内联在逐帧 draw 中执行**，不是引擎原始的“函数体直出”通道：
 
 - 作者不能通过 `return (ctx, api) => {}` 自定义 setup；
-- `api.three()` 无法从 storyboard 的 `scene.code` 直接使用；
-- Three 的 `needs: ['three']` 目前只从 block 元数据收集，而当前 block 货架都未启用 Three；
-- 引擎本身支持两段式与 Three，但当前 Skill 的 storyboard 编译路径尚未产品化暴露。
+- `api.three()` 无法从 storyboard 的 `scene.code` 直接使用；params 模板可用，且必须声明 `template.needs.three: true`；
+- params 模板的代码形状固定为顶层 `function draw(g, p) { ... }`：IIFE、`export` / `import` 一律拒绝；
+- `G0` 是整帧单元：`rect: {x:0,y:0,w:W,h:H}`，`g.api` / `g.t` / `g.sceneT` / `g.a` / `g.reveal` 每帧由 emit 写入。
 
 ### 4.3 `scene.code` 静态扫描
 
@@ -279,14 +284,13 @@ sceneDur ──累加──► scene.start
 
 - 旁白一场一个音频事件，`at = scene.start + speechStart`。
 - 没有 TTS 或 provider 不返回时长时，按 4.6 字/秒 + 句末标点估算，并给提示。
-- `beats` 只解析本场范围；边界浮点差 1e-3 内吸附。
 - cue 在 plan 阶段切成场景相对时间；SRT 只写不读。
 
 ### 6.2 字幕
 
 `platform/kit/captions/core.js` 统一处理字体、逐字时间、折行、定位、安全区、淡入淡出与主体避让；`platform/kit/captions/styles/*.js` 只定义盒型与绘制。
 
-7 种样式：`band / plain / card / karaoke / collage / handnote / vertical`，另有 `none`。字幕在场景元素之后、相机变换之外绘制。
+7 种样式：`band / plain / card / karaoke / collage / handnote / vertical`，另有 `none`。字幕在场景内容之后、相机变换之外绘制。
 
 ### 6.3 音频事件
 
@@ -298,7 +302,7 @@ sceneDur ──累加──► scene.start
 
 - 旁白：一场一个事件。
 - BGM：可按旁白区间切成相邻事件实现 ducking；无 duck 配置时用单事件 + 首尾淡入淡出。
-- SFX：element 的 `sfx` / block 静态 `sfxTrack` / 循环音效，全部在编译期展开为绝对时间事件；运行时不产生声音。
+- SFX：只有 params 场的 `template.defaultSfx` / `template.sfxTrack` / 循环音效，全部在编译期展开为绝对时间事件；code 场不自带音效；运行时不产生声音。
 - 引擎不做 LUFS、母带归一、侧链压缩；响度属导出后工序。
 
 ### 6.4 语音与素材
@@ -316,11 +320,10 @@ sceneDur ──累加──► scene.start
 | 命令 | 输入 | 证明什么 | 不证明什么 |
 |---|---|---|---|
 | `tt build` | storyboard | 六阶段编译通过，引擎协议校验通过 | 画面好不好 |
-| `tt stills` / `probe` | 指定时刻 | 真实 ink/text/caption 框、亮度、元素可见性 | 全片时间连续性 |
-| `tt qa` | 一次 build + 一次浏览器会话；约 24 个采样帧，联系表 12 格复用其中大部分采样点（首尾与 verify 时刻追加），单会话约 24–30 帧 | 空墨迹（`QA_INK_EMPTY`）、recipe verify/forbid、12 格视觉证据 | 全片逐帧无缺陷；安全框、碰撞、审美好坏 |
-| recipe `verify/forbid` | receipts + composition（由 `tt qa` 调用） | 规范断言与题材枚举禁止项 | 主观审美 |
+| `tt stills` / `probe` | 指定时刻 | 真实 ink/text/caption 框、亮度、单元可见性 | 全片时间连续性 |
+| `tt qa` | 一次 build + 一次浏览器会话；约 24 个采样帧，联系表 12 格复用其中大部分采样点（首尾追加），单会话约 24–30 帧 | 渲染异常与空墨迹（`RENDER_PAGE_ERROR` / `QA_INK_EMPTY`）、12 格视觉证据 | 全片逐帧无缺陷；安全框、碰撞、审美好坏 |
 | `tt det` | 编译产物 | 规范化 composition 的 SHA-256 指纹 | 像素一致、MP4 字节一致 |
-| `tt ci --baseline` | 9 条 demo | 编译指纹与构建状态回归；指纹变化提示人审后刷新 | 像素/视觉回归 |
+| `tt ci --baseline` | 9 条 recipe 的骨架 / 镜头参考合成片 | 编译指纹与构建状态回归；指纹变化提示人审后刷新 | 像素/视觉回归 |
 | `tt ci [--deep]` | 全货架 | 快速/深度全量回归；`--deep` 复用 `tt qa` 同一管线 | 真机联网、真实素材与导出验收 |
 
 ### 7.1 采样口径
@@ -329,8 +332,10 @@ sceneDur ──累加──► scene.start
 
 - 时间维采样 `sampleTimes`：每场至少一帧；名额富余时优先分给长场；单帧位置固定在 55%，多帧在 18%–82% 内铺开。
 - 联系表 `reviewSampleTimes`：12 格；首内容场开场 6%、末内容场收尾 94%，其余从时间维候选点里均匀挑选，不另起一套渲染。
-- verify 的 `at` 与 signature `t` 也并入同一批采样点；时间去重窗口 0.05s。
-- 一次 `sampleFilm` 同时产出 receipts、平均亮度和联系表 PNG；`grid.picks` 决定哪些帧进图。
+- 联系表首尾格并入同一批采样点；时间去重窗口 0.05s。
+- 每一帧走 preview-panel 的 `capture(t)`：面板 pause → seek → await video settle → 同步重绘 → 回传 PNG；不再用固定 140ms 等待，视频场也不会抽到 settle 前的中间帧。
+- 一次 `sampleFilm` 同时产出 receipts、平均亮度和联系表 PNG；联系表在页内按 capture 顺序直接拼，`grid.picks` 决定哪些帧进图，不另起一轮渲染。
+- 浏览器由 `scripts/lib/chrome-cdp.mjs` 直接启动本机 Chrome 并通过 CDP 驱动；不依赖 Playwright，也不需要下载浏览器。
 
 ### 7.2 `det` 的真实语义
 
@@ -346,12 +351,10 @@ sceneDur ──累加──► scene.start
 
 ### 7.3 质量门与联系表
 
-`tt qa` 是**轻校验**，唯一硬门禁是 **must = 0**。must 只有四类：
+`tt qa` 是**轻校验**，唯一硬门禁是 **must = 0**。must 只有两类：
 
 - 页内渲染异常 `RENDER_PAGE_ERROR`；
-- `QA_INK_EMPTY`：元素声明了却没有墨迹（字体没加载、资源丢失、颜色透明）；
-- recipe `verify` 的 must 断言失败；
-- `RECIPE_FORBID_VIOLATION`：recipe `forbid` 命中。
+- `QA_INK_EMPTY`：场景单元执行了却没有墨迹（字体没加载、资源丢失、颜色透明）。
 
 安全框、碰撞、文字互压、字幕带、对比度、停留时长、空帧、能量曲线、时间维闪烁都不再自动判定——它们是构图与审美，机器不替人下结论，也不写进报告。
 
@@ -359,27 +362,27 @@ sceneDur ──累加──► scene.start
 
 ### 7.4 baseline 的真实语义
 
-`tt ci --baseline` 直接编译 9 条 demo，只记录每条 recipe 的编译指纹与构建状态到 `output/baseline.json`，不启浏览器、不采样、不存分数。构建失败是硬失败；指纹变化是复审提示，人审后 `--write` 刷新。它证明“编译产物是否稳定”，不证明像素或审美回归。
+`tt ci --baseline` 对 params 型编译 `skeleton.storyboard.json`，对 code 型编译由 `ref-shots/` 合成的回归片；只记录每条 recipe 的编译指纹与构建状态到 `output/baseline.json`，不启浏览器、不采样、不存分数。构建失败是硬失败；指纹变化是复审提示，人审后 `--write` 刷新。它证明“编译产物是否稳定”，不证明像素或审美回归。
 
 ---
 
 ## 8. CLI 与工程目录
 
-创作、检查与预览统一走 `platform/cli.mjs`（下称 `tt`）。MP4 导出是单独的 `scripts/render.mjs`，因为需要 Playwright 启浏览器并回传分片字节；当前没有 `tt render` 子命令。
+创作、检查与预览统一走 `platform/cli.mjs`（下称 `tt`）。MP4 导出是单独的 `scripts/render.mjs`，因为需要本地 Chrome + CDP 把分片字节回传给 Node；当前没有 `tt render` 子命令。
 
 | 命令 | 作用 |
 |---|---|
-| `tt new <dir> --recipe <id>` | 建工程，复制 recipe demo 到 storyboard |
+| `tt new <dir> --recipe <id>` | 建工程，复制 recipe 的 `skeleton.storyboard.json` 到 storyboard |
 | `tt build` | 编译，产出 `out/` 四件套 |
 | `tt assets fetch` | Pexels 检索/下载/署名/回写素材 |
 | `tt stills` / `tt probe` | 指定帧 / 单帧凭据 |
-| `tt qa` | 轻量质量管线：空墨迹 + verify/forbid + 12 格联系表 |
+| `tt qa` | 轻量质量管线：渲染异常 + 空墨迹 + 12 格联系表 |
 | `tt det` | 编译指纹 |
 | `tt preview` | 只读预览 + 多帧画笔批注；发送后写工程 `annotations/` 并关闭 |
 | `tt annotations [--all] [--ack [id]]` | 读取批注批次：默认最新未处理批次；`--ack` 标记整批已处理 |
+| `tt lab [--recipe <id>] [--port N]` | code recipe 镜头参考实验室：`ref-shots/` 逐个走真实编译 + 引擎面板，可改代码重跑、不回写 |
 | `tt ci [--deep] [--baseline]` | 快速/深度/基线回归 |
-| `tt block list` | 列出 block 与契约 |
-| `tt recipe list / show / audit` | recipe 清单 / 详情 / 全量审计 |
+| `tt recipe list / show / audit` | recipe 清单 / 详情（mode + template）/ 全量审计 |
 | `tt pack` | 打 Skill + 引擎干净分发包 |
 
 工程目录：
@@ -405,7 +408,7 @@ sceneDur ──累加──► scene.start
 | 画幅 | Skill 仅开放 1920×1080@30 和 1080×1920@30 |
 | 轨道 / 多图层合成 | 不支持；只有顺序场景 |
 | 跨场景 crossfade | 不支持；转场是单场景内快照/覆盖 |
-| 3D | 引擎支持；当前 storyboard 编译路径未开放 `api.three` |
+| 3D | 引擎支持；`scene.code` 未开放，params 模板需声明 `template.needs.three: true` |
 | 场景代码安全 | 无沙箱；可信作者输入，词法扫描只拦常见问题 |
 | 母带响度 | 不做 LUFS；导出后交给外部工具 |
 | 自动作曲 | 不做；BGM 从 manifest 选 |
@@ -421,8 +424,8 @@ sceneDur ──累加──► scene.start
 **运行时（Agent 直接读）**
 
 - `SKILL.md`：Agent 操作契约与路由
-- `recipes/*/brief.md`、`recipe.json`、`demo.storyboard.json`：recipe 契约、规范与样片
-- recipe 目录内 `visual.md` 与 `examples/`：该 recipe 的画法物理规律与可运行范例
+- `recipes/*/recipe.json`、`brief.md`、`skeleton.storyboard.json`：recipe 契约、创作方向与建工程骨架
+- code 型 recipe 目录内的 `visual.md` 与 `ref-shots/`：与内容无关的画法物理规律、独立单场镜头参考（镜头参考文件头格式统一由 `SKILL.md` 定义）
 - `references/README.md`：运行时参考索引
 - `references/storyboard.md`：storyboard 契约
 - `references/ticktoon-authoring.md`：引擎级 scene API 与扩展契约

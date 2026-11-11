@@ -134,12 +134,9 @@ node "$SKILL_DIR/platform/cli.mjs" stills 1.4 2.2 \
 
 ## 主体避让
 
-障碍来源按以下顺序收集：
+障碍只有一处来源：`options.avoid`，即 recipe / `uses.captions` 显式给出的归一化矩形。场景代码和 params 模板不向字幕层提交结构化避障区；`at: "auto"` 时如果没有 `avoid`，九个候选点按顺序取第一个能放进安全区的位置。
 
-1. `options.avoid`：recipe 显式给出的归一化矩形；
-2. 活跃场景元素的 `g.captionAvoid`：block 提供的逻辑像素矩形，优先级高于该元素的通用墨迹 / 版位框；
-3. 活跃元素的 `g.ink`；
-4. 非全屏元素的 `g.rect`。面积达到画面 72% 的版位框不会被当成整块主体，否则全幅场景会排斥所有位置。
+`at: "auto"` 依赖 recipe 自己知道主体在哪。全幅画面（code 场铺满整帧、params 模板铺满整帧）没有可避让的主体框，应改用明确的 `at` 或给出 `avoid`。
 
 显式避障示例：
 
@@ -154,19 +151,11 @@ node "$SKILL_DIR/platform/cli.mjs" stills 1.4 2.2 \
 }
 ```
 
-数组和对象均表示 `[x, y, w, h]` / `{x,y,w,h}`，数值为画宽、画高比例。`g.captionAvoid` 则直接使用逻辑像素：
-
-```js
-g.captionAvoid = [
-  { x: 0, y: H * 0.12, w: W * 0.39, h: H * 0.88 }
-];
-```
-
-block 只需声明主体区域，不需要实现候选点评分或字幕排版；当前 `scene.crayon` 用该契约标出左侧主体区。`scene.code` 不参与 `g.captionAvoid` 收集，需要 `at: "auto"` 排位时应在字幕参数里用 `avoid` 给出归一化矩形。
+数组和对象均表示 `[x, y, w, h]` / `{x,y,w,h}`，数值为画宽、画高比例。
 
 ## 字体角色
 
-`font` 优先解析 recipe 顶层 `fonts` 的角色，其次解析下表 kit 角色，最后接受 `assets/fonts/manifest.json` 的键。字幕字体会独立加入本场资源，不依赖某个 block 恰好使用同一字体。
+`font` 优先解析 recipe 顶层 `fonts` 的角色，其次解析下表 kit 角色，最后接受 `assets/fonts/manifest.json` 的键。字幕字体会独立加入本场资源，不依赖场景代码或模板恰好使用同一字体。
 
 | kit 角色 | manifest 键 / 引擎 FontFace 键 | 字体真实 family | 文件 | 字重与用途 |
 |---|---|---|---|---|

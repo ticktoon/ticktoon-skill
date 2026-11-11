@@ -49,7 +49,7 @@ BGM 固定 `assets/bgm/fast-cut.mp3`（`audio.mood = cut`）：129.2 BPM，一�
 
 ## 镜头写法
 
-这些写法都在 `TT.flash` 里，具体参数见 `references/flash.md`；`demo.storyboard.json` 是可直接改的运行样例。
+这些写法都在 `TT.flash` 里，具体参数见 `references/flash.md`；`ref-shots/` 里每个文件是一场独立写法示例，文件头格式见 `SKILL.md`。只复用结构与节拍，不要照抄示例的题材。
 
 - 手法轮换：同一手法全片最多 2 次，且不连续。kit 只提供绘制词法，不会随机替你挑场景；每场用什么手法，由 storyboard 显式决定。
 
@@ -78,6 +78,6 @@ BGM 固定 `assets/bgm/fast-cut.mp3`（`audio.mood = cut`）：129.2 BPM，一�
 ## 交付前
 
 - `tt build`、`tt stills`、`tt qa`、`tt det`。
-- `qa` 的 `must` 必须为 0：现在只抓空墨迹、recipe 自带的 verify / forbid；排版是否安全靠 12 格联系表自己看。装饰层请走 `TT.flash.mask/layers` 的离屏合成，不要在主画布重复 `fillText`。
+- `qa` 的 `must` 必须为 0：现在只抓 `RENDER_PAGE_ERROR` 与空墨迹；排版是否安全靠 12 格联系表自己看。装饰层请走 `TT.flash.mask/layers` 的离屏合成，不要在主画布重复 `fillText`。
 - `captions` 固定 `none`；画面文字就是正文，不要再叠字幕。
 - 不导出 MP4，除非用户明确要求。

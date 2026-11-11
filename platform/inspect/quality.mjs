@@ -1,8 +1,7 @@
 /**
- * 统一质量管线：一次 build + 一次浏览器采样，让 QA / verify / forbid
- * 共用同一批 receipts。
+ * 统一质量管线：一次 build + 一次浏览器采样，机器只跑轻门禁。
  *
- * 退出码只看 must：渲染异常、空墨迹、配方自己的断言失败。
+ * 退出码只看 must：渲染异常、空墨迹。
  * 构图、安全框、碰撞、对比度、停留、时间维都留给 12 格联系表和人审。
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
@@ -10,7 +9,6 @@ import path from 'node:path';
 import { buildProject } from '../project/build.mjs';
 import { sampleFilm, sampleTimes, reviewSampleTimes } from './sample.mjs';
 import { runQa } from './qa.mjs';
-import { runRecipeVerify, runRecipeForbid } from './verify.mjs';
 
 function uniquePicks(picks) {
   const out = [];
@@ -27,7 +25,7 @@ function uniquePicks(picks) {
  * @param {{
  *   root: string, dir: string, file?: string|null, tts?: object|null,
  *   count?: number, gridCount?: number, cols?: number,
- *   inkless?: Set<string>, log?: (line: string) => void,
+ *   log?: (line: string) => void,
  * }} options
  * @returns {Promise<{ ok: boolean, built: object, sampled: object|null, result: object }>}
  */
@@ -39,7 +37,6 @@ export async function runFilmQuality({
   count = 24,
   gridCount = 12,
   cols = 4,
-  inkless = new Set(),
   log = () => {},
 }) {
   mkdirSync(dir, { recursive: true });
@@ -63,18 +60,7 @@ export async function runFilmQuality({
 
   const scanPicks = sampleTimes(built.planned, Math.max(1, count));
   const reviewPicks = reviewSampleTimes(built.planned, gridCount, scanPicks);
-  const extraPicks = [];
-  const verifyT = built.recipe?.signature?.verify?.t;
-  if (verifyT != null) {
-    extraPicks.push({ sceneId: '(signature)', time: Number(verifyT.toFixed(3)) });
-  }
-  if (built.recipe?.abi === '8') {
-    for (const item of built.recipe.verify || []) {
-      const t = Number(item.at);
-      if (Number.isFinite(t) && t >= 0) extraPicks.push({ sceneId: '(verify)', time: Number(t.toFixed(3)) });
-    }
-  }
-  const picks = uniquePicks([...reviewPicks, ...scanPicks, ...extraPicks]);
+  const picks = uniquePicks([...reviewPicks, ...scanPicks]);
   const grid = reviewPicks.length
     ? {
       cols,
@@ -99,48 +85,24 @@ export async function runFilmQuality({
     log,
   });
 
+  const inkless = built.recipe?.template?.inkless ? new Set([built.recipe.id]) : new Set();
   const qa = runQa({
     receipts: sampled.receipts,
     inkless,
   });
-  // abi 8 only：verify / forbid 读编译产物里的 _recipe；非 v8 配方没有 _recipe，全部为空。
-  const recipe = built.composition?._recipe || (built.recipe?.abi === '8' ? built.recipe : null);
-  const verifyRun = runRecipeVerify({
-    recipe,
-    planned: built.planned,
-    receipts: sampled.receipts,
-    format: built.storyboard.format,
-    caption: built.caption || null,
-  });
-  const forbidIssues = runRecipeForbid({ recipe, planned: built.planned });
   // 渲染异常不是"建议"：页内抛错说明这一帧没有按预期画出来。
   const renderIssues = (sampled.pageErrors || []).map((message) => ({
     level: 'must', code: 'RENDER_PAGE_ERROR', t: 0, msg: message,
   }));
 
-  const issues = [
-    ...qa.issues,
-    ...verifyRun.issues,
-    ...forbidIssues,
-    ...renderIssues,
-  ];
+  const issues = [...qa.issues, ...renderIssues];
   const countLevel = (level) => issues.filter((issue) => issue.level === level).length;
   const summary = {
     must: countLevel('must'),
     should: countLevel('should'),
     nice: countLevel('nice'),
   };
-  const verifyTally = (status) => verifyRun.results.filter((item) => item.status === status).length;
-  const checks = {
-    qa: qa.summary,
-    verify: {
-      pass: verifyTally('pass'),
-      fail: verifyTally('fail'),
-      skip: verifyTally('skip'),
-      results: verifyRun.results,
-    },
-    forbid: { violations: forbidIssues.length },
-  };
+  const checks = { qa: qa.summary };
   const result = {
     ok: summary.must === 0,
     summary,

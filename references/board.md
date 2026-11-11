@@ -1,6 +1,6 @@
 # TT.board 舞台底库
 
-公共实现位于 `platform/kit/board.js`，由 `platform/kit/index.json` 注入为 `TT.board`。code 场与 block 场共用同一批底：内容由 `scene.code` 实时写，舞台（纸、板、幕布）必须可穷举、由人审过，所以写死在这里。舞台只画底，不画任何内容——人物、图形、标注、正文都不在它的职责内。
+公共实现位于 `platform/kit/board.js`，由 `platform/kit/index.json` 注入为 `TT.board`。code 场与 params 模板共用同一批底：内容由 `scene.code` / 模板实时写，舞台（纸、板、幕布）必须可穷举、由人审过，所以写死在这里。舞台只画底，不画任何内容——人物、图形、标注、正文都不在它的职责内。
 
 ## 通用约定
 

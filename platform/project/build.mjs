@@ -1,5 +1,5 @@
 /**
- * 工程构建：①schema → ②resolve → ③plan → ④emit → ⑤assemble → ⑥check。
+ * 工程构建：①schema → ②resolve → ③plan → ④emit → ⑤check → ⑥assemble。
  *
  * 每步都可能报错，但只有 schema 的错误会让流程停下——因为后面的步骤都建立在
  * "结构合法"这个前提上。其余步骤尽量跑完，一次把问题全给出来。
@@ -35,20 +35,20 @@ async function validateWithEngine(root, composition) {
   }
 }
 
-function summarize({ planned, emitted, resolved, composition }) {
-  let elements = 0;
+function summarize({ planned, resolved, composition }) {
+  let units = 0;
   let cues = 0;
   for (const scene of planned.scenes) {
-    elements += scene.elements.length;
+    if (scene.unit) units += 1;
     cues += scene.cues.length;
   }
   return {
     duration: composition.duration,
     scenes: planned.scenes.length,
-    elements,
+    paramsScenes: planned.scenes.filter((scene) => scene.params !== null).length,
+    units,
     captionCues: cues,
-    codeScenes: planned.scenes.filter((scene) => scene.code).length,
-    cachedCanvases: 0,
+    codeScenes: planned.scenes.filter((scene) => scene.code !== null).length,
     estimatedNarration: resolved.scenes.filter((s) => s.estimated).length,
   };
 }
@@ -58,7 +58,7 @@ function summarize({ planned, emitted, resolved, composition }) {
  */
 export async function buildProject({ root, dir, file = null, tts = null, write = true, receipts = false, captionOverride = null }) {
   const started = Date.now();
-  // file 覆盖：audit 直接编译 recipe 的 demo.storyboard.json，不复制临时文件
+  // file 覆盖：audit / ci 直接编译 recipe 的骨架或示例合成片，不要求它是工程 storyboard.json
   const storyboardPath = file || path.join(dir, 'storyboard.json');
   const outDir = path.join(dir, 'out');
   const bag = new Bag();
@@ -100,6 +100,7 @@ export async function buildProject({ root, dir, file = null, tts = null, write =
   const { kitIndex, kitDir } = readKitIndex(root);
   const emitted = planned.scenes.map((scene) => emitScene({
     scene,
+    recipe,
     fonts,
     format: storyboard.format,
     catalog,
@@ -110,7 +111,7 @@ export async function buildProject({ root, dir, file = null, tts = null, write =
     rules: recipe?.rules || null,
   }));
 
-  check({ scenes: planned.scenes, fonts, format: storyboard.format, bag, catalog, caption, recipe });
+  check({ scenes: planned.scenes, bag, recipe });
 
   const { composition, events } = assemble({
     scenes: emitted.map((scene, i) => ({
@@ -122,17 +123,6 @@ export async function buildProject({ root, dir, file = null, tts = null, write =
     format: storyboard.format,
     bag,
   });
-
-  // 把视觉规范随产物透传（引擎只读已知字段），供 tt qa 执行 verify / forbid。
-  if (recipe?.abi === '8') {
-    composition._recipe = {
-      id: recipe.id,
-      abi: recipe.abi,
-      blocks: recipe.blocks,
-      rules: recipe.rules,
-      verify: recipe.verify,
-    };
-  }
 
   const engineCheck = await validateWithEngine(root, composition);
   if (engineCheck.error) {
