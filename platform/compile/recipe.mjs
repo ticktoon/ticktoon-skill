@@ -2,13 +2,15 @@
  * recipe —— 一类成片的视觉规范与模板契约。
  *
  * 两种模式：
- *   code   recipe 只给 visual.md / ref-shots / rules / fonts / captions / audio，
- *          storyboard 写 scene.code。
+ *   code   recipe 只给 recipe.md / ref-shots / rules / captions / audio，
+ *          storyboard 写 scene.code；字体由 scene.resources 的 font 条目声明。
  *   params recipe 自带 template（draw / params / resources / needs / defaultSfx /
- *          sfxTrack / motion / inkless），storyboard 写 scene.params。
+ *          sfxTrack / motion / inkless），storyboard 写 scene.params；字体写死在
+ *          模板代码里，并在 template.resources 声明。
  *
- * fonts 直接写在 recipe 顶层，没有 style 包装。颜色由 kit 自带默认值或
- * scene.code 直接写，背景由 scene.code / 模板自己铺满；recipe 不承载用色决策。
+ * recipe 不承载字体表。资源里的 font 只写 manifest 键，src 由编译期补齐。
+ * 颜色由 kit 自带默认值或 scene.code 直接写，背景由 scene.code / 模板自己铺满；
+ * recipe 不承载用色决策。
  */
 import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
@@ -16,11 +18,10 @@ import { isPlainObject } from './diag.mjs';
 
 const DIMENSION_MODES = new Set(['fixed', 'enum', 'auto', 'random']);
 const RULE_KEYS = new Set(['safeMargin', 'scale', 'stroke', 'pen', 'board', 'forbid']);
-const FONT_ROLES = new Set(['display', 'body', 'num', 'hand', 'caption', 'brand', 'serif', 'round', 'poster', 'cutout']);
-const RECIPE_KEYS = new Set(['id', 'abi', 'name', 'keywords', 'when', 'mode', 'template', 'fonts', 'rules', 'captions', 'audio']);
+const RECIPE_KEYS = new Set(['id', 'abi', 'name', 'keywords', 'when', 'notWhen', 'mode', 'template', 'rules', 'captions', 'audio']);
 const RECIPE_MODES = new Set(['code', 'params']);
 const TEMPLATE_KEYS = new Set(['draw', 'params', 'resources', 'needs', 'defaultSfx', 'sfxTrack', 'motion', 'inkless']);
-const NEEDS_KEYS = new Set(['font', 'image', 'video', 'three']);
+const NEEDS_KEYS = new Set(['image', 'video', 'three']);
 const CAPTION_STYLE_KEYS = new Set([
   'style', 'font', 'baseSize', 'lineHeight', 'top', 'at', 'band', 'size', 'color',
   'background', 'accent', 'highlight', 'palette', 'avoid', 'maxWidth', 'maxHeight',
@@ -40,9 +41,9 @@ export function validateRecipe(recipe, manifest, recipeDir) {
   const id = recipe?.id ?? '<unknown>';
   const fail = (code, at, msg) => errors.push({ code, path: at, msg: `recipe ${id}: ${at} — ${msg}` });
 
-  if (recipe?.abi !== '9') {
+  if (recipe?.abi !== '1') {
     fail('RECIPE_ABI_UNSUPPORTED', 'abi',
-      `只支持 abi "9"（收到 ${JSON.stringify(recipe?.abi)}）；旧配方请迁移为 mode + template`);
+      `只支持 abi "1"（收到 ${JSON.stringify(recipe?.abi)}）`);
     return errors;
   }
 
@@ -55,16 +56,18 @@ export function validateRecipe(recipe, manifest, recipeDir) {
     fail('RECIPE_MODE_INVALID', 'mode', `mode 只能是 code / params，收到 ${JSON.stringify(recipe.mode)}`);
   }
 
-  validateFonts(recipe.fonts, manifest, fail);
+  validateWhenList(recipe.when, 'when', fail);
+  validateWhenList(recipe.notWhen, 'notWhen', fail);
+
   validateRules(recipe.rules, fail);
-  validateCaptions(recipe.captions, recipe.fonts, fail);
+  validateCaptions(recipe.captions, manifest, fail);
   validateAudio(recipe.audio, fail);
 
   if (recipe.mode === 'params') {
     if (!recipe.template) {
       fail('RECIPE_TEMPLATE_MISSING', 'template', 'params 模式必须有 template');
     } else {
-      validateTemplate(recipe.template, recipe, recipeDir, fail);
+      validateTemplate(recipe.template, recipe, recipeDir, manifest, fail);
     }
   } else if (recipe.mode === 'code' && recipe.template !== undefined) {
     fail('RECIPE_TEMPLATE_UNEXPECTED', 'template', 'code 模式不允许声明 template');
@@ -73,25 +76,16 @@ export function validateRecipe(recipe, manifest, recipeDir) {
   return errors;
 }
 
-function validateFonts(fontMap, manifest, fail) {
-  if (!isPlainObject(fontMap)) {
-    fail('RECIPE_FONTS_MISSING', 'fonts', 'recipe 必须有顶层 fonts 对象（角色 → manifest 键）');
+/** when / notWhen 是 `tt recipe list` 的选择元数据：都必须是逐条的判断条件，不能是一句长摘要。 */
+function validateWhenList(value, field, fail) {
+  const code = field === 'notWhen' ? 'RECIPE_NOTWHEN_INVALID' : 'RECIPE_WHEN_INVALID';
+  if (!Array.isArray(value) || !value.length) {
+    fail(code, field, `${field} 必须是非空字符串数组，每条写一个适用或不适用条件`);
     return;
   }
-  for (const role of ['display', 'body']) {
-    if (!fontMap[role]) fail('RECIPE_FONTS_ROLE_MISSING', `fonts.${role}`, `必须声明 ${role} 字体角色`);
-  }
-  for (const [role, name] of Object.entries(fontMap)) {
-    if (!FONT_ROLES.has(role)) {
-      fail('RECIPE_FONTS_ROLE_UNKNOWN', `fonts.${role}`,
-        `未知字体角色 "${role}"；可用：${[...FONT_ROLES].join(' / ')}`);
-      continue;
-    }
-    if (typeof name !== 'string' || !name.trim()) {
-      fail('RECIPE_FONTS_NAME_INVALID', `fonts.${role}`, '字体值必须是非空 manifest 键');
-    } else if (!isPlainObject(manifest) || !manifest[name]) {
-      fail('RECIPE_FONTS_UNKNOWN', `fonts.${role}`,
-        `字体 "${name}" 不在 assets/fonts/manifest.json 里`);
+  for (const [index, item] of value.entries()) {
+    if (typeof item !== 'string' || !item.trim()) {
+      fail(code, `${field}[${index}]`, `${field} 的每一条都必须是非空字符串`);
     }
   }
 }
@@ -179,7 +173,7 @@ function validateDimension(spec, at, fail) {
   }
 }
 
-function validateCaptions(captions, fontMap, fail) {
+function validateCaptions(captions, manifest, fail) {
   if (captions === undefined) return;
   if (!isPlainObject(captions)) {
     fail('RECIPE_CAPTIONS_INVALID', 'captions', 'captions 必须是 { style, ... } 对象');
@@ -208,12 +202,11 @@ function validateCaptions(captions, fontMap, fail) {
     fail('RECIPE_CAPTION_TOP_RANGE', 'captions.top', 'top 必须是 0–1 的画面高度比例');
   }
   if (captions.style === 'none') return;
-  if (typeof captions.font === 'string' && isPlainObject(fontMap) && !fontMap[captions.font]) {
-    fail('RECIPE_CAPTION_FONT_UNKNOWN', 'captions.font',
-      `字幕字体角色 "${captions.font}" 不在 recipe 顶层 fonts 里；字幕不能绕过 recipe 自带字体`);
-  }
   if (captions.font !== undefined && typeof captions.font !== 'string') {
-    fail('RECIPE_CAPTION_FONT_TYPE', 'captions.font', 'captions.font 必须是字体角色字符串');
+    fail('RECIPE_CAPTION_FONT_TYPE', 'captions.font', 'captions.font 必须是 manifest 字体键字符串');
+  } else if (typeof captions.font === 'string' && (!isPlainObject(manifest) || !manifest[captions.font])) {
+    fail('RECIPE_CAPTION_FONT_UNKNOWN', 'captions.font',
+      `字体 "${captions.font}" 不在 assets/fonts/manifest.json 里；captions.font 直接写 manifest 键`);
   }
 }
 
@@ -253,7 +246,7 @@ function validateAudio(audio, fail) {
   }
 }
 
-function validateTemplate(template, recipe, recipeDir, fail) {
+function validateTemplate(template, recipe, recipeDir, manifest, fail) {
   if (!isPlainObject(template)) {
     fail('RECIPE_TEMPLATE_TYPE', 'template', 'template 必须是对象');
     return;
@@ -292,23 +285,12 @@ function validateTemplate(template, recipe, recipeDir, fail) {
   }
 
   if (!isPlainObject(template.needs)) {
-    fail('TEMPLATE_NEEDS_MISSING', 'template.needs', 'needs 必须是 { font, image, video, three } 对象');
+    fail('TEMPLATE_NEEDS_MISSING', 'template.needs', 'needs 必须是 { image, video, three } 对象');
   } else {
     for (const key of Object.keys(template.needs)) {
       if (!NEEDS_KEYS.has(key)) {
         fail('TEMPLATE_NEEDS_KEY_UNKNOWN', `template.needs.${key}`,
-          `needs 只允许 font / image / video / three`);
-      }
-    }
-    if (!Array.isArray(template.needs.font)
-      || !template.needs.font.every((role) => typeof role === 'string' && role.trim())) {
-      fail('TEMPLATE_NEEDS_FONT', 'template.needs.font', 'needs.font 必须是字体角色数组');
-    } else {
-      for (const role of template.needs.font) {
-        if (!recipe.fonts?.[role]) {
-          fail('TEMPLATE_FONT_ROLE_MISSING', `fonts.${role}`,
-            `模板需要字体角色 "${role}"，但 recipe 顶层 fonts 没有声明`);
-        }
+          `needs 只允许 image / video / three；字体写 template.resources`);
       }
     }
     for (const key of ['image', 'video', 'three']) {
@@ -320,15 +302,28 @@ function validateTemplate(template, recipe, recipeDir, fail) {
 
   if (template.resources !== undefined) {
     if (!Array.isArray(template.resources)) {
-      fail('TEMPLATE_RESOURCES_TYPE', 'template.resources', 'resources 必须是 {type,name,src} 数组');
+      fail('TEMPLATE_RESOURCES_TYPE', 'template.resources',
+        'resources 必须是 {type,name} 数组；font 只写 manifest 键，image/video 另带 src');
     } else {
       for (const [index, res] of template.resources.entries()) {
         const at = `template.resources[${index}]`;
         if (!isPlainObject(res) || !RESOURCE_TYPES.has(res.type)
-          || typeof res.name !== 'string' || !res.name.trim()
-          || typeof res.src !== 'string' || !res.src.trim()) {
+          || typeof res.name !== 'string' || !res.name.trim()) {
           fail('TEMPLATE_RESOURCE_INVALID', at,
-            '资源必须是 {type: image|video|font, name: 非空字符串, src: 非空字符串}');
+            '资源必须是 {type: image|video|font, name: 非空字符串}');
+          continue;
+        }
+        if (res.type === 'font') {
+          if (res.src !== undefined) {
+            fail('TEMPLATE_FONT_SRC', at,
+              'font 资源只写 manifest 键做 name，不要写 src；src 由编译期按 manifest 补齐');
+          }
+          if (!isPlainObject(manifest) || !isPlainObject(manifest[res.name])) {
+            fail('TEMPLATE_FONT_UNKNOWN', `${at}.name`,
+              `字体 "${res.name}" 不是 assets/fonts/manifest.json 的键；src 由编译期补齐`);
+          }
+        } else if (typeof res.src !== 'string' || !res.src.trim()) {
+          fail('TEMPLATE_RESOURCE_SRC', `${at}.src`, 'image / video 资源必须有非空 src');
         }
       }
     }

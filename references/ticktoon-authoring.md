@@ -16,7 +16,7 @@
 
 禁止使用墙钟、`Math.random()`、异步绘制、帧间可变历史和 Canvas 像素回读。数学助手使用下方 `TT`，不要假设 `api` 提供 `ease`、`lerp`、`clamp`、`cover` 或 `contain`。
 
-`platform/compile/emit.mjs` 在 scene 前拼接 `TT` 与 `CAPTIONS`（有字幕时），都按 IIFE 挂到全局，只注入本次用到的成员（`new Function('ctx','api', code)` 没有 import）。可用的 `TT` 成员：`TT.ease.*`（缓动）、`TT.clamp01` / `TT.num.fmt` / `TT.env.fade|reveal` / `TT.rng`（数值与包络）、`TT.text`（中文优先断行 + 量测 + 墨迹框）、`TT.font`（recipe 顶层 `fonts` 查询，`font().css` 的族名恒等于 `resources[].name`），以及场景 kit `TT.chart` / `TT.pen` / `TT.mark` / `TT.transition` / `TT.board` / `TT.geom` / `TT.flash`。code 场额外注入 `FONTS` 与 `RULES`；params 模板在顶层定义 `function draw(g, p)`，每帧由 emit 传入整帧 `G0` 与 `scene.params`，模板资源来自 `template.resources`，字体来自 `template.needs.font`。params 模板不注入 `RULES`。
+`platform/compile/emit.mjs` 在 scene 前拼接 `TT` 与 `CAPTIONS`（有字幕时），都按 IIFE 挂到全局，只注入本次用到的成员（`new Function('ctx','api', code)` 没有 import）。可用的 `TT` 成员：`TT.ease.*`（缓动）、`TT.clamp01` / `TT.num.fmt` / `TT.env.fade|reveal` / `TT.rng`（数值与包络）、`TT.text`（中文优先断行 + 量测 + 墨迹框）、`TT.font`（本场字体资源键查询，`font().css` 的族名恒等于 `resources[].name`），以及场景 kit `TT.chart` / `TT.pen` / `TT.mark` / `TT.board` / `TT.geom` / `TT.flash`。`TT.transition` 只由编译器注入独立双帧转场场，普通 `scene.code` 不直接调用。code 场额外注入 `FONTS` 与 `RULES`；params 模板在顶层定义 `function draw(g, p)`，每帧由 emit 传入整帧 `G0` 与 `scene.params`，资源来自 `template.resources`（字体同样在模板代码里写 manifest 键）。params 模板不注入 `RULES`。
 
 ## Three layers
 
@@ -53,7 +53,7 @@ composition 只有两个顶层字段：
 - 场景起点由编译期按顺序累加，画幅继承 composition。
 - 每个场景有唯一 `id`；`background` 默认 `"#000000"`，`seed` 默认 `0`，`cues` 默认 `[]`。
 - 所有 cues 都是场景相对；每个 cue 必须带 `chars` 数组，来源没有逐字边界时为空数组。
-- 图片、字体、视频都在**场景自己的** `resources` 里声明，统一 `{type, name, src}`；视频额外可带 `start`（源内偏移，默认 0）。图片/视频的 `name` 对应 `api.img(name)` / `api.video(name)`，字体的 `name` 就是 `family`。
+- 图片、字体、视频都在**场景自己的** `resources` 里声明。字体只写 manifest 键 `{type:"font", name:"sans-400"}`，`src` 由编译期补齐；图片/视频写 `{type, name, src}`，视频额外可带 `start`（源内偏移，默认 0）。图片/视频的 `name` 对应 `api.img(name)` / `api.video(name)`，字体的 `name` 就是 `family`。params 模板的字体写 `template.resources`。
 - 同一个字体在多个场景声明是正常写法，引擎按 `src` 只下载一次。
 - 音频是 `audio[]` 里的扁平事件，不是资源：`{ src, at, duration, role, volume, sourceStart, fadeIn, fadeOut }`。`role: 'bgm'` 会在比文件长时循环。
 - 音频事件不得越过 composition 时长。

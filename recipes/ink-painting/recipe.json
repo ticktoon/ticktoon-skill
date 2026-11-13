@@ -1,34 +1,27 @@
 {
   "id": "ink-painting",
-  "abi": "9",
+  "abi": "1",
   "name": "水墨写意",
-  "keywords": [
-    "水墨",
-    "国风",
-    "宣纸",
-    "毛笔",
-    "写意",
-    "留白",
-    "墨线"
+  "keywords": ["水墨", "国风", "宣纸", "毛笔", "写意", "留白", "墨线"],
+  "mode": "code",
+  "when": [
+    "东方美学、诗词、茶酒、历史或文化题材。",
+    "画面要「少而慢」：一笔分三段推进，留白占主体。",
+    "需要水墨笔锋的提按、晕染与印章，而不是规则图形。"
   ],
-  "when": "需要一笔浓淡分明的墨线慢慢长出来、大片留白让观众自己补完画面时",
-  "fonts": {
-    "display": "sans-900",
-    "body": "sans-400",
-    "num": "latin-700",
-    "caption": "sans-900"
-  },
+  "notWhen": [
+    "需要清晰步骤、图表或数据；改用 whiteboard-explainer / crayon-guide。",
+    "需要多镜头叙事或快节奏；改用 flash-cut / footage-cut。",
+    "画面必须铺满、信息密度高；本 recipe 的留白会变成空白。"
+  ],
   "rules": {
     "safeMargin": 0.09,
     "scale": {
       "title": 1,
       "label": 0.75,
-      "note": 0.55
+      "note": 1.25
     },
-    "stroke": [
-      3,
-      12
-    ],
+    "stroke": [3, 12],
     "pen": {
       "mode": "fixed",
       "value": "inkbrush"
@@ -48,7 +41,7 @@
   },
   "captions": {
     "style": "plain",
-    "font": "caption",
+    "font": "WenYuanSerifSC-Bold",
     "baseSize": 46,
     "lineHeight": 1.22,
     "top": 0.78,
@@ -65,6 +58,5 @@
       "level": 0.045,
       "edge": 0.12
     }
-  },
-  "mode": "code"
+  }
 }

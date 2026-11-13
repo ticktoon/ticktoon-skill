@@ -22,8 +22,8 @@
     const { ctx } = c;
     const o = c.options || {};
     const base = c.metrics?.baseSize ?? 46;
-    const role = c.metrics?.fontRole || o.font || 'caption';
-    const f = TT.font(c.fonts, Math.round(base * (o.size || 1)), role, c.metrics?.fontFamily);
+    const family = c.metrics?.fontFamily || null;
+    const f = TT.font(c.fonts, Math.round(base * (o.size || 1)), family || 'sans-400', family);
     const em = f.size;
     const palette = o.palette || PALETTE;
     const seed = o.seed || 17;

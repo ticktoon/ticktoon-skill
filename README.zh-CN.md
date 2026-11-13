@@ -31,7 +31,7 @@ LLM 只写一份 `storyboard.json`。平台把它编译成 protocol v1.0 `compos
 ```text
 用户需求
    ↓
-SKILL.md ── 选 recipe，读它的 brief / skeleton
+SKILL.md ── 选 recipe，读它的 recipe.md / skeleton
    ↓
 storyboard.json                  ← Agent 唯一手写的文件
    ├─ scene.code                 code 型 recipe：整幅画面内容
@@ -54,7 +54,7 @@ ticktoon tick(t)                 同一条同步渲染路径
 | 层 | 位置 | 职责 | Agent 何时读 |
 |---|---|---|---|
 | 操作契约 | `SKILL.md` | 路由、创作闭环、红线、交付自检 | 每次任务 |
-| recipe 规范 | `recipes/<id>/` | `recipe.json`、`brief.md`、`skeleton.storyboard.json`；code 型另有 `visual.md` / `ref-shots/`，params 型另有 `template.js` | 只读选中的 1 条 |
+| recipe 规范 | `recipes/<id>/` | `recipe.json`、`recipe.md`、`skeleton.storyboard.json`；code 型另有 `ref-shots/`，params 型另有 `template.js` | 只读选中的 1 条 |
 | 运行时参考 | `references/` | `scene.code` 与公共 kit 的 API 手册 | 需要时读 1 篇 |
 | 内容 | `<工程>/storyboard.json` | 本片场景、旁白、字幕、素材、code、params | **写** |
 
@@ -64,12 +64,12 @@ ticktoon tick(t)                 同一条同步渲染路径
 
 | 单位 | 位置 | 它负责 | 它不负责 |
 |---|---|---|---|
-| **recipe** | `recipes/` | 一类成片的规范：`mode`、`fonts`、`rules`、`captions`、`audio`；params 型还负责 `template`（`draw / params / resources / needs / defaultSfx / sfxTrack / motion / inkless`） | 内容、叙事、绘制 |
+| **recipe** | `recipes/` | 一类成片的规范：`mode`、`rules`、`captions`、`audio`；params 型还负责 `template`（`draw / params / resources / needs / defaultSfx / sfxTrack / motion / inkless`） | 内容、叙事、绘制 |
 | **kit** | `platform/kit/` | 可复用的绘制词法：文字、笔、标注、舞台、相机、转场、字幕、新闻背景 | 构图、题材 |
 
-recipe 只有两种模式，同一条 recipe 内不混用：`mode: "code"` 由场景写 `scene.code` 调用公共 kit；`mode: "params"` 由场景写 `scene.params`，画面交给 recipe 自带的 `template.js` 画定。`recipe.json` 顶层的 `fonts` 是编译共用的机器契约：只有字体角色，没有 `style` 包装，也不承载颜色、背景、字号、行高、版式或动效。颜色由 kit 自带默认值或 `scene.code` 直接写 hex，背景由 `scene.code` / 模板自己铺满。所有取值静态可追踪。
+recipe 只有两种模式，同一条 recipe 内不混用：`mode: "code"` 由场景写 `scene.code` 调用公共 kit；`mode: "params"` 由场景写 `scene.params`，画面交给 recipe 自带的 `template.js` 画定。字体不写进 recipe：字体库由 `assets/fonts/manifest.json` 定义，code 场在 `scene.resources` 里声明 `{"type":"font","name":"<manifest 键>"}`（`src` 由编译期补齐），params 模板把字体键写死在模板代码并在 `template.resources` 声明。颜色由 kit 自带默认值或 `scene.code` 直接写 hex，背景由 `scene.code` / 模板自己铺满。所有取值静态可追踪。
 
-编译是确定性的：同一份 storyboard 与相同输入产出同一份 `composition.json`，由 `tt det` 验证。渐进式披露也是设计的一部分：`SKILL.md` 只做路由，写稿前先读一条 recipe 的 `brief.md` 和 `skeleton.storyboard.json`；code 型再读 `visual.md` 与一两个 `ref-shots/`，`references/` 按需一次读一篇。
+编译是确定性的：同一份 storyboard 与相同输入产出同一份 `composition.json`，由 `tt det` 验证。渐进式披露也是设计的一部分：`SKILL.md` 只做路由，选好 recipe 后读它的 `recipe.md` 和 `skeleton.storyboard.json`；code 型再读一两个 `ref-shots/`，`references/` 按需一次读一篇。
 
 ## 能做什么
 
@@ -82,15 +82,15 @@ recipe 覆盖讲解、叙事、快闪、突发新闻与实拍。每条要么用�
 | `ink-painting` | 墨线、晕染与大片留白 | `scene.code` | 东方美学、诗词、文化 |
 | `illustrated-story` | 纸张拼贴、剪报字 | `scene.code` | 小故事、观察随笔 |
 | `flash-cut` | 硬切、大字、一句一场 | `scene.code` | 观点、结论、促销节拍 |
-| `crayon-guide` | 暖米纸、蜡笔斜纹、手写标签 | `scene.params` | 菜谱、清单、儿童科普 |
-| `shadow-play` | 透光幕布、关节剪影 | `scene.params` | 寓言、民间故事、姿态叙事 |
+| `crayon-guide` | 暖米纸、蜡笔斜纹、人物与手绘图解 | `scene.code` | 教程、文化观点、对比、儿童科普 |
+| `shadow-play` | 透光幕布、关节剪影、随剧情变化的器物与场景 | `scene.code` | 寓言、民间故事、历史小段 |
 | `news-broadcast` | 固定竖版新闻卡：蓝色径向底、世界地图、流动线 | `scene.params` | 突发快讯、标题 / 正文 / 来源 |
 | `footage-cut` | 满幅真实素材 + 硬短句 | `scene.params` | Pexels 或本地实拍混剪 |
 
 除此之外：
 
-- **带 kit 的场景代码**——`TT.text`、`TT.pen`、`TT.mark`、`TT.board`、`TT.geom`、`TT.transition`、`TT.flash`、`TT.chart`、`TT.newsBg` 等；编译器只注入场景实际用到的成员。
-- **7 种字幕样式 + `none`**——band、plain、card、karaoke、collage、handnote、vertical，支持逐字时间与主体避让。
+- **带 kit 的场景代码**——`TT.text`、`TT.pen`、`TT.mark`、`TT.board`、`TT.geom`、`TT.flash`、`TT.chart`、`TT.newsBg` 等；编译器只注入场景实际用到的成员，转场边界另注入 `TT.transition` 生成双帧合成场。
+- **7 种字幕样式 + `none`**——plain、perchar、karaoke、collage、handnote、vertical、tornpaper，支持逐字时间与主体避让。
 - **旁白与声音**——默认零密钥 edge-tts，可选 Volc TTS；BGM/SFX 支持淡入淡出与人声闪避。
 - **实拍素材**——Pexels 检索、下载、署名、缓存与内置素材降级。
 - **预览与审片**——只读预览、静帧、probe 凭据；预览页可逐帧画笔标注、累积成待发送列表，点「发送批注」后整批连描述与截图写入 `<工程>/annotations/` 并关闭预览，用 `tt annotations` 读回，形成改稿闭环。
@@ -105,6 +105,20 @@ recipe 覆盖讲解、叙事、快闪、突发新闻与实拍。每条要么用�
 ![蜡笔图解](assets/readme/crayon-guide.png)
 ![突发新闻](assets/readme/news-broadcast.png)
 -->
+
+## 双帧转场：真正的场间合成
+
+转场不是在前场末尾盖一层效果、再从黑色里捞出后场。编译器会为边界生成一个独立的转场 `code scene`，同时绘制前后两场到离屏画布，再合成两张完整画面。因此 `push-left / push-up` 中两张图真正拼接移动，`wipe-left / wipe-up` 直接揭示后场，`iris` 直接打开圆形窗口，都不经过机制性的黑色间隙。
+
+storyboard 只需要在边界前一场选择固定预设：
+
+```json
+{ "id": "s01", "duration": 4, "transition": "push-up", "code": "/* 完整前场 */" }
+```
+
+内置 11 种固定预设：交叉融合、向左 / 向上擦入与推移、缩放、故障、圆形揭示、纸张翻页，以及参考 GL Transitions 的 `squares-wire`、`morph`。方向由完整预设名区分，不开放出入场、圆心等零散参数。图案转场仍使用确定性 Canvas 路径与切片，不引入 WebGL 或像素回读。双帧转场用于 `scene.code` 边界；画面中的文字也只是完整画面的一部分，不做字幕特例。
+
+视觉时间轴采用 `(A-D/2) + T(D) + (B-D/2)`，总片长不变。旁白、SFX、BGM 与 SRT 仍按原始 A/B 逻辑时间轴生成，不随视觉节点移动。详见 [转场协议](references/transition.md)。
 
 ## QA：一次浏览器会话，抽帧、凭据、联系表一次完成
 
@@ -167,11 +181,11 @@ node scripts/doctor.mjs
 
 ### 在 Agent 里用
 
-把本仓库或 `tt pack` 产出的干净分发包放进 Agent 的 skills 目录（Claude Code 可放在 `~/.claude/skills/ticktoon`），确保 [`SKILL.md`](SKILL.md) 位于根目录。Agent 会从 `recipes/` 选一条 recipe，读它的 brief 与 skeleton，然后写 storyboard 并编译；code 型还会读 `visual.md` 与 `ref-shots/`。
+把本仓库或 `tt pack` 产出的干净分发包放进 Agent 的 skills 目录（Claude Code 可放在 `~/.claude/skills/ticktoon`），确保 [`SKILL.md`](SKILL.md) 位于根目录。Agent 会从 `recipes/` 选一条 recipe，读它的 `recipe.md` 与 skeleton，然后写 storyboard 并编译；code 型还会读 `ref-shots/`。
 
 示例请求：
 
-> 做一个 30 秒的白板科普视频，讲复利，只用一条旁白，字幕用默认 band 样式。
+> 做一个 30 秒的白板科普视频，讲复利，只用一条旁白，字幕用默认 perchar 样式。
 
 ### 用 CLI
 
@@ -205,17 +219,16 @@ node scripts/render.mjs my-video/out/composition.json -o my-video/video.mp4
 ```text
 ticktoon-skill/
 ├── SKILL.md                     # Agent 入口：路由、闭环、红线
-├── recipes/                     # 内置 recipe：规范、brief、骨架、ref-shots
+├── recipes/                     # 内置 recipe：规范、文档、骨架、ref-shots
 │   ├── whiteboard-explainer/
-│   │   ├── recipe.json          # mode / fonts / rules / captions / audio
-│   │   ├── brief.md             # 何时用、何时不用、视觉数值
+│   │   ├── recipe.json          # mode / rules / captions / audio
+│   │   ├── recipe.md            # 创作纲要 + 画法规范
 │   │   ├── skeleton.storyboard.json
-│   │   ├── visual.md            # code 型 recipe 的画法规范
 │   │   └── ref-shots/*.js
 │   ├── news-broadcast/
 │   │   ├── recipe.json          # mode: params + template 契约
 │   │   ├── template.js         # 固定满幅模板：draw(g, p)
-│   │   ├── brief.md
+│   │   ├── recipe.md
 │   │   └── skeleton.storyboard.json
 │   └── ...
 ├── references/                  # 运行时 API 手册：storyboard、scene code、kit

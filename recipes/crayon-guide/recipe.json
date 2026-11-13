@@ -1,130 +1,59 @@
 {
   "id": "crayon-guide",
-  "abi": "9",
+  "abi": "1",
   "name": "蜡笔图解",
   "keywords": [
     "蜡笔",
     "手账",
     "图解",
-    "步骤",
     "绘本",
-    "亲子"
+    "亲子",
+    "人物",
+    "对比"
   ],
-  "when": "用暖米纸与蜡笔斜纹把步骤、清单或小知识画成手账时",
-  "mode": "params",
-  "template": {
-    "draw": "template.js",
-    "params": {
-      "title": {
-        "type": "string",
-        "required": true,
-        "maxChars": 10
-      },
-      "subtitle": {
-        "type": "string",
-        "maxChars": 14,
-        "default": ""
-      },
-      "bubble": {
-        "type": "string",
-        "maxChars": 14,
-        "default": ""
-      },
-      "badge": {
-        "type": "string",
-        "maxChars": 6,
-        "default": "3步搞定"
-      },
-      "ingredients": {
-        "type": "array",
-        "maxItems": 4,
-        "maxChars": 6,
-        "default": [],
-        "feel": "旧版纯文本清单；新配方优先用 items[] 图标槽"
-      },
-      "steps": {
-        "type": "array",
-        "maxItems": 3,
-        "maxChars": 10,
-        "default": []
-      },
-      "times": {
-        "type": "array",
-        "maxItems": 3,
-        "maxChars": 8,
-        "default": []
-      },
-      "note": {
-        "type": "string",
-        "maxChars": 24,
-        "default": ""
-      },
-      "items": {
-        "type": "objects",
-        "maxItems": 4,
-        "fields": {
-          "kind": {
-            "enum": [
-              "bowl",
-              "plate",
-              "pot",
-              "egg",
-              "veg",
-              "meat",
-              "spice",
-              "spoon"
-            ],
-            "default": "bowl"
-          },
-          "label": {
-            "type": "string",
-            "default": "",
-            "maxChars": 8
-          }
-        },
-        "default": []
-      }
-    },
-    "needs": {
-      "font": [
-        "display",
-        "hand",
-        "num"
-      ],
-      "image": false,
-      "video": false,
-      "three": false
-    },
-    "motion": {
-      "enter": 0.66,
-      "exitRatio": 0.52
-    },
-    "inkless": true
-  },
-  "fonts": {
-    "display": "ZTZiYouTi",
-    "body": "sans-400",
-    "hand": "ZTZiYouTi",
-    "num": "latin-700",
-    "caption": "sans-900"
-  },
+  "mode": "code",
+  "when": [
+    "需要用亲切的蜡笔绘本讲生活教程、文化观点、实验故事或轻科普。",
+    "不同场次需要自由组合人物、材料、对话、对比柱、分层图与手写标注。",
+    "画面需要暖米纸、蜡笔排线、颗粒和手绘轮廓，而不是现代信息卡。"
+  ],
+  "notWhen": [
+    "需要严谨公式推导、坐标轴或高密度数据图；改用 whiteboard-explainer / blackboard-lesson。",
+    "需要固定新闻版式；改用 news-broadcast。",
+    "需要实拍、写实人物或快节奏大字；改用 footage-cut / flash-cut。"
+  ],
   "rules": {
-    "safeMargin": 0.06,
+    "safeMargin": 0.055,
+    "scale": {
+      "title": 1,
+      "label": 0.8,
+      "note": 0.6
+    },
+    "stroke": [
+      2,
+      4.6
+    ],
+    "board": {
+      "mode": "fixed",
+      "value": "crayon"
+    },
     "forbid": [
-      "把 params 模板缩成卡片；模板必须铺满整帧",
-      "steps 与 times 数量不一致",
-      "字幕压住步骤卡或右下角手写注",
-      "在同一场景写 scene.code；本 recipe 只收 scene.params"
+      "在同一场景写 scene.params；本 recipe 只收 scene.code",
+      "把人物、材料或图解整理成题材枚举；每场按 narration 重新组织画面",
+      "再铺第二层纸底；纸纹只来自 TT.board.crayon",
+      "用纯色矩形和平滑矢量图标代替蜡笔排线与颗粒",
+      "把每帧随机抖动当作手绘感；纹理和轮廓偏移必须由固定序号决定",
+      "主体或场景内文字侵入底部字幕带；公共 captions 只有 handnote 一层"
     ]
   },
   "captions": {
     "style": "handnote",
-    "font": "hand",
+    "font": "ZTZiYouTi",
     "baseSize": 42,
     "lineHeight": 1.34,
-    "top": 0.8,
+    "top": 0.84,
     "at": "auto",
-    "maxWidth": 0.5
+    "maxWidth": 0.56
   },
   "audio": {
     "mood": "soft",

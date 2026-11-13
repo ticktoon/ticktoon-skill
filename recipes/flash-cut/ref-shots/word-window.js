@@ -18,6 +18,14 @@
       "type": "video",
       "name": "nature",
       "src": "skill:assets/demo/nature.mp4"
+    },
+    {
+      "type": "font",
+      "name": "sans-900"
+    },
+    {
+      "type": "font",
+      "name": "sans-400"
     }
   ]
 }
@@ -34,7 +42,7 @@ const frame = api.video('tech');
 const bg = TT.flash.contrastColor(api, frame, { light: '#F2F0E8', dark: B });
 ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
 const fg = bg === B ? S : B;
-const size = TT.flash.fit(ctx, 'MOVE', W * 0.82, { maxPx: 540, role: 'display' });
+const size = TT.flash.fit(ctx, 'MOVE', W * 0.82, { maxPx: 540, fontKey: 'sans-900' });
 TT.flash.mask(ctx, api, { text: 'MOVE', x: W * 0.5, y: H * 0.5, size, fill: 'image', image: frame, fit: 'cover', focus: [0.52, 0.38], zoom: 1.12, t: T, dur: 0.28, reveal: TT.clamp01((T - 0.04) / 0.3), revealDir: 'l' });
 TT.flash.micro(ctx, { text: '02 / 09 — EVERY', x: W * 0.04, y: H * 0.165, size: 18, color: fg });
 TT.flash.micro(ctx, { text: 'BRAND FILM / 4:5', x: W * 0.96, y: H * 0.165, size: 16, color: fg, align: 'right' });

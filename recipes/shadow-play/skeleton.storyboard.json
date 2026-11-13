@@ -6,60 +6,23 @@
     "fps": 30
   },
   "meta": {
-    "title": "皮影戏·两段姿态"
+    "title": "未命名皮影戏"
   },
   "scenes": [
     {
       "id": "s01",
-      "narration": "更鼓敲过三下，有人提着灯往渡口走。",
-      "params": {
-        "title": "夜行",
-        "subtitle": "第 一 折 · 渡 口",
-        "plaques": [
-          "渡口",
-          "三更"
-        ],
-        "characters": [
-          {
-            "kind": "adult",
-            "pose": "walk",
-            "x": 0.78,
-            "scale": 1,
-            "color": "#a8432e",
-            "prop": "staff"
-          }
-        ]
-      }
-    },
-    {
-      "id": "s02",
-      "narration": "孩子在门口招手，一只小兽跟在后面，谁也没有先说话，只听见灯轻轻晃了一下。",
-      "params": {
-        "title": "归途",
-        "subtitle": "第 二 折 · 门 前",
-        "plaques": [
-          "门前",
-          "清晨"
-        ],
-        "characters": [
-          {
-            "kind": "child",
-            "pose": "wave",
-            "x": 0.55,
-            "scale": 0.82,
-            "color": "#3f6f8f",
-            "prop": "lantern"
-          },
-          {
-            "kind": "animal",
-            "pose": "stand",
-            "x": 0.84,
-            "scale": 0.68,
-            "color": "#5f7f66",
-            "prop": "none"
-          }
-        ]
-      }
+      "duration": 3,
+      "code": [
+        "// 场景骨架：根据本场 narration 重新组织人物、建筑、器物与光影。",
+        "// 规范读 recipe.md，完整写法看 ref-shots/；可用 W / H / ctx / api / TT / RULES。",
+        "TT.board.stage(ctx, { W, H }, { seed: 1 });",
+        "// 在这里绘制本场人物、建筑与器物。",
+        "TT.board.stageFrame(ctx, { W, H });"
+      ],
+      "resources": [
+        { "type": "font", "name": "sans-900" },
+        { "type": "font", "name": "sans-400" }
+      ]
     }
   ]
 }

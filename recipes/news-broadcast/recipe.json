@@ -1,6 +1,6 @@
 {
   "id": "news-broadcast",
-  "abi": "9",
+  "abi": "1",
   "name": "突发新闻",
   "keywords": [
     "新闻",
@@ -11,8 +11,18 @@
     "竖版",
     "键盘声"
   ],
-  "when": "固定竖版突发新闻模板：径向蓝底 + 世界地图 + 流动线，只写标题、正文、来源与可选品牌；标题/正文可用行首 * 标黄重点行，无旁白、无字幕",
   "mode": "params",
+  "when": [
+    "单幕突发速报，8–12 秒，只讲「发生了什么 + 影响 + 来源」。",
+    "需要固定版式、换稿不换视觉的竖屏信息卡。",
+    "信息是硬事实，不需要主持人、评论或现场画面。"
+  ],
+  "notWhen": [
+    "多条不相关要闻或需要时间线复盘；改用 footage-cut 或 flash-cut。",
+    "需要评论立场、解释背景或专家引语；改用 whiteboard-explainer（解释）或 blackboard-lesson（推导）。",
+    "需要现场图/视频；本 recipe 是纯版面块，不承担媒体画面。",
+    "需要旁白或 TTS；本 recipe 是静默新闻卡，改用其他有旁白的 recipe。"
+  ],
   "template": {
     "draw": "template.js",
     "params": {
@@ -44,11 +54,6 @@
       }
     },
     "needs": {
-      "font": [
-        "display",
-        "body",
-        "brand"
-      ],
       "image": false,
       "video": false,
       "three": false
@@ -58,6 +63,14 @@
         "type": "image",
         "name": "news-world-map",
         "src": "skill:assets/image/world-map.png"
+      },
+      {
+        "type": "font",
+        "name": "WenYuanSerifSC-Bold"
+      },
+      {
+        "type": "font",
+        "name": "sans-900"
       }
     ],
     "sfxTrack": {
@@ -77,12 +90,6 @@
       "exitRatio": 0.44
     },
     "inkless": true
-  },
-  "fonts": {
-    "display": "WenYuanSerifSC-Bold",
-    "body": "WenYuanSerifSC-Bold",
-    "brand": "sans-900",
-    "num": "latin-700"
   },
   "rules": {
     "safeMargin": 0.055,

@@ -14,6 +14,7 @@ import { assemble, buildSrt } from '../compile/assemble.mjs';
 import { check } from '../compile/check.mjs';
 import { detHash, sceneHashes } from '../compile/det.mjs';
 import { Bag } from '../compile/diag.mjs';
+import { createVisualScenes } from '../compile/transition-scenes.mjs';
 
 function readKitIndex(root) {
   const kitDir = path.join(root, 'platform', 'kit');
@@ -78,15 +79,15 @@ export async function buildProject({ root, dir, file = null, tts = null, write =
 
   const catalog = loadCatalog(root);
   const normalized = normalizeStoryboard(raw, catalog, captionOverride);
-  const { storyboard, bag: schemaBag, recipe, fonts, caption } = normalized;
+  const { storyboard, bag: schemaBag, recipe, caption } = normalized;
   bag.errors.push(...schemaBag.errors);
   bag.warnings.push(...schemaBag.warnings);
 
-  if (!bag.ok || !fonts) {
+  if (!bag.ok) {
     return finish({ ok: false, bag, outDir, write, report: { ok: false, status: 'failed', errors: bag.errors, warnings: bag.warnings } });
   }
 
-  const resolved = await resolveStoryboard({ storyboard, fonts, recipe, catalog, tts });
+  const resolved = await resolveStoryboard({ storyboard, recipe, catalog, tts });
   bag.warnings.push(...resolved.warnings);
 
   const planned = planStoryboard({
@@ -101,7 +102,6 @@ export async function buildProject({ root, dir, file = null, tts = null, write =
   const emitted = planned.scenes.map((scene) => emitScene({
     scene,
     recipe,
-    fonts,
     format: storyboard.format,
     catalog,
     kitIndex,
@@ -111,14 +111,24 @@ export async function buildProject({ root, dir, file = null, tts = null, write =
     rules: recipe?.rules || null,
   }));
 
-  check({ scenes: planned.scenes, bag, recipe });
+  check({ scenes: planned.scenes, bag, recipe, catalog });
 
+  // 声音始终绑定原始逻辑场；视觉场可以插入转场、裁掉首尾，但不能改变音频时钟。
+  const audioScenes = emitted.map((scene, i) => ({
+    ...scene,
+    start: planned.scenes[i].start,
+    speechStart: planned.scenes[i].speechStart,
+  }));
+  const visual = createVisualScenes({
+    plannedScenes: planned.scenes,
+    emittedScenes: audioScenes,
+    format: storyboard.format,
+    transitionKitCode: readFileSync(path.join(kitDir, kitIndex.transition.file), 'utf-8'),
+    bag,
+  });
   const { composition, events } = assemble({
-    scenes: emitted.map((scene, i) => ({
-      ...scene,
-      start: planned.scenes[i].start,
-      speechStart: planned.scenes[i].speechStart,
-    })),
+    scenes: visual.scenes,
+    audioScenes,
     resolved,
     format: storyboard.format,
     bag,
@@ -144,7 +154,7 @@ export async function buildProject({ root, dir, file = null, tts = null, write =
     receipts: [],
   };
 
-  const context = { fonts, recipe, storyboard, caption, captionName: caption?.name || null, catalog };
+  const context = { recipe, storyboard, caption, captionName: caption?.name || null, catalog };
   if (!bag.ok) return { ...finish({ ok: false, bag, outDir, write, report, composition, events, planned }), ...context };
   return { ...finish({ ok: true, bag, outDir, write, report, composition, events, planned }), ...context };
 }
@@ -154,7 +164,7 @@ function finish({ ok, bag, outDir, write, report, composition, events, planned }
     mkdirSync(outDir, { recursive: true });
     if (composition) writeFileSync(path.join(outDir, 'composition.json'), JSON.stringify(composition, null, 2));
     if (events) writeFileSync(path.join(outDir, 'events.json'), JSON.stringify(events, null, 2));
-    if (composition) writeFileSync(path.join(outDir, 'subs.srt'), buildSrt(composition.scenes));
+    if (composition) writeFileSync(path.join(outDir, 'subs.srt'), buildSrt(planned?.scenes || composition.scenes));
     writeFileSync(path.join(outDir, 'report.json'), JSON.stringify(report, null, 2));
   }
   return { ok, bag, report, composition, events, planned, outDir };

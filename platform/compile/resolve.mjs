@@ -1,18 +1,17 @@
 /**
  * ② resolve —— 把"作者写的东西"换成"编译需要的东西"。
  *
- * 四件事，彼此独立：
+ * 三件事，彼此独立：
  *   旁白 → 语音时长（有 TTS 用 TTS，没有就估，并标记 estimated）
- *   字体 → 角色 → family id → 文件，缺一个就掉 fallback 并告警
  *   音效 → 名字 → 文件 + 时长 + 电平
  *   BGM  → recipe.audio 的文件 / key → 文件
+ *
+ * 字体不在这里解析：scene.resources / template.resources 的 font 条目在 schema 阶段
+ * 已按 manifest 键补好 src，emit 直接进本场 resources。
  *
  * P0 没有 TTS：`tts` 传 null 即走估算。估算与 TTS 的产物形状完全一样（一个秒数），
  * 所以 P1 接上 TTS 时 plan / emit / assemble 一行都不用改。
  */
-import { existsSync } from 'node:fs';
-import path from 'node:path';
-
 /** 播报语速。中文按字算，标点不发音只制造停顿。 */
 export const CHARS_PER_SECOND = 4.6;
 /** 旁白场的首尾留白。leadIn 让画面先出现再开口，hold 让最后一句不被切断。 */
@@ -31,9 +30,9 @@ export function estimateSpeech(text) {
 }
 
 /**
- * @returns {{ scenes, bgm, fonts, sfx, warnings, ttsUsed }}
+ * @returns {{ scenes, bgm, sfx, warnings, ttsUsed }}
  */
-export async function resolveStoryboard({ storyboard, fonts: fontRoles, recipe, catalog, tts }) {
+export async function resolveStoryboard({ storyboard, recipe, catalog, tts }) {
   const warnings = [];
   const ttsUsed = !!tts;
 
@@ -67,38 +66,6 @@ export async function resolveStoryboard({ storyboard, fonts: fontRoles, recipe, 
       level: 'nice', code: 'NARRATION_ESTIMATED', path: '',
       msg: 'P0 无 TTS，旁白时长按 4.6 字/秒估算；P1 接上 TTS 后同名配方会自动改用实测时长',
     });
-  }
-
-  // --- 字体：code 场注入 recipe 的全部字体；params 场只解析 template.needs.font ---
-  const roles = new Set();
-  for (const scene of storyboard.scenes) {
-    if (scene.code !== null) {
-      for (const role of Object.keys(fontRoles || {})) roles.add(role);
-    } else if (scene.params !== null) {
-      for (const role of recipe?.template?.needs?.font || []) roles.add(role);
-    }
-  }
-  const fonts = [];
-  for (const role of roles) {
-    const name = fontRoles?.[role];
-    const entry = name ? catalog.fonts[name] : null;
-    if (!name || !entry) {
-      warnings.push({
-        level: 'should', code: 'FONT_FALLBACK', path: `fonts.${role}`,
-        msg: `字体角色 "${role}" 没有对应的 manifest 条目，画面会回落到系统字体`,
-      });
-      continue;
-    }
-    const rel = entry.src.replace(/^skill:/, '');
-    const abs = path.join(catalog.root, rel);
-    if (!existsSync(abs)) {
-      warnings.push({
-        level: 'should', code: 'FONT_FILE_MISSING', path: `assets/fonts/manifest.json`,
-        msg: `字体 ${name} 指向的 ${entry.src} 不存在，画面会回落到系统字体`,
-      });
-      continue;
-    }
-    fonts.push({ role, name, src: entry.src });
   }
 
   // --- 音效：params 场的模板音效（defaultSfx / sfxTrack）；code 场不自带门禁音效 ---
@@ -145,5 +112,5 @@ export async function resolveStoryboard({ storyboard, fonts: fontRoles, recipe, 
       }
     : null;
 
-  return { scenes, bgm, fonts, sfx, warnings, ttsUsed, pacing: PACING };
+  return { scenes, bgm, sfx, warnings, ttsUsed, pacing: PACING };
 }

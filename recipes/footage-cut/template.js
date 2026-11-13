@@ -47,14 +47,14 @@ function draw(g, p) {
     const lineW = Math.max(6, Math.round(W * 0.0042));
     const lineRight = gutterX + lineW;
     const enter = clamp01(g.reveal * 1.25);
-    const body = font(fonts, Math.round(W * 0.014), 'body');
+    const body = font(fonts, Math.round(W * 0.014), 'sans-400');
     ctx.font = body.css;
     ctx.textBaseline = 'alphabetic';
     ctx.textAlign = 'left';
     ctx.fillStyle = accent;
     ctx.fillRect(gutterX, H * 0.105 - body.ascent, lineW, body.ascent + body.descent);
     ctx.fillStyle = ink;
-    TT.text(ctx, String(p.kicker || ''), lineRight + 22, H * 0.105, Math.round(W * 0.014), { font: body.css, color: ink, role: 'body' });
+    TT.text(ctx, String(p.kicker || ''), lineRight + 22, H * 0.105, Math.round(W * 0.014), { font: body.css, color: ink, fontKey: 'sans-400' });
     ctx.textAlign = 'right';
     ctx.fillStyle = muted;
     ctx.fillText('REAL FOOTAGE  /  PEXELS', W - margin, H * 0.105);
@@ -64,11 +64,11 @@ function draw(g, p) {
     const paragraphs = String(p.title || '').split('\n');
     const minSize = 44;
     let size = Math.round(W * 0.046);
-    let display = font(fonts, size, 'display');
+    let display = font(fonts, size, 'sans-900');
     let lines = paragraphs;
     let textX = 0;
     for (;;) {
-      display = font(fonts, size, 'display');
+      display = font(fonts, size, 'sans-900');
       ctx.font = display.css;
       textX = lineRight + display.size * 0.6;
       const availW = W - margin - textX;
@@ -76,7 +76,7 @@ function draw(g, p) {
       if (lines.length <= 3 || size <= minSize) break;
       size = Math.max(minSize, size - 4);
     }
-    display = font(fonts, size, 'display');
+    display = font(fonts, size, 'sans-900');
     ctx.font = display.css;
     textX = lineRight + display.size * 0.6;
     const top = H * (lines.length > 1 ? 0.465 : 0.565);
@@ -107,7 +107,7 @@ function draw(g, p) {
       let x = textX;
       [...line].forEach((ch, ci) => {
         ctx.fillStyle = masks[li][ci] ? accent : ink;
-        TT.text(ctx, ch, x, top + li * display.lineHeight + display.ascent, display.size || 76, { font: display.css, color: masks[li][ci] ? accent : ink, role: 'display' });
+        TT.text(ctx, ch, x, top + li * display.lineHeight + display.ascent, display.size || 76, { font: display.css, color: masks[li][ci] ? accent : ink, fontKey: 'sans-900' });
         x += ctx.measureText(ch).width;
       });
     });

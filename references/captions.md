@@ -5,7 +5,7 @@
 ```text
 recipe.uses.captions / CLI --captions
                 ↓
-platform/compile/captions.mjs       校验、默认值、旧 ID 别名、字体资源
+platform/compile/captions.mjs       校验、默认值、字体资源
                 ↓
 platform/kit/captions/core.js       公共排版与避障模型
                 ↓
@@ -21,7 +21,7 @@ platform/kit/captions/styles/*.js       各样式只负责盒型参数与绘制
 ```json
 {
   "uses": {
-    "captions": "band"
+    "captions": "perchar"
   }
 }
 ```
@@ -33,7 +33,7 @@ platform/kit/captions/styles/*.js       各样式只负责盒型参数与绘制
   "uses": {
     "captions": {
       "style": "collage",
-      "font": "caption",
+      "font": "sans-900",
       "band": true,
       "at": "auto",
       "size": 1.0
@@ -45,11 +45,11 @@ platform/kit/captions/styles/*.js       各样式只负责盒型参数与绘制
 CLI 的 `--captions` 会覆盖 recipe 设置，既接受 ID，也接受 JSON 对象：
 
 ```bash
-node "$SKILL_DIR/platform/cli.mjs" build --dir output/caption-kit/styles/band \
+node "$SKILL_DIR/platform/cli.mjs" build --dir output/caption-kit/styles/perchar \
   --captions '{"style":"collage","at":{"x":0.66,"y":0.43},"size":1.25,"maxWidth":0.30}'
 
 node "$SKILL_DIR/platform/cli.mjs" stills 1.4 2.2 \
-  --dir output/caption-kit/styles/band \
+  --dir output/caption-kit/styles/perchar \
   --captions collage
 ```
 
@@ -59,15 +59,17 @@ node "$SKILL_DIR/platform/cli.mjs" stills 1.4 2.2 \
 
 | ID | 视觉特征 | 适合内容 | 常用参数 |
 |---|---|---|---|
-| `band` | 满宽深色带、左侧 accent 边条、已读字逐字点亮 | 白板科普、教程、信息密度较高的解释 | `background`、`accent`、`color`、`band` |
-| `plain` | 默认无底色，白字配深色描边和柔和阴影，可放在任意位置 | 实拍、插画、需要露出画面的短视频 | `at`、`stroke`、`shadow`、`color`、`band` |
-| `card` | 圆角背衬跟随实际文本宽度，已读字点亮 | 新闻、播报、数据和正式说明 | `background`、`color`、`align`、`band` |
+| `plain` | 默认无底色，白字配深色描边和柔和阴影，可放在任意位置 | 实拍、插画、需要露出画面的短视频 | `at`、`stroke`、`shadow`、`color`、`band`、`padding` |
+| `perchar` | 圆角背衬跟随实际文本宽度，逐字字幕：未读字弱化，已读字点亮 | 新闻、播报、数据和正式说明 | `background`、`color`、`align`、`band` |
 | `karaoke` | 已读字变白，当前字使用高亮色并放大到 1.12 倍 | 叙事、历史、歌曲和跟读 | `highlight`、`background`、`color` |
 | `collage` | 每字独立色块，色板循环，确定性错位、逐字回弹和最大 ±6° 微旋转；多行有不同横向偏移 | 社交视频、拼贴插画、生活方式和活泼标题 | `palette`、`seed`、`rotation`、`maxWidth`、`avoid` |
 | `handnote` | 手写字、灰色纸带、不规则荧光笔条，字级轻微手绘抖动且不逐帧闪烁 | 白板、手账、教育、轻量解释 | `font`、`highlight`、`background`、`color` |
 | `vertical` | 字从上到下，列从右到左，逐字显现 | 水墨、国风、诗词和东方美学 | `font`、`maxHeight`、`at`、`color`、`band` |
+| `tornpaper` | 白色手撕纸背衬，带柔和投影；上下撕边平缓，纸纤维按 `seed` 固定；左上角斜置一块 accent 和纸色块，深墨字默认江城圆体 | 手账、生活记录、报刊剪贴和轻松叙事 | `background`、`accent`、`color`、`seed`、`band` |
 
 `collage` 的色块是字形设计本身，不受 `band: false` 抑制。其色块前景色默认按背景亮度自动选择；单色 `palette` 时可用 `color` 指定文字颜色。随机偏移由字符序号与 `seed` 哈希得到，不使用 `Math.random()`，同一输入可重复渲染。
+
+`perchar` 的四周留白来自盒型的 `padX: 34 / padY: 14`，不是额外加的 padding；即使 `band: false` 关闭背衬，文字仍保留这段留白。`plain` 的背衬内边距为 `28 / 14`，只有 `band: true` 时才会看到底色和留白。
 
 ## 参数 schema
 
@@ -75,8 +77,8 @@ node "$SKILL_DIR/platform/cli.mjs" stills 1.4 2.2 \
 
 | 参数 | 类型 / 范围 | 默认值 | 说明 |
 |---|---|---|---|
-| `style` | 七样式 ID、`none`（关闭字幕），或旧 ID `bar` / `broadcast` | `band` | 对象形式时指定样式 |
-| `font` | recipe 顶层 `fonts` 角色、kit 字体角色或 manifest 键 | 随样式 | 见下方字体表 |
+| `style` | 七样式 ID 或 `none`（关闭字幕） | `perchar` | 对象形式时指定样式 |
+| `font` | `assets/fonts/manifest.json` 的字体键 | 随样式 | 见下方字体表；直接写键，如 `JiangChengYuanTi`，没有角色层 |
 | `size` | number，`0.5–2.0` | `1` | 相对 recipe `captions.baseSize` 的倍率 |
 | `at` | `bottom` / `top` / `center` / `auto` / `{x,y}` | 随样式 | 字幕整体位置 |
 | `band` | boolean | 随样式 | 是否绘制该样式的整体背衬；`collage` 例外 |
@@ -88,7 +90,7 @@ node "$SKILL_DIR/platform/cli.mjs" stills 1.4 2.2 \
 | `avoid` | 归一化矩形数组 | `[]` | `auto` 排位时的额外主体障碍，见“主体避让” |
 | `color` | CSS 颜色字符串 | 随样式 | 主文字颜色 |
 | `background` | CSS 颜色字符串 | 随样式 | 整体背衬颜色 |
-| `accent` | CSS 颜色字符串 | `#E2574C` | `band` 左侧边条 |
+| `accent` | CSS 颜色字符串 | `tornpaper: #9FD4BD` | `tornpaper` 左上角斜置色块 |
 | `highlight` | CSS 颜色字符串 | `karaoke: #FFD166`；`handnote: #F4D35E` | 当前字或荧光笔高亮 |
 | `palette` | 非空 CSS 颜色字符串数组 | collage 六色色板 | 逐字循环的独立色块颜色 |
 | `seed` | integer | `17` | collage 确定性错位、块尺寸和旋转的种子 |
@@ -101,13 +103,13 @@ node "$SKILL_DIR/platform/cli.mjs" stills 1.4 2.2 \
 
 | 样式 | font | at | band |
 |---|---|---|---|
-| `band` | `caption` | `bottom` | `true` |
-| `plain` | `caption` | `bottom` | `false` |
-| `card` | `caption` | `bottom` | `true` |
-| `karaoke` | `caption` | `bottom` | `true` |
-| `collage` | `caption` | `auto` | `true` |
-| `handnote` | `hand` | `bottom` | `true` |
-| `vertical` | `serif` | `auto` | `false` |
+| `plain` | `sans-900` | `bottom` | `false` |
+| `perchar` | `sans-900` | `bottom` | `true` |
+| `karaoke` | `sans-900` | `bottom` | `true` |
+| `collage` | `sans-900` | `auto` | `true` |
+| `handnote` | `ZTZiYouTi` | `bottom` | `true` |
+| `vertical` | `WenYuanSerifSC-Bold` | `auto` | `false` |
+| `tornpaper` | `JiangChengYuanTi` | `bottom` | `true` |
 
 未识别参数、未知样式或字体、越界的 `size` / `rotation`、非法位置等会在 schema 阶段报错，不会静默回退成另一种字幕。
 
@@ -153,32 +155,29 @@ node "$SKILL_DIR/platform/cli.mjs" stills 1.4 2.2 \
 
 数组和对象均表示 `[x, y, w, h]` / `{x,y,w,h}`，数值为画宽、画高比例。
 
-## 字体角色
+## 字幕字体
 
-`font` 优先解析 recipe 顶层 `fonts` 的角色，其次解析下表 kit 角色，最后接受 `assets/fonts/manifest.json` 的键。字幕字体会独立加入本场资源，不依赖场景代码或模板恰好使用同一字体。
+`font` 直接写 `assets/fonts/manifest.json` 的键，没有角色层。字幕字体是独立资源：只要 `captions.font` 指定的文件，`emit` 就会加载它，与场景代码、模板用没用到同一款字体无关。不写 `font` 时用样式默认键；写了 manifest 里不存在的键会在 schema 阶段报 `CAPTION_FONT_UNKNOWN`。
 
-| kit 角色 | manifest 键 / 引擎 FontFace 键 | 字体真实 family | 文件 | 字重与用途 |
-|---|---|---|---|---|
-| `caption` | `sans-900` | DingTalk JinBuTi | `DingTalk-JinBuTi.woff2` | 900；默认主字幕，紧凑有力 |
-| `hand` | `ZTZiYouTi` | ZT ZiYouTi | `ZTZYT.woff2` | 400；自由手写，handnote 默认 |
-| `round` | `JiangChengYuanTi` | JiangChengYuanTi | `江城圆体.woff2` | 400；柔和圆体 |
-| `poster` | `ZTYueDongHei` | ZT YueDongHei | `ZTYDH.woff2` | 400；海报型强调字幕 |
-| `serif` | `WenYuanSerifSC-Bold` | WenYuan Serif SC | `WYST_BOLD.woff2` | 700；宋体，vertical 与国风字幕默认 |
-| `cutout` | `MaokenAssortedSans` | MaokenAssortedSans | `MKSJH.woff2` | 400；不规则字面，适合剪报拼贴 |
+| manifest 键 | 字体真实 family | 文件 | 字重与用途 |
+|---|---|---|---|
+| `sans-900` | DingTalkJinBuTi | `DingTalk-JinBuTi.woff2` | 900；默认主字幕，紧凑有力 |
+| `sans-700` | WenYuanSansSC | `WenYuanSansSC-Bold.woff2` | 700；小标题与关键词，比默认字幕略轻 |
+| `sans-400` | WenYuanSansSC | `WenYuanSansSC-Medium.woff2` | 400；长句与信息型字幕，阅读更稳 |
+| `WenYuanSerifSC-Bold` | WenYuanSerifSC | `WYST_BOLD.woff2` | 700；宋体，vertical 与国风字幕默认 |
+| `JiangChengYuanTi` | JiangChengYuanTi | `江城圆体.woff2` | 400；柔和圆体，tornpaper 默认 |
+| `ZTZiYouTi` | ZTZiYouTi | `ZTZYT.woff2` | 400；自由手写，handnote 默认 |
+| `ZTYueDongHei` | ZTYueDongHei | `ZTYDH.woff2` | 400；海报型强调字幕 |
+| `MaokenAssortedSans` | MaokenAssortedSans | `MKSJH.woff2` | 400；不规则字面，适合剪报拼贴 |
+| `DouYinMeiHaoTi` | DouYinMeiHaoTi | `DYMHT.woff2` | 400；活泼标题字 |
+| `QianTuBiFengShouXie` | QianTuBiFengShouXie | `QTBFSXT.woff2` | 400；笔锋手写，适合国风题款 |
+| `TsangerYuMo` | TsangerYuMo | `CEYM-W02.woff2` | 400；毛笔墨韵，适合水墨题款与东方情绪标题 |
+| `TsangerShuYuan` | TsangerShuYuan | `CESYT03.woff2` | 400；圆润舒展，适合轻松日常与亲和标题 |
+| `StarLovePencil` | StarLovePencil | `ZZJZDB.woff2` | 400；自动铅笔手写感，适合手账、批注与草稿 |
 
-例如 `"font": "caption"` 和 `"font": "sans-900"` 都使用钉钉进步体。应写 manifest 键 `ZTZiYouTi`，不要把字体内部 family `ZT ZiYouTi` 当作资源键。
+资源键与 FontFace 族名一律用 manifest 键；manifest 的 `family` 只做说明，不写进 `captions.font`。
 
-## 旧 ID 兼容
-
-| 旧 ID | 实际样式 | 说明 |
-|---|---|---|
-| `bar` | `band` | 原 recipe 无需修改 |
-| `broadcast` | `card` | 原 recipe 无需修改 |
-| `karaoke` | `karaoke` | ID 保持不变，增加可配置高亮色 |
-
-别名在配置归一化时解析，并同时注册原 ID 的入口，因此旧 composition 中的 caption 名称和现有 recipe 均可继续使用。
-
-## 添加第八种样式
+## 添加新样式
 
 只需新增 `platform/kit/captions/styles/pill.js`。catalog 会按文件名自动注册 `pill`，不需要修改 emit、字体加载、cue 计划或位置代码。
 

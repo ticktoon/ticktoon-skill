@@ -23,6 +23,14 @@
       "type": "video",
       "name": "tech",
       "src": "skill:assets/demo/tech.mp4"
+    },
+    {
+      "type": "font",
+      "name": "sans-900"
+    },
+    {
+      "type": "font",
+      "name": "sans-400"
     }
   ]
 }

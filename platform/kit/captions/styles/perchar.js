@@ -1,6 +1,6 @@
-/** card：背衬跟随实际文本宽度；兼容旧 broadcast。 */
+/** perchar：逐字字幕——背衬跟随实际文本宽度，未读字弱化，已读字点亮。 */
 (() => {
-  CAPTIONS.card = (c) => TT.captionKit.render(c, { padX: 34, padY: 14 }, (m) => {
+  CAPTIONS.perchar = (c) => TT.captionKit.render(c, { padX: 34, padY: 14 }, (m) => {
     const { ctx, o, f, rect } = m;
     if (o.band !== false) {
       ctx.fillStyle = o.background || 'rgba(10,12,16,0.88)';

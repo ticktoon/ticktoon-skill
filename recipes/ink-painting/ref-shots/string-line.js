@@ -3,7 +3,12 @@
   "title": "一根弦",
   "note": "与三场示例不同题材，水墨骨架相同：曲线控制点、排线区间与题款可变",
   "duration": 3.6,
-  "resources": [],
+  "resources": [
+    {
+      "type": "font",
+      "name": "QianTuBiFengShouXie"
+    }
+  ],
   "tags": [
     "水墨",
     "线条",
@@ -14,13 +19,14 @@
 /*
  * 「一根弦」——与本 recipe 的三场示例不同题材，骨架完全一样。
  * 用来证明：换内容只换曲线控制点、排线区间与题款，contract 里的物理规律一行不动。
- * 宣纸 TT.board.wash / 墨线 inkbrush / 文字 TT.text / 印章 TT.mark.seal / 静态镜头。
+ * 宣纸 TT.board.wash / 墨线 inkbrush / 文字 TT.text / 方框印章 TT.mark.box / 静态镜头。
  */
 const T = api.t;
-const t = T < 1.2 ? T : (T < 2.2 ? 1.2 : 1.2 + (T - 2.2) * 2.2);
+// 呼吸直接放在笔画之间：弦 0.1–1.85s 落完，停一拍后 2.05s 才起振颤。
+// 不要用会冻结进度的时间重映射；t 停住时正在画的弦会停在半空，看起来像笔卡死。
 const clamp01 = TT.clamp01;
 const ease = TT.ease;
-const SCALE = RULES.scale || { title: 1, label: 0.75, note: 0.55 };
+const SCALE = RULES.scale || { title: 1, label: 0.75, note: 1.25 };
 const STROKE = Array.isArray(RULES.stroke) ? RULES.stroke : [3, 12];
 const M = Number.isFinite(RULES.safeMargin) ? RULES.safeMargin : 0.09;
 const thin = STROKE[0];
@@ -69,9 +75,12 @@ const cubic = (a, b, c, d, n = 32) => {
   }
   return pts;
 };
+// 两块笔迹：主弦带笔；振颤与拨点是纹理，只落墨，笔不在这几十根短线之间来回跳。
 const strokes = [];
-const stroke = (pts, at, dur, color = ink, width = 4, dash = []) => {
-  strokes.push({ pts, at, dur, pen: 'inkbrush', color, width, dash, seed: 0 });
+const detailStrokes = [];
+const stroke = (pts, at, dur, color = ink, width = 4, dash = [], hero = false) => {
+  const item = { pts, at, dur, pen: 'inkbrush', color, width, dash, seed: 0 };
+  (hero ? strokes : detailStrokes).push(item);
 };
 const label = (value, x, y, size, color, k, align = 'left', rotate = -0.01) => {
   if (k <= 0) return;
@@ -79,7 +88,7 @@ const label = (value, x, y, size, color, k, align = 'left', rotate = -0.01) => {
   ctx.translate(x, y + (1 - k) * 10);
   ctx.rotate(rotate);
   ctx.globalAlpha = clamp01(k) * alpha;
-  TT.text(ctx, value, 0, 0, size, { color, align, role: 'body' });
+  TT.text(ctx, value, 0, 0, size, { color, align, fontKey: 'QianTuBiFengShouXie' });
   ctx.restore();
 };
 
@@ -88,9 +97,9 @@ const chord = [
   ...cubic([220, 560], [560, 546], [820, 574], [1080, 558]),
   ...cubic([1080, 558], [1360, 542], [1580, 570], [1720, 552]).slice(1),
 ];
-stroke(chord.slice(0, 20), 0.08, 0.7, ink, bold);
-stroke(chord.slice(19, 44), 0.55, 0.6, midInk, mid);
-stroke(chord.slice(43), 0.95, 0.7, ink, bold * 0.9);
+stroke(chord.slice(0, 20), 0.10, 0.65, ink, bold, [], true);
+stroke(chord.slice(19, 44), 0.62, 0.60, midInk, mid, [], true);
+stroke(chord.slice(43), 1.15, 0.70, ink, bold * 0.9, [], true);
 
 // 振颤：上下成对淡墨短弧，越往外越淡。位置是序号的固定函数。
 for (let i = 0; i < 6; i += 1) {
@@ -98,20 +107,29 @@ for (let i = 0; i < 6; i += 1) {
   const amp = 26 + (i % 3) * 14;
   const up = cubic([x - 70, 552], [x - 20, 552 - amp], [x + 20, 552 - amp], [x + 70, 552], 16);
   const down = cubic([x - 70, 562], [x - 20, 562 + amp * 0.6], [x + 20, 562 + amp * 0.6], [x + 70, 562], 16);
-  stroke(up, 2.2 + i * 0.08, 0.5, i < 3 ? midInk : pale, thin);
-  stroke(down, 2.5 + i * 0.08, 0.5, pale, thin * 0.8);
+  stroke(up, 2.05 + i * 0.08, 0.35, i < 3 ? midInk : pale, thin);
+  stroke(down, 2.25 + i * 0.08, 0.35, pale, thin * 0.8);
 }
 
 // 拨点：三个重墨点落在线上，不铺色块。
 for (let i = 0; i < 3; i += 1) {
   const x = 520 + i * 430;
-  stroke([[x, 556], [x + 8, 550]], 2.7 + i * 0.12, 0.3, ink, mid);
+  stroke([[x, 556], [x + 8, 550]], 2.6 + i * 0.07, 0.15, ink, mid);
 }
 
-label('一根弦', W * 0.12, 190, 62 * SCALE.title, ink, prog(t, 0.2, 0.8), 'left', -0.02);
-label('振过之后才安静', W * 0.12, 250, 42 * SCALE.note, midInk, prog(t, 2.4, 0.7), 'left', -0.01);
-TT.mark.seal(ctx, { at: [1680, 300], text: '写意', shape: 'square', size: 0.055, color: sealColor, alpha: prog(t, 2.7, 0.6) });
+label('一根弦', W * 0.12, 190, 76 * SCALE.title, ink, prog(T, 0.15, 0.5), 'left', -0.02);
+label('振过之后才安静', W * 0.12, 268, 42 * SCALE.note, ink, prog(T, 2.45, 0.5), 'left', -0.01);
+const sealAlpha = prog(T, 2.7, 0.4);
+if (sealAlpha > 0) {
+  ctx.save();
+  ctx.translate(1680, 300);
+  ctx.rotate(-0.08);
+  TT.mark.box(ctx, { rect: [-28, -28, 56, 56], shape: 'round', radius: 5, color: sealColor, width: 4.5, alpha: sealAlpha });
+  TT.text(ctx, '写意', 0, 4, 17, { fontKey: 'QianTuBiFengShouXie', color: sealColor, alpha: sealAlpha, align: 'center', baseline: 'middle', maxWidth: 44 });
+  ctx.restore();
+}
 
-TT.pen.track(ctx, strokes, t, { sceneScale: fit * scale });
+TT.pen.track(ctx, detailStrokes, T, { sceneScale: fit * scale, penBody: false });
+TT.pen.track(ctx, strokes, T, { sceneScale: fit * scale });
 ctx.restore();
 ctx.restore();

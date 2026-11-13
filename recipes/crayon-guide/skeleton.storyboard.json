@@ -6,47 +6,21 @@
     "fps": 30
   },
   "meta": {
-    "title": "蜡笔图解·窗台种葱"
+    "title": "未命名蜡笔图解"
   },
   "scenes": [
     {
       "id": "s01",
-      "narration": "先在盆底铺一层土，把葱种尖头朝上插进去，间距留两指。盖一层薄土，浇透水，放到有阳光的窗台。头三天别暴晒，一周后就能冒出第一茬绿。",
-      "params": {
-        "title": "窗台种葱",
-        "subtitle": "一盆 · 两周吃上",
-        "badge": "3步发芽",
-        "steps": [
-          "铺土插种",
-          "薄土浇透",
-          "窗台晒太阳"
-        ],
-        "times": [
-          "2 分钟",
-          "3 分钟",
-          "1 分钟"
-        ],
-        "note": "小注 · 头三天别暴晒",
-        "bubble": "土别盖太厚",
-        "items": [
-          {
-            "kind": "pot",
-            "label": "小花盆"
-          },
-          {
-            "kind": "veg",
-            "label": "葱种"
-          },
-          {
-            "kind": "bowl",
-            "label": "营养土"
-          },
-          {
-            "kind": "spoon",
-            "label": "清水"
-          }
-        ]
-      }
+      "duration": 3,
+      "code": [
+        "// 场景骨架：根据本场 narration 自由组合人物、器物、图解与标注。",
+        "// 规范读 recipe.md，完整写法看 ref-shots/；可用 W / H / ctx / api / TT / RULES。",
+        "TT.board.crayon(ctx, api, { seed: 1 });"
+      ],
+      "resources": [
+        { "type": "font", "name": "ZTZiYouTi" },
+        { "type": "font", "name": "sans-900" }
+      ]
     }
   ]
 }

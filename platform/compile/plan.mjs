@@ -8,6 +8,7 @@
  * params 场只有一个内部单元 template，覆盖整场；它不改变时间链。
  */
 import { round3 } from './diag.mjs';
+import { TRANSITION_PRESETS } from './transitions.mjs';
 
 const CJK = /[\u2e80-\u303f\u3040-\u9fff\uac00-\ud7af\uf900-\ufaff\ufe30-\ufe4f\uff00-\uffef]/;
 const SILENT = /[，。！？；：、,.!?;:…—\s"'（）()《》「」【】]/;
@@ -223,6 +224,28 @@ export function planStoryboard({ storyboard, resolved, format, bag, captionPx = 
       unit: scene.params !== null ? { id: 'template', at: 0, dur: duration } : null,
     });
     cursor = round3(cursor + duration);
+  });
+
+  // 转场只校验固定时长是否能从相邻正场各借一半；视觉节点在 emit 后展开。
+  scenes.forEach((scene, index) => {
+    if (!scene.transition) return;
+    if (!scenes[index + 1]) {
+      bag.error('TRANSITION_LAST_SCENE', `scenes[${index}].transition`,
+        '最后一场后面没有可接的场景；删掉 transition，或把它移到前一场');
+    } else if (!scene.code || !scenes[index + 1].code) {
+      bag.error('TRANSITION_CODE_ONLY', `scenes[${index}].transition`,
+        '双帧转场只支持 code 场景；前后两场都必须使用 scene.code');
+    }
+  });
+  scenes.forEach((scene, index) => {
+    const incoming = scenes[index - 1]?.transition;
+    const outgoing = scene.transition;
+    const reserved = (incoming ? TRANSITION_PRESETS[incoming].dur / 2 : 0)
+      + (outgoing ? TRANSITION_PRESETS[outgoing].dur / 2 : 0);
+    if (scene.duration - reserved <= 0) {
+      bag.error('TRANSITION_SCENE_TOO_SHORT', `scenes[${index}].transition`,
+        `场景 ${scene.id} 只有 ${scene.duration}s，扣除相邻转场各占的一半后没有正常画面；延长该场或去掉一个转场`);
+    }
   });
 
   return { scenes, duration: cursor };

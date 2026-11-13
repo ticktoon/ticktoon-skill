@@ -14,8 +14,11 @@
       "duration": 3,
       "code": [
         "// 场景骨架：在下面写本场内容。",
-        "// 规范读 visual.md，写法看 ref-shots/；可用 W / H / ctx / api / TT / RULES。",
+        "// 规范读 recipe.md，写法看 ref-shots/；可用 W / H / ctx / api / TT / RULES。",
         "TT.board.wash(ctx, api, { bleed: true });"
+      ],
+      "resources": [
+        { "type": "font", "name": "QianTuBiFengShouXie" }
       ]
     }
   ]

@@ -335,7 +335,7 @@ async function cmdNew() {
     const { target: file, mode } = newProject({ dir: path.resolve(target), recipe, catalog });
     console.log(`已创建 ${file}`);
     if (mode === 'code') {
-      console.log('下一步：读 recipe 的 brief.md / visual.md / ref-shots/，然后在 storyboard.json 里写 scene.code');
+      console.log('下一步：读 recipe 的 recipe.md / ref-shots/，然后在 storyboard.json 里写 scene.code');
     } else {
       console.log('下一步：改 storyboard.json 的 scene.params');
     }
@@ -618,6 +618,15 @@ function cmdPack() {
   child.on('exit', (code) => process.exit(code ?? 0));
 }
 
+/** 选择元数据是多条判断条件：逐条打印，续行与首行文字对齐。 */
+function printConditions(label, items) {
+  if (!items.length) return;
+  const indent = ' '.repeat(label.length + 2);
+  items.forEach((item, index) => {
+    console.log(`  ${index === 0 ? label.padEnd(label.length + 2) : indent}${item}`);
+  });
+}
+
 function cmdRecipeList() {
   const catalog = loadCatalog(ROOT);
   // 货架清单的唯一来源：recipes/ 目录扫描。SKILL.md 不复制这份表，新增 recipe 无需改文档。
@@ -625,7 +634,8 @@ function cmdRecipeList() {
     id: recipe.id,
     name: recipe.name,
     keywords: recipe.keywords || [],
-    when: recipe.when,
+    when: recipe.when || [],
+    notWhen: recipe.notWhen || [],
   }));
   if (json) {
     console.log(JSON.stringify(rows, null, 2));
@@ -633,7 +643,9 @@ function cmdRecipeList() {
   }
   for (const row of rows) {
     const head = `${row.id.padEnd(20)} ${(row.name || '').padEnd(10)} ${row.keywords.join(' / ')}`.trimEnd();
-    console.log(`${head}  ${row.when || ''}`);
+    console.log(head);
+    printConditions('when', row.when);
+    printConditions('not', row.notWhen);
   }
 }
 
@@ -652,9 +664,9 @@ function cmdRecipeShow() {
     mode: recipe.mode || null,
     name: recipe.name,
     keywords: recipe.keywords || [],
-    when: recipe.when,
+    when: recipe.when || [],
+    notWhen: recipe.notWhen || [],
     template: recipe.mode === 'params' ? template : null,
-    fonts: recipe.fonts ?? null,
     rules: recipe.rules ?? null,
     captions: recipe.captions ?? null,
     audio: recipe.audio ?? null,
@@ -675,8 +687,8 @@ function cmdRecipeShow() {
   console.log(`  mode    ${view.mode}`);
   console.log(`  template ${view.template?.draw || '-'}`);
   if (view.keywords.length) console.log(`  keywords ${view.keywords.join(' / ')}`);
-  if (view.when) console.log(`  when    ${view.when}`);
-  pretty('fonts', view.fonts);
+  printConditions('when', view.when);
+  printConditions('not', view.notWhen);
   pretty('rules', view.rules);
   pretty('captions', view.captions);
   pretty('audio', view.audio);
@@ -702,7 +714,7 @@ function usage() {
   tt preview [--port N]           只读预览（复用引擎面板）；批注在页面内多帧累积，发送后落盘并关闭
   tt lab [--port N] [--recipe <id>]   code recipe 镜头参考实验室：真实编译 + 引擎预览，可改代码重跑
   tt annotations [--all] [--ack [id]]  读取批注批次：默认最新未处理批次；--ack 标记整批已处理
-  tt recipe list / show <id> / audit   recipe 货架（id/名称/关键词/when）/ 单条详情（mode+fonts+rules+template）/ 全量审计（骨架 + 示例）
+  tt recipe list / show <id> / audit   recipe 货架（id/名称/关键词/when）/ 单条详情（mode+rules+template）/ 全量审计（骨架 + 示例）
   tt ci [--deep] [--count N]      全量回归：audit + 逐条 det 两次；--deep 复用 tt qa 管线
   tt ci --baseline [--write]       recipe 骨架 / 示例合成片的编译指纹与构建状态基线（新 recipe 自动纳入）；--write 刷新基线
   tt pack [目标目录]              打干净分发包（Skill + 引擎 dist）

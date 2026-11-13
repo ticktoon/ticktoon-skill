@@ -1,51 +1,81 @@
 {
-  "note": "字体角色或真实 family → 文件。name 同时是引擎 FontFace 族名；recipe.fonts 的值必须与 manifest 键逐字相同。",
+  "note": "字体库：键同时是引擎 FontFace 族名和作者引用键。code 场写 scene.resources、params 模板写 template.resources：{\"type\":\"font\",\"name\":\"<键>\"}，src 由编译期按本表补齐；字幕写 captions.font。desc 是选型依据。",
   "sans-900": {
     "src": "skill:assets/fonts/DingTalk-JinBuTi.woff2",
-    "family": "DingTalk JinBuTi",
+    "family": "DingTalkJinBuTi",
     "weight": 900,
-    "desc": "钉钉进步体；字幕默认主字体，标题黑，字形紧、有压迫感"
+    "desc": "钉钉进步体，900；紧凑厚重、力量感强，作为视频主标题，适合强强调、封面大字"
+  },
+  "sans-700": {
+    "src": "skill:assets/fonts/WenYuanSansSC-Bold.woff2",
+    "family": "WenYuanSansSC",
+    "weight": 700,
+    "desc": "文渊黑体 Bold，700；干干净稳重的粗无衬线。用作小标题、高亮关键词；如需把重点数字、西文单独加粗分流时，可选用此字体"
   },
   "sans-400": {
     "src": "skill:assets/fonts/WenYuanSansSC-Medium.woff2",
-    "family": "WenYuan Sans SC",
+    "family": "WenYuanSansSC",
     "weight": 400,
-    "desc": "正文黑，字面干净、长句可读"
-  },
-  "latin-700": {
-    "src": "skill:assets/fonts/WenYuanSansSC-Bold.woff2",
-    "family": "WenYuan Sans SC",
-    "weight": 700,
-    "desc": "数字与西文加粗"
-  },
-  "MaokenAssortedSans": {
-    "src": "skill:assets/fonts/MKSJH.woff2",
-    "family": "MaokenAssortedSans",
-    "weight": 400,
-    "desc": "猫啃什锦黑；不规则字面适合剪报与拼贴"
-  },
-  "ZTYueDongHei": {
-    "src": "skill:assets/fonts/ZTYDH.woff2",
-    "family": "ZT YueDongHei",
-    "weight": 400,
-    "desc": "ZT YueDongHei；悦动黑，适合海报型强调字幕"
-  },
-  "ZTZiYouTi": {
-    "src": "skill:assets/fonts/ZTZYT.woff2",
-    "family": "ZT ZiYouTi",
-    "weight": 400,
-    "desc": "ZT ZiYouTi；自由手写风，handnote 默认字体"
+    "desc": "文渊黑体 Medium，400；默认正文基底，适合解说字幕、撕纸卡片正文、长句信息，长时间阅读友好"
   },
   "WenYuanSerifSC-Bold": {
     "src": "skill:assets/fonts/WYST_BOLD.woff2",
-    "family": "WenYuan Serif SC",
+    "family": "WenYuanSerifSC",
     "weight": 700,
-    "desc": "文源宋体 Bold；vertical 与国风字幕默认字体"
+    "desc": "文渊宋体 Bold，700；雅致衬线书卷感，适合诗文摘录、纪录片引语、人文向标题"
   },
   "JiangChengYuanTi": {
     "src": "skill:assets/fonts/江城圆体.woff2",
     "family": "JiangChengYuanTi",
     "weight": 400,
-    "desc": "江城圆体 400W；友好、柔和的圆体"
+    "desc": "江城圆体，400；笔画圆润饱满，观感温和百搭。适合日常字幕、信息卡片、提示文字，也可用于轻松向小标题，克制不抢画面。"
+  },
+  "DouYinMeiHaoTi": {
+    "src": "skill:assets/fonts/DYMHT.woff2",
+    "family": "DouYinMeiHaoTi",
+    "weight": 400,
+    "desc": "抖音美好体，400；圆润清爽，识别度高，适合短视频常规字幕、轻量提示文字"
+  },
+  "MaokenAssortedSans": {
+    "src": "skill:assets/fonts/MKSJH.woff2",
+    "family": "MaokenAssortedSans",
+    "weight": 400,
+    "desc": "猫啃什锦黑，400；原生单字重，视觉粗黑，字形错落随性，自带手工拼贴感。适合剪报风格大字、复古标题、趣味卡片点缀；不适合流式长字幕、密集小字、连续旁白"
+  },
+  "ZTYueDongHei": {
+    "src": "skill:assets/fonts/ZTYDH.woff2",
+    "family": "ZTYueDongHei",
+    "weight": 400,
+    "desc": "卓特悦动黑；活泼张力强，适合海报式短标题、重点提示、情绪向大字"
+  },
+  "ZTZiYouTi": {
+    "src": "skill:assets/fonts/ZTZYT.woff2",
+    "family": "ZTZiYouTi",
+    "weight": 400,
+    "desc": "卓特自由体，400；随性手写质感，主打海报短标题、情绪强调字；不适合流式长字幕、密集小字正文"
+  },
+  "QianTuBiFengShouXie": {
+    "src": "skill:assets/fonts/QTBFSXT.woff2",
+    "family": "QianTuBiFengShouXie",
+    "weight": 400,
+    "desc": "千图笔锋手写；起收笔锐利有笔墨锋感，适合水墨题款、国风短标题"
+  },
+  "TsangerYuMo": {
+    "src": "skill:assets/fonts/CEYM-W02.woff2",
+    "family": "TsangerYuMo",
+    "weight": 400,
+    "desc": "仓耳与墨 W02；写意毛笔质感，笔画收放富有变化，国风情绪标题、水墨题字首选"
+  },
+  "TsangerShuYuan": {
+    "src": "skill:assets/fonts/CESYT03.woff2",
+    "family": "TsangerShuYuan",
+    "weight": 400,
+    "desc": "仓耳舒圆 W03；舒展柔和圆体，轻松治愈，适合生活化旁白、亲和小标题"
+  },
+  "StarLovePencil": {
+    "src": "skill:assets/fonts/ZZJZDB.woff2",
+    "family": "StarLovePencil",
+    "weight": 400,
+    "desc": "宅在家自动笔；铅笔手绘抖动质感，适合手账、草稿批注、随记小字"
   }
 }

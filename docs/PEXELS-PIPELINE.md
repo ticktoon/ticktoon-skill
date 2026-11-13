@@ -1,6 +1,6 @@
 # Pexels 实拍素材流水线
 
-本文只讲 Pexels 实时检索、下载与回写；突发新闻配方的运行时契约见 `recipes/news-broadcast/brief.md`。
+本文只讲 Pexels 实时检索、下载与回写；突发新闻配方的运行时契约见 `recipes/news-broadcast/recipe.md`。
 
 ## Pexels 实时检索与下载
 

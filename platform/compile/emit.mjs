@@ -60,7 +60,7 @@ const indent = (text, pad) => text.split('\n').map((line) => (line ? pad + line 
 /**
  * @returns {{ id, duration, background, seed, code, cues, resources, needs, meta }}
  */
-export function emitScene({ scene, recipe, fonts, format, catalog, kitIndex, kitDir, caption = null, receipts, rules = null }) {
+export function emitScene({ scene, recipe, format, catalog, kitIndex, kitDir, caption = null, receipts, rules = null }) {
   const W = format.w;
   const H = format.h;
   const captionName = caption?.name || null;
@@ -81,10 +81,7 @@ export function emitScene({ scene, recipe, fonts, format, catalog, kitIndex, kit
   if (template?.drawSource) {
     for (const name of ttNamesOf(template.drawSource)) usedNames.add(name);
   }
-  // transition 是编译期追加的代码；env / rng 被 G 对象与入场淡入直接引用。
-  const hasTransitionIn = !!scene.transitionIn && scene.transitionIn.type !== 'cut';
-  const hasTransitionOut = !!scene.transitionOut && scene.transitionOut.type !== 'cut';
-  if (hasTransitionIn || hasTransitionOut) usedNames.add('transition');
+  // env / rng 被 params 模板的 G 对象与入场淡入直接引用。
   if (template) {
     usedNames.add('env');
     usedNames.add('rng');
@@ -104,24 +101,23 @@ export function emitScene({ scene, recipe, fonts, format, catalog, kitIndex, kit
   for (const res of scene.resources || []) pushRes(res);
   if (template) {
     // params 模板自带的固定资源（例如新闻底图）。draw.js 用 g.api.img(name) 查询。
-    for (const res of template.resources || []) pushRes(res);
-    for (const role of template.needs?.font || []) {
-      const name = fonts?.[role];
-      const entry = name ? catalog.fonts[name] : null;
-      if (entry) pushRes({ type: 'font', name, src: entry.src });
+    for (const res of template.resources || []) {
+      if (res.type === 'font') {
+        const entry = catalog.fonts?.[res.name];
+        if (entry) pushRes({ type: 'font', name: res.name, src: entry.src });
+      } else {
+        pushRes(res);
+      }
     }
   }
   if (captionCode && captionFontName) {
     const entry = catalog.fonts[captionFontName];
     if (entry) pushRes({ type: 'font', name: captionFontName, src: entry.src });
   }
-  // code 场没有模板 needs.font 可供推导，TT.font 可能取到 recipe.fonts 的任一角色，
-  // 所以把 fonts 里声明的字体全部带进本场；引擎按 src 去重。
-  if (scene.code) {
-    for (const name of Object.values(fonts || {})) {
-      const entry = name ? catalog.fonts[name] : null;
-      if (entry) pushRes({ type: 'font', name, src: entry.src });
-    }
+  // FONTS 是本场字体资源键的恒等映射；TT.font / TT.text.fontKey 的参数就是 manifest 键。
+  const fontMap = {};
+  for (const res of resources) {
+    if (res.type === 'font') fontMap[res.name] = res.name;
   }
 
   const needs = new Set();
@@ -152,7 +148,7 @@ export function emitScene({ scene, recipe, fonts, format, catalog, kitIndex, kit
     push(captionCode.trim());
   }
 
-  push(`const FONTS = ${JSON.stringify(fonts || {})};`);
+  push(`const FONTS = ${JSON.stringify(fontMap)};`);
   // RULES 只属于 code 场：params 模板通过 params 契约拿内容，不需要视觉规范对象。
   if (scene.code) push(`const RULES = ${JSON.stringify(rules ?? {})};`);
 
@@ -303,19 +299,7 @@ export function emitScene({ scene, recipe, fonts, format, catalog, kitIndex, kit
     }
   }
 
-  // 过渡永远在最后：它要盖住已经完成的画面（包括字幕），也只有在尾帧才拿得到
-  // 完整的帧快照。入场先画、出场后画，两者同时存在时出场压住入场。
-  if (hasTransitionIn || hasTransitionOut) {
-    push(`  const __TT_TRANS_G = { W, H, fonts: FONTS, bg: ${JSON.stringify(background)}, dur: ${Number(scene.duration)} };`);
-    const transitionArgs = (tr) => `{ type: ${JSON.stringify(tr.type)}, dur: ${Number(tr.dur)}, `
-      + `dir: ${JSON.stringify(tr.dir)}, color: ${JSON.stringify(tr.color)}, at: ${JSON.stringify(tr.at)}, t: T }`;
-    if (hasTransitionIn) {
-      push(`  TT.transition.in(__TT_TRANS_G, ctx, ${transitionArgs(scene.transitionIn)});`);
-    }
-    if (hasTransitionOut) {
-      push(`  TT.transition.out(__TT_TRANS_G, ctx, ${transitionArgs(scene.transitionOut)});`);
-    }
-  }
+  // 场间转场不在单场内绘制；编译器随后生成独立的双帧转场场。
   push('};');
 
   return {

@@ -2,17 +2,7 @@
 
 真实素材铺满画幅，只压一两行硬短句；靠镜头切换与素材本身讲事实，不靠手绘。
 
-## 何时用
-
-- 已经有实拍素材（Pexels 或本地），希望保留画面质感。
-- 文案是短句或两行陈述，不需要字幕逐字跟读。
-- 需要真实场景、人物、街道、自然，而不是插画或图表。
-
-## 何时不用
-
-- 没有素材、也不准备检索 → 改用 `scene.code` 型 recipe。
-- 需要解释机制、步骤或数据 → `whiteboard-explainer` / `crayon-guide`。
-- 需要逐字字幕 → `illustrated-story` 或白板 recipe。
+选中本 recipe 后，这份文档就是创作纲要：recipe 只规定固定版式与素材检索意图，题材与叙事由 storyboard 自由组织。
 
 ## 内容怎么写
 
@@ -29,6 +19,10 @@
 - 素材上只用发丝线与细分割线。
 - `captions.style: "none"`；`audio.mood: "soft"`，音量 0.1，淡入 2s / 淡出 2.6s。
 - 素材检索、缓存、署名与降级链见 `references/pexels.md`。
+
+## 字体
+
+压屏字与模板内文字用 `sans-900`，细标注用 `sans-400`；两族字体都在 `template.resources` 声明，模板代码里直接写 manifest 键。
 
 ## 骨架样例
 

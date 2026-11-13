@@ -3,7 +3,12 @@
   "title": "印落空处",
   "note": "最后一方印落在留白里，不压主体墨线",
   "duration": 2.927,
-  "resources": [],
+  "resources": [
+    {
+      "type": "font",
+      "name": "QianTuBiFengShouXie"
+    }
+  ],
   "tags": [
     "印章",
     "收束",
@@ -13,18 +18,18 @@
 */
 // 水墨写意 · 示例：收束。印不压墨线，落在留白里。
 const T = api.t;
-const t = T < 1.2 ? T : (T < 2.2 ? 1.2 : 1.2 + (T - 2.2) * 2.2);
+// 呼吸放在笔画之间：收笔 0.1–1.0s 落完，随后才是淡墨与印。
+// 不要用会冻结进度的时间重映射；t 停住时正在画的墨线会停在半空，看起来像卡死。
 const clamp01 = TT.clamp01;
 const ease = TT.ease;
-const SCALE = RULES.scale || { title: 1, label: 0.75, note: 0.55 };
+const SCALE = RULES.scale || { title: 1, label: 0.75, note: 1.25 };
 const STROKE = Array.isArray(RULES.stroke) ? RULES.stroke : [3, 12];
 const M = Number.isFinite(RULES.safeMargin) ? RULES.safeMargin : 0.09;
 const thin = STROKE[0];
 const ink = '#2b2d2b';
-const midInk = '#6b6e69';
 const pale = '#a8aaa4';
 const sealColor = '#a34030';
-const titlePx = 62 * SCALE.title;
+const titlePx = 76 * SCALE.title;
 
 const enterDur = 0.4;
 const exitDur = 0.168;
@@ -64,9 +69,12 @@ const cubic = (a, b, c, d, n = 32) => {
   }
   return pts;
 };
+// 两块笔迹：收笔带笔；淡墨下沿只落墨，笔不在收束后重新冒出来。
 const strokes = [];
-const stroke = (pts, at, dur, color = ink, width = 4, dash = []) => {
-  strokes.push({ pts, at, dur, pen: 'inkbrush', color, width, dash, seed: 0 });
+const detailStrokes = [];
+const stroke = (pts, at, dur, color = ink, width = 4, dash = [], hero = false) => {
+  const item = { pts, at, dur, pen: 'inkbrush', color, width, dash, seed: 0 };
+  (hero ? strokes : detailStrokes).push(item);
 };
 const label = (value, x, y, size, color, k, align = 'left', rotate = -0.01) => {
   if (k <= 0) return;
@@ -74,21 +82,30 @@ const label = (value, x, y, size, color, k, align = 'left', rotate = -0.01) => {
   ctx.translate(x, y + (1 - k) * 10);
   ctx.rotate(rotate);
   ctx.globalAlpha = clamp01(k) * alpha;
-  TT.text(ctx, value, 0, 0, size, { color, align, role: 'body' });
+  TT.text(ctx, value, 0, 0, size, { color, align, fontKey: 'QianTuBiFengShouXie' });
   ctx.restore();
 };
 
 // 收笔：一道短而重的墨线，把三场的视线收回到右下。
 const finish = cubic([1180, 720], [1320, 690], [1460, 740], [1580, 690], 28);
-stroke(finish, 0.08, 0.9, ink, thin * 3);
-stroke([[1180, 748], [1330, 742], [1450, 752]], 0.9, 0.3, pale, thin * 0.8);
+stroke(finish, 0.10, 0.90, ink, thin * 3, [], true);
+stroke([[1180, 748], [1330, 742], [1450, 752]], 1.08, 0.30, pale, thin * 0.8);
 
-label('落在空处', W * 0.12, 200, titlePx, ink, prog(t, 0.2, 0.7), 'left', -0.02);
-label('印不压墨线', W * 0.12, 260, 42 * SCALE.note, midInk, prog(t, 0.95, 0.25), 'left', -0.01);
+label('落在空处', W * 0.12, 200, titlePx, ink, prog(T, 0.15, 0.5), 'left', -0.02);
+label('印不压墨线', W * 0.12, 278, 42 * SCALE.note, ink, prog(T, 0.95, 0.3), 'left', -0.01);
 
-// 印章走 TT.mark.seal：它自带双线圈与倾斜，用 alpha 淡入，不手写方框。
-TT.mark.seal(ctx, { at: [1680, 300], text: '写意', shape: 'square', size: 0.055, color: sealColor, alpha: prog(t, 0.9, 0.3) });
+// 印章用方框 + 题字拼出：盒形走 TT.mark.box，文字走 TT.text，整体轻斜、淡入。
+const sealAlpha = prog(T, 1.1, 0.4);
+if (sealAlpha > 0) {
+  ctx.save();
+  ctx.translate(1680, 300);
+  ctx.rotate(-0.08);
+  TT.mark.box(ctx, { rect: [-28, -28, 56, 56], shape: 'round', radius: 5, color: sealColor, width: 4.5, alpha: sealAlpha });
+  TT.text(ctx, '写意', 0, 4, 17, { fontKey: 'QianTuBiFengShouXie', color: sealColor, alpha: sealAlpha, align: 'center', baseline: 'middle', maxWidth: 44 });
+  ctx.restore();
+}
 
-TT.pen.track(ctx, strokes, t, { sceneScale: fit * scale });
+TT.pen.track(ctx, detailStrokes, T, { sceneScale: fit * scale, penBody: false });
+TT.pen.track(ctx, strokes, T, { sceneScale: fit * scale });
 ctx.restore();
 ctx.restore();

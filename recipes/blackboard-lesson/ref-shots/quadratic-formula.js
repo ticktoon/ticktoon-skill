@@ -3,7 +3,12 @@
   "title": "一元二次方程求根公式",
   "note": "黑板推导：配方、开方、得出公式，再代入一个例子；一整场约 28 秒",
   "duration": 27.974,
-  "resources": [],
+  "resources": [
+    {
+      "type": "font",
+      "name": "JiangChengYuanTi"
+    }
+  ],
   "tags": [
     "推导",
     "代数",
@@ -18,7 +23,6 @@ const t = api.t;
 const D = Math.max(0.001, api.d);
 const clamp01 = TT.clamp01;
 const ease = TT.ease;
-const TAU = Math.PI * 2;
 
 // ---- 视觉规范：边距、字号阶梯、线宽区间都由 recipe.rules 决定 ----
 const SCALE = RULES.scale || { title: 1, label: 0.8, note: 0.6 };
@@ -38,11 +42,6 @@ const notePx = 40 * SCALE.note;
 const B = (f) => f * D;
 const prog = (value, at, dur) => ease.inOutCubic(clamp01((value - at) / Math.max(0.001, dur)));
 const show = (atFrac, durFrac) => prog(t, B(atFrac), B(durFrac));
-const ellipse = (cx, cy, rx, ry, start = -1.9, n = 76) => Array.from({ length: n + 1 }, (_, i) => {
-  const a = start + TAU * i / n;
-  const wob = Math.sin(i * 2.17) * 1.6 + Math.sin(i * 5.3) * 0.7;
-  return [cx + Math.cos(a) * (rx + wob), cy + Math.sin(a) * (ry + wob * 0.32)];
-});
 
 // ---- 镜头与安全框：TT.geom 统一 zoom 路径与反像采样 ----
 const enterDur = 0.62;
@@ -107,63 +106,45 @@ const label = (value, x, y, size, color, k, align = 'left', rotate = -0.008) => 
   ctx.translate(x, y + (1 - k) * 10);
   ctx.rotate(rotate);
   ctx.globalAlpha = clamp01(k) * alpha;
-  TT.text(ctx, value, 0, 0, size, { color, align, role: 'body' });
+  TT.text(ctx, value, 0, 0, size, { color, align, fontKey: 'JiangChengYuanTi' });
   ctx.restore();
 };
 
 // ---- 第 1 拍：标题与副题 ----
-label('求根公式', 960, 142, titlePx, ink, show(0.015, 0.045), 'center', -0.012);
-stroke([[815, 169], [905, 172], [1030, 168], [1115, 171]], 0.052, 0.024, yellow, bold);
+label('求根公式', 960, 132, titlePx, ink, show(0.015, 0.045), 'center', -0.012);
+stroke([[815, 158], [905, 161], [1030, 157], [1115, 160]], 0.052, 0.024, yellow, bold);
 label('从一般式到两个根，只需要五步', 960, 204, notePx, muted, show(0.062, 0.028), 'center', 0.006);
 
 // ---- 第 2 拍：一般式 ----
 label('①', 150, 268, stepPx, yellow, show(0.082, 0.018));
 label('ax² + bx + c = 0', 232, 270, eqPx, ink, show(0.088, 0.03));
-label('a ≠ 0', 930, 270, notePx, blue, show(0.108, 0.018));
-label('先看清方程的样子', 232, 300, notePx, muted, show(0.112, 0.02), 'left', 0.004);
+label('a ≠ 0', 1120, 270, notePx, blue, show(0.108, 0.018), 'right');
+label('先看清方程的样子', 232, 306, notePx, muted, show(0.112, 0.02), 'left', 0.004);
 
 // ---- 第 3 拍：同除以 a ----
-label('②', 150, 350, stepPx, yellow, show(0.152, 0.018));
-label('x² + (b/a)x + c/a = 0', 232, 352, eqPx, ink, show(0.158, 0.03));
-label('两边同除以 a', 930, 352, notePx, blue, show(0.178, 0.018));
-arrow([[880, 322], [820, 318], [780, 316]], 0.185, 0.018, blue, thin);
+label('②', 150, 362, stepPx, yellow, show(0.152, 0.018));
+label('x² + (b/a)x + c/a = 0', 232, 362, eqPx, ink, show(0.158, 0.03));
+label('两边同除以 a', 1120, 362, notePx, blue, show(0.178, 0.018), 'right');
 
 // ---- 第 4 拍：移项与配方 ----
-label('③', 150, 432, stepPx, yellow, show(0.222, 0.018));
-label('x² + (b/a)x = -c/a', 232, 434, eqPx, ink, show(0.228, 0.03));
-label('(x + b/2a)² = (b² - 4ac) / 4a²', 232, 507, eqPx, ink, show(0.258, 0.036));
-label('两边加上 (b/2a)²', 930, 434, notePx, blue, show(0.248, 0.018));
-stroke([[492, 452], [540, 455], [596, 451]], 0.268, 0.016, yellow, thin);
-label('左边凑成完全平方', 232, 537, notePx, muted, show(0.298, 0.018), 'left', 0.004);
+label('③', 150, 462, stepPx, yellow, show(0.222, 0.018));
+label('x² + (b/a)x = -c/a', 232, 462, eqPx, ink, show(0.228, 0.03));
+label('(x + b/2a)² = (b² - 4ac) / 4a²', 232, 536, eqPx, ink, show(0.258, 0.036));
+label('两边加上 (b/2a)²', 1120, 462, notePx, blue, show(0.248, 0.018), 'right');
+stroke([[492, 480], [540, 483], [596, 479]], 0.268, 0.016, yellow, thin);
+label('左边凑成完全平方', 232, 574, notePx, muted, show(0.298, 0.018), 'left', 0.004);
 
 // ---- 第 5 拍：开方 ----
-label('④', 150, 586, stepPx, yellow, show(0.332, 0.018));
-label('x + b/2a = ± √(b² - 4ac) / 2a', 232, 588, eqPx, ink, show(0.338, 0.032));
-label('两边开方，注意正负', 930, 588, notePx, blue, show(0.362, 0.018));
-arrow([[870, 558], [820, 554], [780, 552]], 0.370, 0.016, blue, thin);
+label('④', 150, 632, stepPx, yellow, show(0.332, 0.018));
+label('x + b/2a = ± √(b² - 4ac) / 2a', 232, 632, eqPx, ink, show(0.338, 0.032));
+label('两边开方，注意正负', 1120, 632, notePx, blue, show(0.362, 0.018), 'right');
 
 // ---- 第 6 拍：求根公式 ----
-label('⑤', 150, 690, stepPx, yellow, show(0.408, 0.018));
-label('x = (-b ± √(b² - 4ac)) / 2a', 232, 690, formulaPx, red, show(0.418, 0.04));
-const circleK = show(0.470, 0.03);
-if (circleK > 0) {
-  ctx.save();
-  ctx.strokeStyle = red;
-  ctx.lineWidth = bold;
-  ctx.globalAlpha *= Math.min(1, circleK * 3);
-  const ring = ellipse(632, 674, 430, 38, -1.72).map(([x, y], i) => {
-    const k = Math.max(0, Math.min(1, circleK * 1.45 - i / 160));
-    return [632 + (x - 632) * k, 674 + (y - 674) * k];
-  });
-  ctx.beginPath();
-  ctx.moveTo(ring[0][0], ring[0][1]);
-  for (let i = 1; i < ring.length; i += 1) ctx.lineTo(ring[i][0], ring[i][1]);
-  ctx.stroke();
-  ctx.restore();
-}
-label('这就是求根公式', 232, 730, notePx, muted, show(0.492, 0.02), 'left', 0.006);
-label('判别式 Δ = b² - 4ac', 232, 770, notePx, yellow, show(0.512, 0.022));
-stroke([[388, 782], [452, 785], [520, 781]], 0.522, 0.016, yellow, thin);
+label('⑤', 150, 710, stepPx, yellow, show(0.408, 0.018));
+label('x = (-b ± √(b² - 4ac)) / 2a', 232, 710, formulaPx, red, show(0.418, 0.04));
+label('这就是求根公式', 232, 782, notePx, muted, show(0.492, 0.02), 'left', 0.006);
+label('判别式 Δ = b² - 4ac', 232, 826, notePx, yellow, show(0.512, 0.022));
+stroke([[238, 841], [330, 844], [455, 840]], 0.522, 0.016, yellow, thin);
 
 // ---- 第 7 拍：右边代入一个例子 ----
 stroke([[1188, 244], [1192, 410], [1189, 590], [1193, 838]], 0.432, 0.05, muted, thin, [16, 12]);

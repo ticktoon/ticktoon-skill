@@ -1,6 +1,6 @@
 {
   "id": "illustrated-story",
-  "abi": "9",
+  "abi": "1",
   "name": "插画剪报",
   "keywords": [
     "插画",
@@ -10,15 +10,17 @@
     "散文",
     "夏天"
   ],
-  "when": "一段小故事或观察随笔，交给满幅米色拼贴纸与逐字剪贴字幕时",
-  "fonts": {
-    "display": "sans-400",
-    "body": "sans-400",
-    "num": "latin-700",
-    "caption": "sans-900",
-    "hand": "ZTZiYouTi",
-    "serif": "WenYuanSerifSC-Bold"
-  },
+  "mode": "code",
+  "when": [
+    "一段观察随笔、小故事或轻科普，4–6 个句子，单幕 12–24 秒。",
+    "画面情绪比信息量重要，希望观众在同一幅画里等字慢慢长出来。",
+    "需要剪报/手账质感：单字色块、随机色板、轻微旋转，而不是一条整行字幕。"
+  ],
+  "notWhen": [
+    "需要多镜头、时间线或事件复盘；改用 footage-cut 或 flash-cut。",
+    "需要图表、数据、步骤卡；步骤图解改用 crayon-guide，图表需在 scene.code 里自己画。",
+    "需要标题大字、正文卡片或第二种字幕；本 recipe 坚持「插画 + 单层剪报字」。"
+  ],
   "rules": {
     "safeMargin": 0.06,
     "scale": {
@@ -45,7 +47,7 @@
   },
   "captions": {
     "style": "collage",
-    "font": "display",
+    "font": "sans-400",
     "baseSize": 44,
     "lineHeight": 1.34,
     "top": 0.8,
@@ -62,6 +64,5 @@
       "level": 0.04,
       "edge": 0.22
     }
-  },
-  "mode": "code"
+  }
 }

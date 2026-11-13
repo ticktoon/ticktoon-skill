@@ -1,17 +1,19 @@
 {
   "id": "footage-cut",
-  "abi": "9",
+  "abi": "1",
   "name": "实拍快切",
-  "keywords": [
-    "实拍",
-    "素材",
-    "航拍",
-    "城市",
-    "压屏字",
-    "纪录片"
-  ],
-  "when": "用真实素材铺满画面、只压一两行硬短句，靠镜头切换而不是手绘讲事实时",
+  "keywords": ["实拍", "素材", "航拍", "城市", "压屏字", "纪录片"],
   "mode": "params",
+  "when": [
+    "已经有实拍素材（Pexels 或本地），希望保留画面质感。",
+    "文案是短句或两行陈述，不需要字幕逐字跟读。",
+    "需要真实场景、人物、街道、自然，而不是插画或图表。"
+  ],
+  "notWhen": [
+    "没有素材、也不准备检索；改用 scene.code 型 recipe。",
+    "需要解释机制、步骤或数据；改用 whiteboard-explainer / crayon-guide。",
+    "需要逐字字幕；改用 illustrated-story 或白板 recipe。"
+  ],
   "template": {
     "draw": "template.js",
     "params": {
@@ -48,24 +50,25 @@
       }
     },
     "needs": {
-      "font": [
-        "display",
-        "body"
-      ],
       "image": false,
       "video": true,
       "three": false
     },
+    "resources": [
+      {
+        "type": "font",
+        "name": "sans-900"
+      },
+      {
+        "type": "font",
+        "name": "sans-400"
+      }
+    ],
     "motion": {
       "enter": 0.56,
       "exitRatio": 0.55
     },
     "inkless": true
-  },
-  "fonts": {
-    "display": "sans-900",
-    "body": "sans-400",
-    "num": "latin-700"
   },
   "rules": {
     "safeMargin": 0.055,

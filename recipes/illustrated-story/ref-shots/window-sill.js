@@ -3,7 +3,12 @@
   "title": "窗台与电线",
   "note": "米色纸、窗台透视、电线与撕边纸片；主体在上半，字幕带留在下半",
   "duration": 7.197,
-  "resources": [],
+  "resources": [
+    {
+      "type": "font",
+      "name": "sans-400"
+    }
+  ],
   "tags": [
     "拼贴",
     "透视",
@@ -58,7 +63,7 @@ const label = (value, x, y, size, color, k, align = 'left', rotate = -0.012) => 
   ctx.translate(x, y + (1 - k) * 10);
   ctx.rotate(rotate);
   ctx.globalAlpha = clamp01(k) * alpha;
-  TT.text(ctx, value, 0, 0, size, { color, align, role: 'body' });
+  TT.text(ctx, value, 0, 0, size, { color, align, fontKey: 'sans-400' });
   ctx.restore();
 };
 

@@ -23,6 +23,14 @@
       "type": "video",
       "name": "tech",
       "src": "skill:assets/demo/tech.mp4"
+    },
+    {
+      "type": "font",
+      "name": "sans-900"
+    },
+    {
+      "type": "font",
+      "name": "sans-400"
     }
   ]
 }
@@ -40,9 +48,9 @@ const M = '#8A8A8A';
 TT.flash.micro(ctx, { text: '08 / 09 — FOUR CARDS', x: W * 0.04, y: H * 0.08, size: 20, color: M });
 TT.flash.panels(ctx, api, { layout: 'quad', rect: { x: W * 0.06, y: H * 0.13, w: W * 0.88, h: H * 0.74 }, radius: 22, t: T, dur: 0.38, stagger: 0.08, from: 'bottom', offset: 36, fromScale: 0.9, border: false, cells: [
   { video: 'city', label: 'CITY / 01', labelColor: S },
-  { color: S, text: 'RUN', textColor: B, textSize: 132, role: 'display', label: 'MOVE / 02', labelColor: B },
-  { color: L, text: '01', textColor: S, textSize: 100, role: 'num' },
-  { color: A, text: 'GO', textColor: S, textSize: 136, role: 'display', label: 'MOVE / 04', labelColor: S }
+  { color: S, text: 'RUN', textColor: B, textSize: 132, fontKey: 'sans-900', label: 'MOVE / 02', labelColor: B },
+  { color: L, text: '01', textColor: S, textSize: 100, fontKey: 'sans-900' },
+  { color: A, text: 'GO', textColor: S, textSize: 136, fontKey: 'sans-900', label: 'MOVE / 04', labelColor: S }
 ] });
 TT.flash.viewfinder(ctx, { rect: { x: W * 0.025, y: H * 0.025, w: W * 0.95, h: H * 0.95 }, color: M, length: 22, width: 1, crosshair: true, alpha: 0.6 });
 TT.flash.micro(ctx, { text: 'FOUR CARDS / ONE GRID', x: W * 0.04, y: H * 0.93, size: 16, color: S });

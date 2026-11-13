@@ -8,7 +8,16 @@
     "拉伸",
     "故障"
   ],
-  "resources": []
+  "resources": [
+    {
+      "type": "font",
+      "name": "sans-900"
+    },
+    {
+      "type": "font",
+      "name": "sans-400"
+    }
+  ]
 }
 */
 // 示例 · 2 拍：拉伸字 + 速度线，末尾切一刀故障。
@@ -21,7 +30,7 @@ const A = '#FF4D00';
 const L = '#12305C';
 const M = '#8A8A8A';
 TT.flash.pattern(ctx, { kind: 'stripes', rect: { x: 0, y: H * 0.62, w: W, h: H * 0.12 }, colorA: L, colorB: '#FFFFFF', gap: 34, width: 8, alpha: 0.14 });
-const size = TT.flash.fit(ctx, 'NOISE', W * 0.76, { maxPx: 360, role: 'display' });
+const size = TT.flash.fit(ctx, 'NOISE', W * 0.76, { maxPx: 360, fontKey: 'sans-900' });
 TT.flash.stretch(ctx, api, { text: 'NOISE', x: W * 0.5, y: H * 0.46, size, t: T, dur: 0.3, skew: -0.18, scaleY: 0.74, offset: -220, color: B, speed: 1, lineColor: A, lineCount: 18, seed: 7 });
 TT.flash.micro(ctx, { text: '05 / 09 — CUT', x: W * 0.04, y: H * 0.08, size: 20, color: M });
 TT.flash.micro(ctx, { text: 'NOISE = SIGNAL', x: W * 0.96, y: H * 0.08, size: 16, color: L, align: 'right' });

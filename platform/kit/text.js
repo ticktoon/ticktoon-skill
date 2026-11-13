@@ -157,15 +157,15 @@
 
   /**
    * TT.text(ctx, text, x, y, size, opts) —— 写一行文字并记账。
-   * opts: font(css 字符串或 TT.font 结果) / role / color / align / baseline / alpha / maxWidth。
-   * 默认字体取 recipe.fonts 的 role；调用方仍可用 ctx 状态画更复杂的排版。
+   * opts: font(css 字符串或 TT.font 结果) / fontKey(manifest 字体键) / color / align /
+   * baseline / alpha / maxWidth。默认字体 sans-400；调用方仍可用 ctx 状态画更复杂的排版。
    */
   function draw(ctx, str, x, y, size, opts = {}) {
     if (!ctx) return null;
     const o = opts || {};
     const font = o.font == null
       ? (typeof TT.font === 'function' && typeof FONTS !== 'undefined'
-        ? TT.font(FONTS, finite(size) ? size : 56, o.role || 'body')
+        ? TT.font(FONTS, finite(size) ? size : 56, o.fontKey || 'sans-400')
         : null)
       : (typeof o.font === 'string' ? { css: o.font } : o.font);
     ctx.save();
@@ -222,12 +222,12 @@
      * 返回 `{ font, lines }`；到 minPx 仍塞不下时返回最小字号的结果，
      * 由调用方（或 check）决定是截断还是改文案。
      */
-    fit(ctx, str, rect, fonts, role, maxPx, minPx) {
+    fit(ctx, str, rect, fonts, fontKey, maxPx, minPx) {
       const from = maxPx;
       const floor = minPx || 32;
       let best = null;
       for (let px = from; px >= floor; px -= 2) {
-        const font = TT.font(fonts, px, role);
+        const font = TT.font(fonts, px, fontKey);
         ctx.font = font.css;
         const lines = layout(ctx, str, rect.w);
         best = { font, lines };

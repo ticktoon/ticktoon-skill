@@ -54,9 +54,9 @@
    * 在固定框内缩字号：宽度和高度同时满足，绝不自动折行。
    * `lineGap` 是旧模板的固定行间距（像素，已按画幅换算）。
    */
-  function fitBox(ctx, lines, role, desired, maxWidth, maxHeight, fonts, minSize, tracking, lineGap) {
+  function fitBox(ctx, lines, fontKey, desired, maxWidth, maxHeight, fonts, minSize, tracking, lineGap) {
     let size = Math.max(minSize, Math.round(desired));
-    let f = font(fonts, size, role);
+    let f = font(fonts, size, fontKey);
     ctx.font = f.css;
     for (let guard = 0; guard < 24; guard += 1) {
       const widest = Math.max(0, ...lines.map((line) => lineWidth(ctx, line, tracking)));
@@ -69,7 +69,7 @@
       const next = Math.max(minSize, Math.floor(size * scale));
       if (next === size) break;
       size = next;
-      f = font(fonts, size, role);
+      f = font(fonts, size, fontKey);
       ctx.font = f.css;
     }
     return f;
@@ -157,7 +157,7 @@ function draw(g, p) {
     const titleTexts = titleLines.map((line) => line.text);
     let titleSpanH = 0;
     if (titleLines.length) {
-      const title = fitBox(ctx, titleTexts, 'display', TITLE_SIZE * S,
+      const title = fitBox(ctx, titleTexts, 'WenYuanSerifSC-Bold', TITLE_SIZE * S,
         titleBox.w, titleBox.h, fonts, 40, 0, lineGap);
       titleSpanH = (titleLines.length - 1) * (title.size + lineGap) + title.size;
       const progress = clamp01(t / ENTER_DUR);
@@ -185,7 +185,7 @@ function draw(g, p) {
       const padX = 12 * S;
       const padY = 6 * S;
       const maxBadgeW = sourceBox.x + sourceBox.w - 0.055 * W;
-      const sourceFont = fitBox(ctx, [sourceLabel], 'body', SOURCE_SIZE * S,
+      const sourceFont = fitBox(ctx, [sourceLabel], 'WenYuanSerifSC-Bold', SOURCE_SIZE * S,
         maxBadgeW - padX * 2, sourceBox.h - padY * 2, fonts, 16, 0, 0);
       const sourceTextW = lineWidth(ctx, sourceLabel);
       sourceBadge = {
@@ -211,7 +211,7 @@ function draw(g, p) {
     const bodyTexts = bodyLines.map((line) => line.text);
     const fallback = fallbackTyping(bodyTexts);
     const typed = Array.isArray(p.__typing) ? p.__typing : fallback;
-    const body = fitBox(ctx, bodyTexts, 'body', CONTENT_SIZE * S,
+    const body = fitBox(ctx, bodyTexts, 'WenYuanSerifSC-Bold', CONTENT_SIZE * S,
       contentBox.w, contentBox.h, fonts, 30, tracking, lineGap);
     const bodyLineH = body.size + lineGap;
     const bodySpanH = bodyLines.length
@@ -284,7 +284,7 @@ function draw(g, p) {
     const brand = String(p.brand || '').trim();
     let brandSpanH = 0;
     if (brand) {
-      const brandFont = fitBox(ctx, [brand], 'brand', BRAND_SIZE * S,
+      const brandFont = fitBox(ctx, [brand], 'sans-900', BRAND_SIZE * S,
         brandBox.w, brandBox.h, fonts, 18, 0, 0);
       brandSpanH = brandFont.size;
       const chars = [...brand];

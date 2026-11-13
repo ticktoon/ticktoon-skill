@@ -3,7 +3,12 @@
   "title": "晾衣绳与信",
   "note": "与三场故事示例不同题材，拼贴骨架相同：透视、撕边、排线、分区不变",
   "duration": 4,
-  "resources": [],
+  "resources": [
+    {
+      "type": "font",
+      "name": "sans-400"
+    }
+  ],
   "tags": [
     "拼贴",
     "窗台",
@@ -60,7 +65,7 @@ const label = (value, x, y, size, color, k, align = 'left', rotate = -0.012) => 
   ctx.translate(x, y + (1 - k) * 10);
   ctx.rotate(rotate);
   ctx.globalAlpha = clamp01(k) * alpha;
-  TT.text(ctx, value, 0, 0, size, { color, align, role: 'body' });
+  TT.text(ctx, value, 0, 0, size, { color, align, fontKey: 'sans-400' });
   ctx.restore();
 };
 

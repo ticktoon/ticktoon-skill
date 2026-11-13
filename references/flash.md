@@ -17,7 +17,7 @@ TT.flash.stagger(ctx, api, { text: '万物皆动', x: W / 2, y: H * 0.48, size: 
 
 单行字号选择器：从 `maxPx` 往下试 2px，直到 `text` 能塞进 `maxWidth`。
 
-- `opts.maxPx` / `minPx` / `role` / `tracking` / `font`
+- `opts.maxPx` / `minPx` / `fontKey`（manifest 字体键） / `tracking` / `font`
 
 ### `TT.flash.stagger(ctx, api, opts)`
 
@@ -36,7 +36,7 @@ TT.flash.stagger(ctx, api, { text: '万物皆动', x: W / 2, y: H * 0.48, size: 
 - 不给 `fill` 时默认纯色，不再默认棋盘；棋盘 / 半调只有显式 `fill:'checker' / 'halftone'` 才出现。
 - 字形默认按字号 3% 加粗：内部先画 fill + stroke 合成 mask，再一次性 `destination-in`。stroke 不是可见描边，是旧组件的圆角加粗；`weight` 可覆盖。
 - 图像填字保持“字是窗口”：不要叠 `layers` 偏移层，否则会出现旧组件没有的阴影。
-- `text`、`x`、`y`、`size`、`font` / `role`、`align`、`baseline`、`tracking`、`weight`
+- `text`、`x`、`y`、`size`、`font` / `fontKey`（manifest 字体键）、`align`、`baseline`、`tracking`、`weight`
 - `fill`: `image` / `checker` / `halftone` / 颜色值；`image` 可以是资源名或 `api.img/api.video` 返回的帧
 - `fit`: `cover / contain`、`focus [fx,fy]`、`zoom`
 - `drift: [dx, dy]`：字窗里图像的移动速度，单位像素/秒；负 x 向左、负 y 向上。只在 `cover` 下有效，靠移动裁切中心完成，不会露底
@@ -94,7 +94,7 @@ TT.flash.stagger(ctx, api, { text: '万物皆动', x: W / 2, y: H * 0.48, size: 
 网格 / 卡片墙 / 拼贴 / 斜版。`cells[]` 每项可带：
 
 - `image`（资源名）、`video`（资源名）、`color`、`tint`
-- `text`、`textSize`、`textColor`、`role`、`align`
+- `text`、`textSize`、`textColor`、`fontKey`（manifest 字体键）、`align`
 - `label`、`labelSize`、`labelColor`
 - `x / y / w / h`（0…1 归一化；给了就走自定义拼贴）
 - `from`、`offset`：单格入场方向与位移，覆盖整面的 `from`；用于双向格子墙
@@ -155,7 +155,7 @@ TT.flash.stagger(ctx, api, { text: '万物皆动', x: W / 2, y: H * 0.48, size: 
 
 故障风超大字。整行字在离屏字版里合成，按条带横向错位，其中一个字按时间跳色；不会把背景一起切碎。切片强度按场景进度脉冲式爆发：窗口外是干净字面，窗口内条带错位，因此同一场里能看到“抽一下—恢复—再抽一下”。
 
-- `text`、`x`、`y`、`size`、`role / font`、`align`、`baseline`、`tracking`
+- `text`、`x`、`y`、`size`、`fontKey` / `font`、`align`、`baseline`、`tracking`
 - `t`、`dur`（默认 `api.d`）、`seed`、`count`、`shift`、`slice:false`
 - `burstAt`：故障窗口数组，默认 `[[0.3, 0.1], [0.72, 0.08]]`，每项 `[中心进度, 半宽]` 或 `{ at, width }`
 - `burst:false`：关闭时间脉冲，恢复为固定切片

@@ -1,24 +1,17 @@
 /** 字幕 kit 的配置契约：recipe 写参数，样式文件只负责绘制。 */
 
-export const CAPTION_ALIASES = { bar: 'band', broadcast: 'card', none: 'none' };
-
-export const CAPTION_FONT_ROLES = {
-  caption: 'sans-900',
-  hand: 'ZTZiYouTi',
-  round: 'JiangChengYuanTi',
-  poster: 'ZTYueDongHei',
-  serif: 'WenYuanSerifSC-Bold',
-  cutout: 'MaokenAssortedSans',
-};
-
+/**
+ * 字幕字体只收 manifest 键，没有角色层。
+ * 字幕是独立资源：emit 会单独加载 captions.font 指向的字体文件。
+ */
 export const CAPTION_STYLE_DEFAULTS = {
-  band: { font: 'caption', at: 'bottom', band: true },
-  plain: { font: 'caption', at: 'bottom', band: false },
-  card: { font: 'caption', at: 'bottom', band: true },
-  karaoke: { font: 'caption', at: 'bottom', band: true, highlight: '#FFD166' },
-  collage: { font: 'caption', at: 'auto', band: true, rotation: 6 },
-  handnote: { font: 'hand', at: 'bottom', band: true, highlight: '#F4D35E' },
-  vertical: { font: 'serif', at: 'auto', band: false },
+  plain: { font: 'sans-900', at: 'bottom', band: false },
+  perchar: { font: 'sans-900', at: 'bottom', band: true },
+  karaoke: { font: 'sans-900', at: 'bottom', band: true, highlight: '#FFD166' },
+  collage: { font: 'sans-900', at: 'auto', band: true, rotation: 6 },
+  handnote: { font: 'ZTZiYouTi', at: 'bottom', band: true, highlight: '#F4D35E' },
+  vertical: { font: 'WenYuanSerifSC-Bold', at: 'auto', band: false },
+  tornpaper: { font: 'JiangChengYuanTi', at: 'bottom', band: true },
 };
 
 const COMMON_KEYS = new Set([
@@ -35,12 +28,11 @@ const DEFAULT_METRICS = { baseSize: 46, lineHeight: 1.24, top: 0.78, margin: 0.0
 /**
  * @param {object|string} raw      recipe.captions 或 CLI --captions
  * @param {object} catalog         静态目录（caption styles / fonts）
- * @param {object} fonts           recipe.fonts（角色 → manifest 键）
  * @param {object} bag             诊断收集器
  * @param {{ margin?: number }} options  recipe.rules.safeMargin
  * @returns {{ name, style, options, metrics, fontName, code } | null}
  */
-export function normalizeCaption(raw, catalog, fonts, bag, { margin = DEFAULT_METRICS.margin } = {}) {
+export function normalizeCaption(raw, catalog, bag, { margin = DEFAULT_METRICS.margin } = {}) {
   if (raw == null || raw === '') return null;
   const input = typeof raw === 'string' ? { style: raw } : raw;
   if (!input || Array.isArray(input) || typeof input !== 'object') {
@@ -50,8 +42,8 @@ export function normalizeCaption(raw, catalog, fonts, bag, { margin = DEFAULT_ME
   for (const key of Object.keys(input)) {
     if (!COMMON_KEYS.has(key)) bag.error('CAPTION_PARAM_UNKNOWN', `captions.${key}`, `未知字幕参数 "${key}"`);
   }
-  const requested = input.style || 'band';
-  const styleId = CAPTION_ALIASES[requested] || requested;
+  const requested = input.style || 'perchar';
+  const styleId = requested;
   if (styleId === 'none') {
     return { name: 'none', style: null, options: null, metrics: null, fontName: null, code: null };
   }
@@ -122,23 +114,14 @@ export function normalizeCaption(raw, catalog, fonts, bag, { margin = DEFAULT_ME
     bag.error('CAPTION_TOP_RANGE', 'captions.top', 'top 必须是 0–1 的画面高度比例');
   }
 
-  const requestedRole = input.font || (CAPTION_STYLE_DEFAULTS[styleId] || {}).font || 'caption';
-  const fontRole = fonts?.[requestedRole] ? requestedRole : null;
-  let fontName = fontRole ? fonts[fontRole] : null;
+  const requestedFont = input.font || (CAPTION_STYLE_DEFAULTS[styleId] || {}).font || 'sans-900';
+  const fontName = typeof requestedFont === 'string' && catalog.fonts?.[requestedFont]
+    ? requestedFont
+    : null;
   if (!fontName) {
-    // 兼容旧 kit 角色：只有 manifest 里确实有这个字体时才允许，并给出明确修复路径。
-    const mapped = CAPTION_FONT_ROLES[requestedRole];
-    if (mapped && catalog.fonts?.[mapped]) {
-      fontName = mapped;
-      bag.warn('should', 'CAPTION_FONT_NOT_IN_STYLE', `captions.font.${requestedRole}`,
-        `字幕字体角色 "${requestedRole}" 不在 recipe 顶层 fonts；已用 manifest 字体 ${mapped}。请把该角色加入 recipe.fonts`);
-    } else {
-      bag.error('CAPTION_FONT_UNKNOWN', 'captions.font',
-        `未知字体角色 "${requestedRole}"；recipe.fonts 可用：${Object.keys(fonts || {}).join(' / ') || '（空）'}`);
-    }
-  }
-  if (fontName && !catalog.fonts?.[fontName]) {
-    bag.error('CAPTION_FONT_UNKNOWN', 'captions.font', `字体 "${fontName}" 不在 assets/fonts/manifest.json 里`);
+    const keys = Object.keys(catalog.fonts || {}).filter((key) => typeof catalog.fonts[key] === 'object');
+    bag.error('CAPTION_FONT_UNKNOWN', 'captions.font',
+      `字体 "${requestedFont}" 不在 assets/fonts/manifest.json；可用：${keys.join(' / ') || '（空）'}`);
   }
 
   return {
@@ -147,8 +130,7 @@ export function normalizeCaption(raw, catalog, fonts, bag, { margin = DEFAULT_ME
     options,
     metrics: {
       baseSize, lineHeight, top, margin,
-      fontRole: requestedRole,
-      fontFamily: fontName || null,
+      fontFamily: fontName,
     },
     fontName,
     code: `${catalog.captionKit}\n${source}\nCAPTIONS[${JSON.stringify(requested)}] = CAPTIONS[${JSON.stringify(styleId)}];`,

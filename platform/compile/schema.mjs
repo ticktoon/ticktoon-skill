@@ -16,14 +16,10 @@ import { Bag, isPlainObject } from './diag.mjs';
 import { normalizeCaption } from './captions.mjs';
 import { validateRecipe } from './recipe.mjs';
 import { scanSceneCode } from './code-scan.mjs';
-import { PACING, estimateSpeech } from './resolve.mjs';
+import { normalizeTransitionPreset } from './transitions.mjs';
 
 // code 与 params 是两种内容形态，由 recipe.mode 决定，同一场不能同时出现。
-export const SCENE_KEYS = ['id', 'narration', 'duration', 'camera', 'code', 'params', 'resources', 'note', 'transitionIn', 'transitionOut'];
-export const TRANSITION_OUT_TYPES = ['cut', 'dip-to-color', 'wipe', 'push', 'page', 'zoom-out', 'glitch'];
-export const TRANSITION_IN_TYPES = ['cut', 'fade-in', 'iris', 'zoom-punch', 'glitch-in'];
-export const TRANSITION_KEYS = ['type', 'dur', 'dir', 'color', 'at'];
-const HEX_COLOR = /^#(?:[0-9a-f]{3}|[0-9a-f]{4}|[0-9a-f]{6}|[0-9a-f]{8})$/i;
+export const SCENE_KEYS = ['id', 'narration', 'duration', 'camera', 'code', 'params', 'resources', 'note', 'transition'];
 export const ROOT_KEYS = ['recipe', 'format', 'meta', 'scenes', 'uses'];
 export const SUPPORTED_FORMATS = [
   { w: 1920, h: 1080, fps: 30 },
@@ -72,10 +68,10 @@ export function loadCatalog(root) {
     const entry = {
       ...recipe,
       dir,
-      brief: existsSync(path.join(dir, 'brief.md')) ? readFileSync(path.join(dir, 'brief.md'), 'utf-8') : '',
+      doc: existsSync(path.join(dir, 'recipe.md')) ? readFileSync(path.join(dir, 'recipe.md'), 'utf-8') : '',
     };
     // 读入时校验视觉规范；错误挂在条目上，选中该 recipe 时才升级为 build error。
-    // 校验只看 recipe.json 本身，dir / brief / drawSource 是载入期附带的运行上下文。
+    // 校验只看 recipe.json 本身，dir / doc / drawSource 是载入期附带的运行上下文。
     entry.recipeErrors = validateRecipe(recipe, fonts, dir);
     if (recipe.mode === 'params' && typeof recipe.template?.draw === 'string') {
       const drawPath = path.join(dir, recipe.template.draw);
@@ -102,8 +98,12 @@ export function loadCatalog(root) {
   };
 }
 
-/** scene.resources：与引擎 ClipResource 同形，供 code 里的 api.img/api.video 使用。 */
-function normalizeSceneResources(raw, bag, at) {
+/**
+ * scene.resources：与引擎 ClipResource 同形。
+ * image / video 由 api.img / api.video 查询；font 只写 manifest 键，src 由编译期补齐，
+ * 引擎按 name 注册 FontFace，族名就是 manifest 键。
+ */
+function normalizeSceneResources(raw, bag, at, catalog) {
   if (raw === undefined) return [];
   if (!Array.isArray(raw)) {
     bag.error('SCENE_RESOURCES_TYPE', `${at}.resources`, 'resources 必须是 {type, name, src} 数组');
@@ -112,42 +112,71 @@ function normalizeSceneResources(raw, bag, at) {
   const out = [];
   const seen = new Set();
   raw.forEach((res, ri) => {
-    const path = `${at}.resources[${ri}]`;
+    const where = `${at}.resources[${ri}]`;
     if (!isPlainObject(res)) {
-      bag.error('SCENE_RESOURCE_TYPE', path, '资源必须是对象 {type, name, src}');
+      bag.error('SCENE_RESOURCE_TYPE', where, '资源必须是对象 {type, name, src}');
       return;
     }
     for (const key of Object.keys(res)) {
       if (!['type', 'name', 'src', 'start'].includes(key)) {
-        bag.error('SCENE_RESOURCE_UNKNOWN_KEY', `${path}.${key}`,
+        bag.error('SCENE_RESOURCE_UNKNOWN_KEY', `${where}.${key}`,
           `资源不认识键 "${key}"，可用：type / name / src / start`);
       }
     }
     if (!['image', 'video', 'font'].includes(res.type)) {
-      bag.error('SCENE_RESOURCE_TYPE', `${path}.type`,
+      bag.error('SCENE_RESOURCE_TYPE', `${where}.type`,
         `资源 type 只能是 image / video / font，收到 ${JSON.stringify(res.type)}`);
       return;
     }
     if (typeof res.name !== 'string' || !res.name.trim()) {
-      bag.error('SCENE_RESOURCE_NAME', `${path}.name`, '资源必须有非空字符串 name');
+      bag.error('SCENE_RESOURCE_NAME', `${where}.name`, '资源必须有非空字符串 name');
+      return;
+    }
+    const name = res.name.trim();
+    if (res.type === 'font') {
+      if (res.src !== undefined) {
+        bag.error('SCENE_RESOURCE_SRC', where,
+          'font 资源只写 manifest 键做 name，不要写 src；src 由编译期按 manifest 补齐');
+        return;
+      }
+      const font = isPlainObject(catalog?.fonts) ? catalog.fonts[name] : null;
+      if (!isPlainObject(font) || !font.src) {
+        const hint = Object.entries(catalog?.fonts || {})
+          .find(([, entry]) => isPlainObject(entry) && entry.family === name);
+        bag.error('SCENE_FONT_UNKNOWN', `${where}.name`,
+          `字体 "${name}" 不是 assets/fonts/manifest.json 的键${hint ? `；是否想写 "${hint[0]}"？` : `；可用：${Object.keys(catalog?.fonts || {}).filter((key) => isPlainObject(catalog.fonts[key])).join(' / ')}`}`);
+        return;
+      }
+      const key = `${res.type}:${name}`;
+      if (seen.has(key)) {
+        bag.error('SCENE_RESOURCE_DUPLICATE', where, `${res.type} 资源名重复：${name}`);
+        return;
+      }
+      seen.add(key);
+      const rel = font.src.replace(/^skill:/, '');
+      if (!existsSync(path.join(catalog.root, rel))) {
+        bag.warn('should', 'FONT_FILE_MISSING', `${where}.name`,
+          `字体 ${name} 指向的 ${font.src} 不存在，画面会回落到系统字体`);
+      }
+      // font 的 src 一律以 manifest 为准，不信任手写路径。
+      out.push({ type: 'font', name, src: font.src });
       return;
     }
     if (typeof res.src !== 'string' || !res.src.trim()) {
-      bag.error('SCENE_RESOURCE_SRC', `${path}.src`, '资源必须有非空字符串 src');
+      bag.error('SCENE_RESOURCE_SRC', `${where}.src`, '资源必须有非空字符串 src');
       return;
     }
     if (res.start !== undefined) {
       if (res.type !== 'video') {
-        bag.error('SCENE_RESOURCE_START', `${path}.start`, '只有 video 资源可以写 start');
+        bag.error('SCENE_RESOURCE_START', `${where}.start`, '只有 video 资源可以写 start');
       } else if (!(Number(res.start) >= 0)) {
-        bag.error('SCENE_RESOURCE_START', `${path}.start`,
+        bag.error('SCENE_RESOURCE_START', `${where}.start`,
           `start 必须是非负秒数，收到 ${JSON.stringify(res.start)}`);
       }
     }
-    const name = res.name.trim();
     const key = `${res.type}:${name}`;
     if (seen.has(key)) {
-      bag.error('SCENE_RESOURCE_DUPLICATE', path, `${res.type} 资源名重复：${name}`);
+      bag.error('SCENE_RESOURCE_DUPLICATE', where, `${res.type} 资源名重复：${name}`);
       return;
     }
     seen.add(key);
@@ -356,100 +385,16 @@ function checkParams(values, spec, recipeId, bag, at) {
 }
 
 /**
- * @returns {{ storyboard, bag, recipe, fonts, caption }}
+ * @returns {{ storyboard, bag, recipe, caption }}
  *   storyboard 是规范化结果：缺省值补齐、`dur` 留空等 plan 填。
  */
-/**
- * scene.transitionIn / transitionOut 的规范化。
- *
- * schema 阶段还不知道 TTS 的真实时长，旁白场只能用 estimateSpeech + pacing 估；
- * 这和 plan 里旁白场的算法一致，但 TTS 接通后可能有几十毫秒误差。因此 `dur` 的
- * 40% 上限在旁白场是**估算校验**，不是最终渲染时长的硬保证；换 TTS 后重跑 build 会再校一次。
- */
-function normalizeTransition(raw, direction, bag, at, sceneDuration, estimated = false) {
-  if (raw === undefined || raw === null) return null;
-  if (!isPlainObject(raw)) {
-    bag.error('TRANSITION_TYPE', at, `${at} 必须是对象 {type, dur, dir, color, at}`);
-    return null;
-  }
-  for (const key of Object.keys(raw)) {
-    if (!TRANSITION_KEYS.includes(key)) {
-      bag.error('TRANSITION_UNKNOWN_KEY', `${at}.${key}`,
-        `过渡不认识键 "${key}"，可用：${TRANSITION_KEYS.join(' / ')}`);
-    }
-  }
-  if (typeof raw.type !== 'string' || !raw.type.trim()) {
-    bag.error('TRANSITION_TYPE', `${at}.type`, `${at}.type 必须是非空字符串；cut 也要显式写 type`);
-    return null;
-  }
-  const type = raw.type.trim();
-  const allowed = direction === 'in' ? TRANSITION_IN_TYPES : TRANSITION_OUT_TYPES;
-  if (!allowed.includes(type)) {
-    bag.error('TRANSITION_UNKNOWN', `${at}.type`,
-      `${direction === 'in' ? 'transitionIn' : 'transitionOut'} 不支持 "${type}"，可用：${allowed.join(' / ')}`);
-    return null;
-  }
-  if (type === 'cut') {
-    // cut 是严格 no-op：其余字段不参与任何绘制，也不制造告警。
-    return { type: 'cut', dur: 0, dir: null, color: null, at: null };
-  }
-
-  const dur = raw.dur === undefined || raw.dur === null ? 0.3 : Number(raw.dur);
-  if (!Number.isFinite(dur) || !(dur > 0)) {
-    bag.error('TRANSITION_DUR_INVALID', `${at}.dur`, `dur 必须是正数，收到 ${JSON.stringify(raw.dur)}`);
-    return null;
-  }
-  if (sceneDuration > 0) {
-    const limit = sceneDuration * 0.4;
-    if (dur > limit + 1e-9) {
-      bag.error('TRANSITION_TOO_LONG', `${at}.dur`,
-        `dur=${dur}s 超过场景时长的 40%（上限 ${limit.toFixed(3)}s，场景 ${sceneDuration.toFixed(3)}s${estimated ? '，按旁白估算' : ''}）；` +
-        '过渡太长会和内容抢时间，把 dur 收到上限内或删掉过渡');
-    }
-  }
-
-  const dirMap = { l: 'l', r: 'r', u: 'u', d: 'd', left: 'l', right: 'r', up: 'u', down: 'd' };
-  let dir = 'l';
-  if (raw.dir !== undefined) {
-    const normalized = typeof raw.dir === 'string' ? dirMap[raw.dir.toLowerCase()] : null;
-    if (normalized) dir = normalized;
-    else {
-      bag.warn('should', 'TRANSITION_DIR_UNKNOWN', `${at}.dir`,
-        `dir 只能是 l / r / u / d（也接受 left / right / up / down），收到 ${JSON.stringify(raw.dir)}；已回落到 l`);
-    }
-  }
-
-  let color = '#000000';
-  if (raw.color !== undefined && raw.color !== null) {
-    if (typeof raw.color === 'string' && HEX_COLOR.test(raw.color)) {
-      color = raw.color;
-    } else {
-      bag.warn('should', 'TRANSITION_COLOR_UNKNOWN', `${at}.color`,
-        `color 只能是 #rgb/#rrggbb/#rrggbbaa，收到 ${JSON.stringify(raw.color)}；已回落到 #000000`);
-    }
-  }
-
-  let atPoint = [0.5, 0.5];
-  if (raw.at !== undefined) {
-    const ok = Array.isArray(raw.at) && raw.at.length === 2
-      && raw.at.every((v) => Number.isFinite(Number(v)) && Number(v) >= 0 && Number(v) <= 1);
-    if (ok) atPoint = raw.at.map(Number);
-    else {
-      bag.error('TRANSITION_AT_INVALID', `${at}.at`,
-        'at 必须是归一化的 [x, y]（两项都在 0–1）；iris 用它定位圆心');
-    }
-  }
-
-  return { type, dur, dir, color, at: atPoint };
-}
-
 export function normalizeStoryboard(input, catalog, captionOverride = null) {
   const bag = new Bag();
   const out = { recipe: null, format: null, meta: {}, scenes: [] };
 
   if (!isPlainObject(input)) {
     bag.error('ROOT_TYPE', '', 'storyboard 必须是一个对象');
-    return { storyboard: out, bag, recipe: null, fonts: null, caption: null };
+    return { storyboard: out, bag, recipe: null, caption: null };
   }
 
   for (const key of Object.keys(input)) {
@@ -465,7 +410,6 @@ export function normalizeStoryboard(input, catalog, captionOverride = null) {
   } else if (!recipe) {
     bag.error('RECIPE_UNKNOWN', 'recipe', `未注册的 recipe "${input.recipe}"；可用：${[...catalog.recipes.keys()].join(' / ')}`);
   }
-  const fonts = recipe?.fonts || null;
   if (recipe) {
     out.recipe = recipe.id;
     // loadCatalog 的结构错误在这里变成 build 的硬失败。
@@ -483,7 +427,7 @@ export function normalizeStoryboard(input, catalog, captionOverride = null) {
         if (key !== 'captions') {
           bag.error('USES_UNKNOWN_KEY', `uses.${key}`,
             key === 'theme'
-              ? 'storyboard 不再支持 uses.theme：字体契约在 recipe.fonts 里，字幕用 uses.captions 或 CLI --captions'
+              ? 'storyboard 不再支持 uses.theme：字体写在 scene.resources / template.resources，字幕用 uses.captions 或 CLI --captions'
               : 'storyboard 的 uses 只支持 captions');
         }
       }
@@ -492,9 +436,7 @@ export function normalizeStoryboard(input, catalog, captionOverride = null) {
   }
 
   const captionInput = captionOverride ?? storyboardCaption ?? recipe?.captions;
-  const caption = fonts
-    ? normalizeCaption(captionInput, catalog, fonts, bag, { margin: recipe?.rules?.safeMargin })
-    : null;
+  const caption = normalizeCaption(captionInput, catalog, bag, { margin: recipe?.rules?.safeMargin });
 
   // --- format ---
   const fmt = Object.assign({ w: 1920, h: 1080, fps: 30 }, input.format || {});
@@ -513,7 +455,7 @@ export function normalizeStoryboard(input, catalog, captionOverride = null) {
   // --- scenes ---
   if (!Array.isArray(input.scenes) || !input.scenes.length) {
     bag.error('SCENES_EMPTY', 'scenes', 'scenes 必须是非空数组');
-    return { storyboard: out, bag, recipe, fonts, caption };
+    return { storyboard: out, bag, recipe, caption };
   }
 
   const seen = new Set();
@@ -554,7 +496,7 @@ export function normalizeStoryboard(input, catalog, captionOverride = null) {
       if (raw.code === undefined) {
         bag.error('SCENE_CODE_REQUIRED', `${at}.code`, `recipe ${recipeId} 是 code 模式：每场必须写 code`);
       }
-      sceneResources = normalizeSceneResources(raw.resources, bag, at);
+      sceneResources = normalizeSceneResources(raw.resources, bag, at, catalog);
       if (code !== null) {
         const scan = scanSceneCode(code, { sceneId: id || at, resources: sceneResources });
         for (const error of scan.errors) bag.error(error.code, `${at}.code`, error.msg);
@@ -593,18 +535,7 @@ export function normalizeStoryboard(input, catalog, captionOverride = null) {
       bag.error('SCENE_DURATION_INVALID', `${at}.duration`, `duration 必须是正数，收到 ${JSON.stringify(raw.duration)}`);
     }
 
-    // 过渡时长的 40% 上限需要一个场景时长；旁白场在这里只能估（TTS 在 resolve 才接入）。
-    const estimatedDuration = hasDuration && Number(raw.duration) > 0
-      ? Number(raw.duration)
-      : hasNarration
-        ? Number(((recipe?.pacing?.leadIn ?? PACING.leadIn)
-          + estimateSpeech(raw.narration)
-          + (recipe?.pacing?.hold ?? PACING.hold)).toFixed(3))
-        : 0;
-    const transitionIn = normalizeTransition(raw.transitionIn, 'in', bag,
-      `${at}.transitionIn`, estimatedDuration, !hasDuration && hasNarration);
-    const transitionOut = normalizeTransition(raw.transitionOut, 'out', bag,
-      `${at}.transitionOut`, estimatedDuration, !hasDuration && hasNarration);
+    const transition = normalizeTransitionPreset(raw.transition, bag, `${at}.transition`);
 
     let camera = null;
     if (raw.camera !== undefined) {
@@ -633,10 +564,9 @@ export function normalizeStoryboard(input, catalog, captionOverride = null) {
       params,
       resources: sceneResources,
       note: raw.note || null,
-      transitionIn,
-      transitionOut,
+      transition,
     });
   });
 
-  return { storyboard: out, bag, recipe, fonts, caption };
+  return { storyboard: out, bag, recipe, caption };
 }

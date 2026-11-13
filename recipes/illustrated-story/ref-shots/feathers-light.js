@@ -3,7 +3,12 @@
   "title": "羽毛与光",
   "note": "动作过去后画面只剩轻的东西；演示留白与收束",
   "duration": 4.448,
-  "resources": [],
+  "resources": [
+    {
+      "type": "font",
+      "name": "sans-400"
+    }
+  ],
   "tags": [
     "收束",
     "留白",
@@ -44,7 +49,7 @@ const label = (value, x, y, size, color, k, align = 'left', rotate = -0.012) => 
   ctx.translate(x, y + (1 - k) * 10);
   ctx.rotate(rotate);
   ctx.globalAlpha = clamp01(k) * alpha;
-  TT.text(ctx, value, 0, 0, size, { color, align, role: 'body' });
+  TT.text(ctx, value, 0, 0, size, { color, align, fontKey: 'sans-400' });
   ctx.restore();
 };
 

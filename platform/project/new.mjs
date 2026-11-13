@@ -2,7 +2,7 @@
  * 建工程：把 recipe 的骨架 storyboard 复制成工程的 storyboard.json。
  *
  * params recipe 的骨架是一份完整固定样例；code recipe 的骨架是一个最小空壳。
- * 骨架只是起点，不是要照抄的成片；code 模式的具体写法看 visual.md 与 ref-shots/。
+ * 骨架只是起点，不是要照抄的成片；code 模式的具体写法看 recipe.md 与 ref-shots/。
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';

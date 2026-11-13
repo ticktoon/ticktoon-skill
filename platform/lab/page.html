@@ -23,6 +23,7 @@
   .subtitle { margin-top:4px; }
   .header-actions { display:flex; gap:10px; }
   .btn { border:1px solid var(--line); border-radius:7px; background:#21262d; color:var(--text); padding:7px 14px; }
+  a.btn { display:inline-flex; align-items:center; text-decoration:none; }
   .btn:hover { border-color:var(--blue); filter:brightness(1.08); }
   .btn.primary { background:#1f6feb; border-color:#1f6feb; color:#fff; }
   .btn:disabled { opacity:.5; cursor:default; }
@@ -115,7 +116,7 @@
     <div class="title-row"><h1>Code Lab</h1><span id="total" class="total">正在读取…</span></div>
     <div class="subtitle">镜头参考来自 <code>recipes/&lt;id&gt;/ref-shots/</code> · 预览走真实 build + 引擎面板</div>
   </div>
-  <div class="header-actions"><button id="refreshBtn" class="btn">↻ 刷新镜头参考</button></div>
+  <div class="header-actions"><a class="btn" href="/kit">Kit 实验台</a><button id="refreshBtn" class="btn">↻ 刷新镜头参考</button></div>
 </header>
 
 <section class="filter-bar">

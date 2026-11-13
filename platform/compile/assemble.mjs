@@ -35,7 +35,7 @@ export function buildSrt(scenes) {
 /**
  * @returns {{ composition, events, bag }}
  */
-export function assemble({ scenes, resolved, format, bag }) {
+export function assemble({ scenes, audioScenes = scenes, resolved, format, bag }) {
   const duration = round3(scenes.reduce((sum, s) => sum + s.duration, 0));
   if (scenes.length === 0) {
     bag.error('ASM_NO_SCENES', '', '没有场景');
@@ -46,8 +46,8 @@ export function assemble({ scenes, resolved, format, bag }) {
 
   const events = [];
 
-  // --- 旁白：一个场景一个事件，起点是场景起点 + leadIn ---
-  scenes.forEach((scene, i) => {
+  // --- 旁白：绑定原始逻辑场，不使用插入转场后的视觉场起点或索引 ---
+  audioScenes.forEach((scene, i) => {
     const speech = resolved.scenes[i];
     if (!speech?.src) return;
     events.push({
@@ -128,7 +128,7 @@ export function assemble({ scenes, resolved, format, bag }) {
     });
   };
 
-  scenes.forEach((scene) => {
+  audioScenes.forEach((scene) => {
     const sfxMeta = scene.meta.sfx;
     if (!sfxMeta) return;
     const cues = [

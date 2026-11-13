@@ -46,7 +46,12 @@ function validateResources(raw, errors, file) {
     if (typeof res.name !== 'string' || !res.name.trim()) {
       errors.push(fail('REF_SHOT_RESOURCES_INVALID', `${at}.name 必须是非空字符串`, file));
     }
-    if (typeof res.src !== 'string' || !res.src.trim()) {
+    if (res.type === 'font') {
+      if (res.src !== undefined) {
+        errors.push(fail('REF_SHOT_RESOURCES_INVALID',
+          `${at} 是 font，只写 manifest 键做 name；src 由编译期补齐`, file));
+      }
+    } else if (typeof res.src !== 'string' || !res.src.trim()) {
       errors.push(fail('REF_SHOT_RESOURCES_INVALID', `${at}.src 必须是非空字符串`, file));
     }
     out.push(res);
@@ -245,9 +250,9 @@ export function recipeRegressionInput({ root, recipe, write = true }) {
     return { kind: 'params', file: skeleton, errors, refShots: [] };
   }
 
-  const visual = path.join(recipe.dir, 'visual.md');
-  if (!existsSync(visual)) {
-    errors.push(fail('VISUAL_MISSING', 'code recipe 必须有 visual.md', 'visual.md'));
+  const doc = path.join(recipe.dir, 'recipe.md');
+  if (!existsSync(doc)) {
+    errors.push(fail('RECIPE_DOC_MISSING', 'recipe 必须有 recipe.md（创作纲要 + 画法规范）', 'recipe.md'));
   }
 
   const { refShots, errors: refShotErrors } = readRecipeRefShots(recipe.dir);

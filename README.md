@@ -31,7 +31,7 @@ Demo: drop a short GIF/WebP in assets/readme/ and uncomment.
 ```text
 user request
    ↓
-SKILL.md ── selects a recipe, reads its brief / skeleton
+SKILL.md ── selects a recipe, reads its recipe.md / skeleton
    ↓
 storyboard.json                  ← the only file the agent writes
    ├─ scene.code                 code recipe: whole-frame canvas content
@@ -54,7 +54,7 @@ The runtime has four layers, deliberately small:
 | Layer | Lives in | Responsibility | The agent reads it |
 |---|---|---|---|
 | Operating contract | `SKILL.md` | routing, authoring loop, red lines, delivery checks | every task |
-| Recipe spec | `recipes/<id>/` | `recipe.json`, `brief.md`, `skeleton.storyboard.json`; code recipes add `visual.md` / `ref-shots/`, params recipes add `template.js` | one selected recipe |
+| Recipe spec | `recipes/<id>/` | `recipe.json`, `recipe.md`, `skeleton.storyboard.json`; code recipes add `ref-shots/`, params recipes add `template.js` | one selected recipe |
 | Runtime reference | `references/` | API manual for `scene.code` and public kit | one page when needed |
 | Content | `<project>/storyboard.json` | this film's scenes, narration, captions, assets, code, params | **writes** |
 
@@ -64,12 +64,12 @@ Two units carry everything:
 
 | Unit | Where | It owns | It does not own |
 |---|---|---|---|
-| **recipe** | `recipes/` | the rules for one kind of film: `mode`, `fonts`, `rules`, `captions`, `audio`; a params recipe also owns `template` (`draw / params / resources / needs / defaultSfx / sfxTrack / motion / inkless`) | content, narrative, drawing |
+| **recipe** | `recipes/` | the rules for one kind of film: `mode`, `rules`, `captions`, `audio`; a params recipe also owns `template` (`draw / params / resources / needs / defaultSfx / sfxTrack / motion / inkless`) | content, narrative, drawing |
 | **kit** | `platform/kit/` | reusable drawing vocabulary: text, pen, mark, board, camera, transition, captions, news background | composition, subject matter |
 
-A recipe is either `mode: "code"` (scenes write `scene.code` against the public kit) or `mode: "params"` (scenes write `scene.params`, and the recipe's own `template.js` draws a fixed full-frame layout). The two modes never mix inside one recipe. `recipe.json`'s top-level `fonts` is the machine contract shared by the compiler and QA: font roles only, with no `style` wrapper. Colors come from kit defaults or hex written directly in code scenes; backgrounds are painted by code scenes or templates. It carries no sizes, line heights, layouts, or motion; those belong to code scenes or template-local metadata. All values are static and traceable.
+A recipe is either `mode: "code"` (scenes write `scene.code` against the public kit) or `mode: "params"` (scenes write `scene.params`, and the recipe's own `template.js` draws a fixed full-frame layout). The two modes never mix inside one recipe. Fonts are not owned by recipes: the font library lives in `assets/fonts/manifest.json`, where every key carries a `desc`. Code scenes declare selected keys in `scene.resources` (`{"type":"font","name":"sans-400"}`); params templates hardcode keys and declare them in `template.resources`. The compiler fills `src` from the manifest. Colors come from kit defaults or hex written directly in code scenes; backgrounds are painted by code scenes or templates. It carries no sizes, line heights, layouts, or motion; those belong to code scenes or template-local metadata. All values are static and traceable.
 
-Compilation is deterministic: the same storyboard and inputs produce the same `composition.json`, which `tt det` verifies. Progressive disclosure is part of the design too: `SKILL.md` routes; a recipe's `brief.md` and `skeleton.storyboard.json` are read first, code recipes then read `visual.md` and one or two `ref-shots/`, and `references/` are consulted one page at a time.
+Compilation is deterministic: the same storyboard and inputs produce the same `composition.json`, which `tt det` verifies. Progressive disclosure is part of the design too: `SKILL.md` routes; a recipe's `recipe.md` and `skeleton.storyboard.json` are read after the recipe is selected, code recipes then read one or two `ref-shots/`, and `references/` are consulted one page at a time.
 
 ## What it can do
 
@@ -82,15 +82,15 @@ Recipes cover explainers, stories, fast cuts, breaking news, and real footage. A
 | `ink-painting` | Ink lines, washes, and large negative space | `scene.code` | Eastern aesthetics, poetry, culture |
 | `illustrated-story` | Paper collage, cut-out lettering | `scene.code` | short stories, observations, essays |
 | `flash-cut` | Hard cuts, oversized type, one sentence per scene | `scene.code` | punchy opinions, conclusions, promo beats |
-| `crayon-guide` | Warm paper, crayon hatching, hand-drawn labels | `scene.params` | recipes, checklists, kids' explainers |
-| `shadow-play` | Backlit screen, articulated silhouettes | `scene.params` | fables, folk tales, gesture-led scenes |
+| `crayon-guide` | Warm paper, crayon hatching, people and hand-drawn diagrams | `scene.code` | tutorials, cultural ideas, comparisons, kids' explainers |
+| `shadow-play` | Backlit screen, articulated silhouettes, scene-specific props | `scene.code` | fables, folk tales, historical vignettes |
 | `news-broadcast` | Fixed vertical news card: blue radial background, world map, flowing lines | `scene.params` | breaking-news cards, title / body / source |
 | `footage-cut` | Full-frame real footage with short overlay lines | `scene.params` | Pexels or local footage montage |
 
 Also included:
 
-- **Scene code with an injected kit** — `TT.text`, `TT.pen`, `TT.mark`, `TT.board`, `TT.geom`, `TT.transition`, `TT.flash`, `TT.chart`, `TT.newsBg`, and more. The compiler injects only the members the scene actually uses.
-- **7 caption styles + `none`** — band, plain, card, karaoke, collage, handnote, vertical, with per-character timing and subject avoidance.
+- **Scene code with an injected kit** — `TT.text`, `TT.pen`, `TT.mark`, `TT.board`, `TT.geom`, `TT.flash`, `TT.chart`, `TT.newsBg`, and more. The compiler injects only the members each scene uses; transition boundaries separately receive `TT.transition` in a generated dual-frame scene.
+- **7 caption styles + `none`** — plain, perchar, karaoke, collage, handnote, vertical, tornpaper, with per-character timing and subject avoidance.
 - **Narration and sound** — zero-key edge-tts by default, optional Volc TTS, BGM/SFX with ducking and fades.
 - **Stock footage** — Pexels search, download, attribution, caching, and bundled fallback.
 - **Preview and review** — read-only preview, stills, probe receipts, and per-frame pen annotations accumulated into a send list; sending writes the whole batch with screenshots into `<project>/annotations/` and closes the preview, read back with `tt annotations`.
@@ -105,6 +105,20 @@ Case images: put screenshots or GIFs in assets/readme/, then uncomment and adjus
 ![Crayon guide](assets/readme/crayon-guide.png)
 ![News broadcast](assets/readme/news-broadcast.png)
 -->
+
+## Dual-frame transitions: real boundary compositing
+
+A transition is not an exit overlay on scene A followed by an entrance from black on scene B. The compiler emits a dedicated transition `code scene` that draws both neighboring scenes into offscreen canvases and composites the two complete frames. In `push-left / push-up`, the pictures stay joined as they move; `wipe-left / wipe-up` reveals B directly over A; `iris` opens directly onto B. None requires a mechanical black gap.
+
+The storyboard only selects a fixed preset on the outgoing scene:
+
+```json
+{ "id": "s01", "duration": 4, "transition": "push-up", "code": "/* complete scene A */" }
+```
+
+The 11 fixed presets cover crossfade, left/up wipes and pushes, zoom, glitch, iris, and a paper-style `page-turn`, plus the GL Transitions–inspired `squares-wire` and `morph`. Direction is part of the complete preset name rather than a separate knob; there are no in/out, center, or duration parameters. Pattern transitions still use deterministic Canvas paths and slices, without WebGL or pixel readback. Dual-frame transitions apply to `scene.code` boundaries. Text already painted into a scene is simply part of the whole frame—there is no special caption compositor.
+
+The visual timeline is `(A-D/2) + T(D) + (B-D/2)`, so total duration is unchanged. Narration, SFX, BGM, and SRT retain the original A/B logical timeline rather than following the generated visual nodes. See the [transition protocol](references/transition.md).
 
 ## QA: one browser session, captured frames, receipts, and contact sheet
 
@@ -167,11 +181,11 @@ The default path needs no API keys: edge-tts plus bundled demo assets. Optional 
 
 ### From an agent
 
-Place this repository, or the clean distribution produced by `tt pack`, in your agent's skills directory (for Claude Code, something like `~/.claude/skills/ticktoon`), with [`SKILL.md`](SKILL.md) at its root. The agent selects a recipe from `recipes/`, reads its brief and skeleton, then writes and compiles a storyboard. Code recipes also read `visual.md` and `ref-shots/`.
+Place this repository, or the clean distribution produced by `tt pack`, in your agent's skills directory (for Claude Code, something like `~/.claude/skills/ticktoon`), with [`SKILL.md`](SKILL.md) at its root. The agent selects a recipe from `recipes/`, reads its `recipe.md` and skeleton, then writes and compiles a storyboard. Code recipes also read `ref-shots/`.
 
 Example request:
 
-> Make a 30-second whiteboard explainer on compound interest. Keep it to one narration track and use the default band captions.
+> Make a 30-second whiteboard explainer on compound interest. Keep it to one narration track and use the default perchar captions.
 
 ### From the CLI
 
@@ -205,17 +219,16 @@ Useful commands:
 ```text
 ticktoon-skill/
 ├── SKILL.md                     # agent entry: routing, loop, red lines
-├── recipes/                     # bundled recipes: rules, briefs, skeletons, ref-shots
+├── recipes/                     # bundled recipes: rules, docs, skeletons, ref-shots
 │   ├── whiteboard-explainer/
-│   │   ├── recipe.json          # mode / fonts / rules / captions / audio
-│   │   ├── brief.md             # when to use, when not, visual numbers
+│   │   ├── recipe.json          # mode / rules / captions / audio
+│   │   ├── recipe.md            # how to write the content + how to draw the frame
 │   │   ├── skeleton.storyboard.json
-│   │   ├── visual.md            # code-recipe visual physics
 │   │   └── ref-shots/*.js
 │   ├── news-broadcast/
 │   │   ├── recipe.json          # mode: params + template contract
 │   │   ├── template.js         # fixed full-frame template: draw(g, p)
-│   │   ├── brief.md
+│   │   ├── recipe.md
 │   │   └── skeleton.storyboard.json
 │   └── ...
 ├── references/                  # runtime API manual: storyboard, scene code, kit

@@ -1,7 +1,11 @@
 # recipe 重构 1.0（已落地）
 
-> 2026-11-11。本文记录最终模型与已执行的改动，不再描述过渡方案。
-> 当前行为以 `SKILL.md`、`platform/` 源码和 `tt` 输出为准。
+> 2026-11-11。本文记录 1.0 骨架与已执行的改动，不再描述过渡方案。
+> 字体契约随后改成了 manifest 键 + `scene.resources` / `template.resources` 声明，
+> recipe 文档随后合并为单份 `recipe.md`；
+> 本文中的 `recipe.fonts` / `template.needs.font` / `brief.md` / `visual.md` 只保留作历史记录；
+> 当前行为以 `SKILL.md`、`docs/ARCHITECTURE.zh-CN.md`、`platform/` 源码和 `tt` 输出为准。
+> ABI 随后从 `"9"` 改为 `"1"`；下文出现的 `"9"` 只作当时记录。
 
 ## 0. 一页结论
 
@@ -59,7 +63,7 @@
 
 ### 1.2 storyboard
 
-场景允许 `id / narration / duration / camera / code / params / resources / note / transitionIn / transitionOut`。
+场景允许 `id / narration / duration / camera / code / params / resources / note / transition`。`transition` 只收固定预设名，写在两个 code 场边界的前一场，由编译器生成独立双帧转场场。
 
 - code 场：`scene.code` 必填，`scene.params` / `scene.resources` 被拒绝。
 - params 场：`scene.params` 必填并按 `template.params` 校验，`scene.code` 被拒绝。

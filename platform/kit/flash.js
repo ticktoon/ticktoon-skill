@@ -68,7 +68,7 @@
     return finite(value) && value > 0;
   }
 
-  function fontOf(o, size, role) {
+  function fontOf(o, size, fontKey) {
     const px = positiveSize(size) ? size : 48;
     if (o && typeof o.font === 'object' && o.font && typeof o.font.css === 'string') {
       return {
@@ -83,7 +83,7 @@
       return { css: o.font, size: px, lineHeight: px * 1.24, ascent: px * 0.78, descent: px * 0.22 };
     }
     try {
-      return TT.font(FONTS, px, (o && o.role) || role || 'display');
+      return TT.font(FONTS, px, (o && o.fontKey) || fontKey || 'sans-900');
     } catch {
       return { css: px + 'px sans-serif', size: px, lineHeight: px * 1.24, ascent: px * 0.78, descent: px * 0.22 };
     }
@@ -97,7 +97,7 @@
    * `TT.text` 会主动记回执，外层的 __ttTextInternal 只能挡住 emit 的包装。
    */
   function drawRawText(ctx, text, x, y, size, o = {}) {
-    const font = fontOf(o, size, o.role);
+    const font = fontOf(o, size, o.fontKey);
     ctx.save();
     setFont(ctx, font);
     ctx.fillStyle = colorOf(o.color, inkColor());
@@ -228,9 +228,9 @@
   function fit(ctx, text, maxWidth, o = {}) {
     const maxPx = Math.max(8, num(o.maxPx, 400));
     const minPx = Math.max(8, num(o.minPx, 24));
-    const role = o.role || 'display';
+    const fontKey = o.fontKey || 'sans-900';
     for (let px = Math.floor(maxPx); px >= minPx; px -= 2) {
-      const font = fontOf(o, px, role);
+      const font = fontOf(o, px, fontKey);
       if (textWidth(ctx, text, font, num(o.tracking, 0)) <= maxWidth) return px;
     }
     return minPx;
@@ -242,7 +242,7 @@
     const text = str(o.text);
     if (!text) return null;
     const size = Math.max(8, num(o.size, 240));
-    const font = fontOf(o, size, o.role || 'display');
+    const font = fontOf(o, size, o.fontKey || 'sans-900');
     const tracking = num(o.tracking, 0);
     const t = num(o.t, num(api && api.t, 0));
     const dur = Math.max(0.001, num(o.dur, 0.32));
@@ -359,7 +359,7 @@
     const text = str(o.text);
     if (!text) return null;
     const size = Math.max(8, num(o.size, 240));
-    const font = fontOf(o, size, o.role || 'display');
+    const font = fontOf(o, size, o.fontKey || 'sans-900');
     const align = o.align || 'center';
     const baseline = o.baseline || 'middle';
     const tracking = num(o.tracking, 0);
@@ -525,7 +525,7 @@
     const text = str(o.text);
     if (!text) return null;
     const size = Math.max(8, num(o.size, 320));
-    const font = fontOf(o, size, o.role || 'display');
+    const font = fontOf(o, size, o.fontKey || 'sans-900');
     const x = finite(o.x) ? o.x : (api && api.W ? api.W / 2 : 0);
     const y = finite(o.y) ? o.y : (api && api.H ? api.H / 2 : 0);
     const t = num(o.t, num(api && api.t, 0));
@@ -843,7 +843,7 @@
           color: colorOf(cell.textColor, inkColor()),
           align: cell.align || 'center',
           baseline: 'middle',
-          role: cell.role || 'display',
+          fontKey: cell.fontKey || 'sans-900',
         };
         const tx = cellRect.x + cellRect.w / 2;
         const ty = cellRect.y + cellRect.h / 2;
@@ -856,7 +856,7 @@
           color: colorOf(cell.labelColor, mutedColor()),
           align: 'left',
           baseline: 'alphabetic',
-          role: 'num',
+          fontKey: 'sans-400',
         };
         const lx = cellRect.x + 14;
         const ly = cellRect.y + 14 + labelSize * 0.8;
@@ -978,7 +978,7 @@
     const labelSize = Math.max(8, num(o.labelSize, Math.min(42, rect.w * 0.085)));
     if (label) {
       TT.text(ctx, label, rect.x + pad, rect.y + pad + labelSize / 2, labelSize, {
-        color: colorOf(o.labelColor, onCard), align: 'left', baseline: 'middle', role: 'body',
+        color: colorOf(o.labelColor, onCard), align: 'left', baseline: 'middle', fontKey: 'sans-400',
       });
     }
 
@@ -1001,7 +1001,7 @@
         const value = Math.max(0, num(row.value, 0));
         const ratio = clamp01(value / Math.max(1, num(row.max, maxValue)));
         TT.text(ctx, str(row.label), rect.x + pad, y + barH / 2, labelSize, {
-          color: labelColor, align: 'left', baseline: 'middle', role: 'body',
+          color: labelColor, align: 'left', baseline: 'middle', fontKey: 'sans-400',
         });
         ctx.save();
         ctx.fillStyle = trackColor;
@@ -1013,7 +1013,7 @@
         ctx.fillRect(trackX, y, trackW * ratio * p, barH);
         ctx.restore();
         TT.text(ctx, str(row.valueText == null ? TT.num.fmt(value, num(row.digits, 0)) : row.valueText), trackX + trackW, y + barH / 2, valueSize, {
-          color: valueColor, align: 'right', baseline: 'middle', role: 'num',
+          color: valueColor, align: 'right', baseline: 'middle', fontKey: 'sans-400',
         });
       }
     } else {
@@ -1044,7 +1044,7 @@
         color: colorOf(o.big.color, cardColor ? readableOn(cardColor) : inkColor()),
         align: o.big.align || 'left',
         baseline: o.big.baseline || 'alphabetic',
-        role: o.big.role || 'display',
+        fontKey: o.big.fontKey || 'sans-900',
       });
     }
   }
@@ -1094,7 +1094,7 @@
         color: colorOf(line.color, paletteColor(i)),
         align: line.align || 'center',
         baseline: line.baseline || 'middle',
-        role: line.role || 'display',
+        fontKey: line.fontKey || 'sans-900',
       });
     }
   }
@@ -1310,7 +1310,7 @@
     const text = str(o.text);
     if (!text) return null;
     const size = Math.max(8, num(o.size, 240));
-    const font = fontOf(o, size, o.role || 'display');
+    const font = fontOf(o, size, o.fontKey || 'sans-900');
     const tracking = num(o.tracking, 0);
     const align = o.align || 'center';
     const baseline = o.baseline || 'middle';
@@ -1449,7 +1449,7 @@
       ctx.arc(cx, cy, Math.max(2, num(o.recSize, 5)), 0, TAU);
       ctx.fill();
       TT.text(ctx, 'REC', cx - 12, cy, Math.max(9, num(o.recTextSize, 14)), {
-        color, align: 'right', baseline: 'middle', role: 'num',
+        color, align: 'right', baseline: 'middle', fontKey: 'sans-400',
       });
     }
     if (o.progress && finite(o.progress.value)) {
@@ -1470,7 +1470,7 @@
           color: colorOf(label.color, mutedColor()),
           align: label.align || 'left',
           baseline: label.baseline || 'middle',
-          role: label.role || 'num',
+          fontKey: label.fontKey || 'sans-400',
         });
       }
     }
@@ -1488,7 +1488,7 @@
     if (text) {
       TT.text(ctx, text, x, y, size, {
         color, align: o.align || 'left', baseline: o.baseline || 'alphabetic',
-        role: o.role || 'num', alpha: o.alpha,
+        fontKey: o.fontKey || 'sans-400', alpha: o.alpha,
       });
     }
     if (o.bar && finite(o.bar.value)) {
@@ -1547,7 +1547,7 @@
       const text = str(band.text);
       if (text) {
         const size = Math.max(10, num(band.size, o.size == null ? bh * 0.6 : o.size));
-        const font = fontOf(band, size, band.role || 'display');
+        const font = fontOf(band, size, band.fontKey || 'sans-900');
         const tw = textWidth(ctx, text, font, num(band.tracking, 0));
         const period = tw + Math.max(24, size * 0.4);
         const speed = num(band.speed, o.speed == null ? 80 : o.speed);
@@ -1558,7 +1558,7 @@
           const xx = start + k * period;
           TT.text(ctx, text, xx, y + bh / 2, size, {
             font, color: colorOf(band.textColor, inkColor()),
-            align: 'left', baseline: 'middle', role: band.role || 'display',
+            align: 'left', baseline: 'middle', fontKey: band.fontKey || 'sans-900',
           });
         }
       }
@@ -1593,12 +1593,12 @@
     }
     if (o.title) {
       TT.text(ctx, str(o.title), rect.x + 76, rect.y + 21, 14, {
-        color: textColor, align: 'left', baseline: 'middle', role: 'num',
+        color: textColor, align: 'left', baseline: 'middle', fontKey: 'sans-400',
       });
     }
     const codeRect = { x: rect.x + 18, y: rect.y + 58, w: rect.w * split - 28, h: rect.h - 76 };
     const previewRect = { x: rect.x + rect.w * split + 8, y: rect.y + 58, w: rect.w * (1 - split) - 26, h: rect.h - 76 };
-    setFont(ctx, fontOf(o, 18, 'num'));
+    setFont(ctx, fontOf(o, 18, 'sans-400'));
     ctx.fillStyle = textColor;
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';

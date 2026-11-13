@@ -3,7 +3,12 @@
   "title": "麻雀起飞",
   "note": "同一张纸，视线跟着起飞的动作向右上走",
   "duration": 5.893,
-  "resources": [],
+  "resources": [
+    {
+      "type": "font",
+      "name": "sans-400"
+    }
+  ],
   "tags": [
     "动作",
     "视线",

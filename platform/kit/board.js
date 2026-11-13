@@ -338,8 +338,8 @@
   }
 
   /**
-   * 皮影幕布：宣纸底 + 四角木框 + 顶部暖灯晕 + 底部操纵区压暗。
-   * 框与灯是固定屏幕坐标，不随镜头缩放——它们属于"戏台"，不属于"戏"。
+   * 皮影幕布背景：宣纸底 + 顶部暖灯晕 + 底部操纵区压暗。
+   * 四角木框由 stageFrame 在场景内容之后单独绘制。
    */
   function stage(ctx, api, opts = {}) {
     const { W, H } = sizeOf(ctx, api);
@@ -371,58 +371,44 @@
     ctx.fillStyle = lamp;
     ctx.fillRect(0, 0, W, H * 0.72);
 
-    // 底部操纵区：越靠近下沿越暗，压住杆子与手。
-    const pit = ctx.createLinearGradient(0, H * 0.78, 0, H);
-    pit.addColorStop(0, 'rgba(28,18,10,0)');
-    pit.addColorStop(1, 'rgba(28,18,10,0.42)');
-    ctx.fillStyle = pit;
-    ctx.fillRect(0, H * 0.78, W, H * 0.22);
+    ctx.restore();
+  }
 
-    // 少量布面褶皱：竖直的淡亮带，位置固定。
-    for (let i = 0; i < 7; i += 1) {
-      const x = (0.08 + i * 0.14 + rnd(i + 5, seed) * 0.04) * W;
-      const bw = (18 + rnd(i + 9, seed) * 26) * u;
-      const fg = ctx.createLinearGradient(x - bw, 0, x + bw, 0);
-      fg.addColorStop(0, 'rgba(255,250,235,0)');
-      fg.addColorStop(0.5, 'rgba(255,250,235,0.10)');
-      fg.addColorStop(1, 'rgba(255,250,235,0)');
-      ctx.fillStyle = fg;
-      ctx.fillRect(x - bw, 0, bw * 2, H);
-    }
-
-    if (opts.frame !== false) {
-      // 四角木框：只压四角，不封边，避免把幕布框成一张贴图。
-      const arm = Math.min(W, H) * 0.16;
-      const th = Math.max(10, Math.min(W, H) * 0.026);
-      const wood = (x0, y0, x1, y1) => {
-        const wg = ctx.createLinearGradient(x0, y0, x1, y1);
-        wg.addColorStop(0, '#6a4a30');
-        wg.addColorStop(0.5, '#4d3421');
-        wg.addColorStop(1, '#3a2618');
-        ctx.fillStyle = wg;
-      };
-      const corners = [
-        [0, 0, 1, 1], [W, 0, -1, 1], [0, H, 1, -1], [W, H, -1, -1],
-      ];
-      for (const [cx, cy, sx, sy] of corners) {
-        ctx.save();
-        ctx.translate(cx, cy);
-        ctx.scale(sx, sy);
-        wood(0, 0, arm, th);
-        ctx.fillRect(0, 0, arm, th);
-        wood(0, 0, th, arm);
-        ctx.fillRect(0, 0, th, arm);
-        // 木条高光
-        ctx.fillStyle = 'rgba(255,222,170,0.16)';
-        ctx.fillRect(0, th * 0.72, arm, th * 0.16);
-        ctx.fillRect(th * 0.72, 0, th * 0.16, arm);
-        // 铆钉
-        ctx.fillStyle = 'rgba(236,206,150,0.35)';
-        ctx.beginPath();
-        ctx.arc(th * 1.6, th * 1.6, th * 0.26, 0, TAU);
-        ctx.fill();
-        ctx.restore();
-      }
+  /**
+   * 皮影固定前景：只画四角木框，其余区域保持完全透明。
+   * 必须在所有场景内容之后调用，保证框角不会被山体或建筑覆盖。
+   */
+  function stageFrame(ctx, api) {
+    const { W, H } = sizeOf(ctx, api);
+    const arm = Math.min(W, H) * 0.16;
+    const th = Math.max(10, Math.min(W, H) * 0.026);
+    const wood = (x0, y0, x1, y1) => {
+      const wg = ctx.createLinearGradient(x0, y0, x1, y1);
+      wg.addColorStop(0, '#6a4a30');
+      wg.addColorStop(0.5, '#4d3421');
+      wg.addColorStop(1, '#3a2618');
+      ctx.fillStyle = wg;
+    };
+    const corners = [
+      [0, 0, 1, 1], [W, 0, -1, 1], [0, H, 1, -1], [W, H, -1, -1],
+    ];
+    ctx.save();
+    for (const [cx, cy, sx, sy] of corners) {
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.scale(sx, sy);
+      wood(0, 0, arm, th);
+      ctx.fillRect(0, 0, arm, th);
+      wood(0, 0, th, arm);
+      ctx.fillRect(0, 0, th, arm);
+      ctx.fillStyle = 'rgba(255,222,170,0.16)';
+      ctx.fillRect(0, th * 0.72, arm, th * 0.16);
+      ctx.fillRect(th * 0.72, 0, th * 0.16, arm);
+      ctx.fillStyle = 'rgba(236,206,150,0.35)';
+      ctx.beginPath();
+      ctx.arc(th * 1.6, th * 1.6, th * 0.26, 0, TAU);
+      ctx.fill();
+      ctx.restore();
     }
     ctx.restore();
   }
@@ -506,9 +492,9 @@
     },
     {
       kind: 'stage',
-      desc: '皮影幕布：宣纸底 + 顶部暖灯晕 + 底部操纵区压暗 + 四角木框',
+      desc: '皮影幕布背景：宣纸底 + 顶部暖灯晕 + 底部操纵区压暗；四角木框由 stageFrame 前景绘制',
       when: '皮影/灯影戏；主体是从背后打光的剪影时用它',
-      opts: 'opts.frame=false 去木框；opts.seed 换褶皱位置',
+      opts: 'opts.seed 换褶皱位置',
     },
     {
       kind: 'news',
@@ -539,6 +525,7 @@
     wash: withTone(wash),
     crayon: withTone(crayon),
     stage: withTone(stage),
+    stageFrame,
     news: withTone(news),
   };
 })();

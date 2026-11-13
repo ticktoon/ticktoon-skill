@@ -2,18 +2,18 @@
 
 **这份文档不是 recipe 的实现清单，是"想做出这种味道"的描述清单。**
 
-当前视觉由 recipe 承载：每条 `recipe.json` 自带顶层 `fonts`（角色 → manifest 键）和 `rules`（safeMargin / scale / stroke / pen / board / forbid）；颜色由 kit 默认值或 code 直接写 hex，背景由 `scene.code` / params 模板自己铺满，字号、版式、动效归场景代码或模板本地。词典条目是一段描述（人读，照着它写出 `scene.code`），不是可切换的主题包。
+当前视觉由 recipe + 场景代码共同承载：`recipe.json` 自带 `rules`（safeMargin / scale / stroke / pen / board / forbid）；字体从 `assets/fonts/manifest.json` 选 manifest 键，code 场声明在 `scene.resources`、params 模板声明在 `template.resources`；颜色由 kit 默认值或 code 直接写 hex，背景由 `scene.code` / params 模板自己铺满，字号、版式、动效归场景代码或模板本地。词典条目是一段描述（人读，照着它写出 `scene.code`），不是可切换的主题包。
 
 两条使用规则：
 
 1. **词典里的风格一律 `scene.code` 现画**，一片最多 3 处；不要等一套主题系统。
-2. 某个条目被第三个片子用到，才考虑沉淀成新的 recipe（params 模板或 visual.md）；被两个片子用到，仍然写在 `scene.code`。这不是偷懒，是先验证需求。
+2. 某个条目被第三个片子用到，才考虑沉淀成新的 recipe（params 模板或 recipe.md 的画法规范）；被两个片子用到，仍然写在 `scene.code`。这不是偷懒，是先验证需求。
 
 ---
 
 ## 一、常用视觉坐标（参考）
 
-下表是 8 套常用风格的坐标描述，可作写 `scene.code` 或新建 recipe 时的参考；它们不是当前可直接引用的主题包。当前 recipe 的视觉数值见各自 `recipe.json` 与 `brief.md`（清单以 `tt recipe list` 为准）。
+下表是 8 套常用风格的坐标描述，可作写 `scene.code` 或新建 recipe 时的参考；它们不是当前可直接引用的主题包。当前 recipe 的视觉数值见各自 `recipe.json` 与 `recipe.md`（清单以 `tt recipe list` 为准）。
 
 | # | 风格 | 底色 | 主色 | 字体气质 | 线宽 / 质感 | 动效惯性 | 用在什么题材 | 落地 |
 |---|---|---|---|---|---|---|---|---|
@@ -98,12 +98,12 @@
 
 1. **观众此刻要相信什么？** 要相信"这是真的"→ 播报台 / 打字机 / 帐本 / 机密文件；要相信"这很酷"→ 霓虹 / 玻璃 HUD / 流体渐变；要相信"这很珍贵"→ 黑场电影 / 水墨 / 日式极简。
 2. **内容量有多大？** 一屏一句话 → 动态字 / 数据海报 / 片头字幕；一屏三行以上 → 瑞士网格 / 杂志衬线 / 备忘录。**风格选错最常见的原因是想用极简风装三段话。**
-3. **这个片子要重复吗？** 一次性 → 随便挑，`scene.code` 现画；要复用 3 次以上 → 找最接近的现有 recipe，或在 recipe 里沉淀 `template.js` / `visual.md`，不要新做主题系统。
+3. **这个片子要重复吗？** 一次性 → 随便挑，`scene.code` 现画；要复用 3 次以上 → 找最接近的现有 recipe，或在 recipe 里沉淀 `template.js` / `recipe.md` 的画法规范，不要新做主题系统。
 
 ---
 
 ## 五、维护
 
 - 加条目：写一行表格，六列都要填满。**填不满说明你还没想清楚这个风格长什么样，别加。**
-- 删条目：被三个片子用过就不要再删，先看能否沉淀进 recipe 的 `visual.md` 或 `template.js`。
-- 改 recipe 视觉：code 型改 `visual.md` / `rules`，params 型改 `template.js`；音画约束改 `recipe.json`（`rules` / `captions` / `audio`），跑 `tt recipe audit`。**词典这一行不用改**——描述和数值本来就该能各自演进。
+- 删条目：被三个片子用过就不要再删，先看能否沉淀进 recipe 的 `recipe.md` 或 `template.js`。
+- 改 recipe 视觉：code 型改 `recipe.md` 的画法规范 / `rules`，params 型改 `template.js`；音画约束改 `recipe.json`（`rules` / `captions` / `audio`），跑 `tt recipe audit`。**词典这一行不用改**——描述和数值本来就该能各自演进。

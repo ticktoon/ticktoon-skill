@@ -2,8 +2,8 @@
  * recipe audit —— "复制阶段"的守门人。
  *
  * audit 就是用机器确认：骨架能建工程，params 的骨架 / code 的 ref-shots 合成片能编译干净，
- * recipe 的 fonts / rules / captions / audio / template 必须通过结构校验，
- * code recipe 还必须有 visual.md 与可解析的 ref-shots/。
+ * recipe 的 rules / captions / audio / template 必须通过结构校验，
+ * code recipe 还必须有 recipe.md 与可解析的 ref-shots/。
  * 视觉质量由 tt qa 的抽帧联系表交给人或 agent 判断。
  *
  * audit 不起浏览器——像素级的事是 tt qa 的职责，这里只做"结构上站得住"。
@@ -22,12 +22,12 @@ export async function auditRecipe({ root, catalog, id }) {
     return { id, ok: false, checks: [{ pass: false, code: 'RECIPE_UNKNOWN', msg: '未注册' }] };
   }
 
-  // fonts / rules / captions / audio / template 的结构校验在 loadCatalog 里完成，
+  // rules / captions / audio / template 的结构校验在 loadCatalog 里完成，
   // 这里只把结果报出来。
   if (recipe.recipeErrors?.length) {
     for (const error of recipe.recipeErrors) add(false, error.code, `${error.path} — ${error.msg}`);
   } else {
-    add(true, 'RECIPE_VALID', `${recipe.mode} 模式：fonts / rules / captions / audio / template 校验通过`);
+    add(true, 'RECIPE_VALID', `${recipe.mode} 模式：rules / captions / audio / template 校验通过`);
   }
 
   const input = recipeRegressionInput({ root, recipe });

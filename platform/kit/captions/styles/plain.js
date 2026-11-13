@@ -1,10 +1,11 @@
 /** plain：无底色白字，描边与柔和阴影保证复杂画面上的可读性。 */
 (() => {
-  CAPTIONS.plain = (c) => TT.captionKit.render(c, { padX: 8, padY: 8 }, (m) => {
+  CAPTIONS.plain = (c) => TT.captionKit.render(c, { padX: 28, padY: 14 }, (m) => {
     const { ctx, o, f, rect } = m;
     if (o.band) {
       ctx.fillStyle = o.background || 'rgba(10,12,16,0.48)';
-      TT.captionKit.rounded(ctx, rect.x, rect.y, rect.w, rect.h, f.size * 0.18);
+      // TT.captionKit.rounded(ctx, rect.x, rect.y, rect.w, rect.h, f.size * 0.18);
+      TT.captionKit.rounded(ctx, rect.x, rect.y, rect.w, rect.h, Math.min(12, f.size * 0.22));
     }
     ctx.lineJoin = 'round';
     ctx.strokeStyle = o.stroke || 'rgba(10,15,20,0.86)';

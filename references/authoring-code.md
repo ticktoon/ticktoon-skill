@@ -4,11 +4,11 @@
 
 配套文件在具体 recipe 目录里，只读你选中的那一条：
 
-- 白板手绘的物理规范（与题材无关）：`recipes/whiteboard-explainer/visual.md`
+- 白板手绘的创作纲要与物理规范：`recipes/whiteboard-explainer/recipe.md`
 - 两个可运行范例：
   - `recipes/whiteboard-explainer/ref-shots/el-nino.js`：机制剖面，演示 `TT.geom` 相机、`TT.board`、`TT.pen`、分段落笔。
   - `recipes/whiteboard-explainer/ref-shots/compound-interest.js`：图表构图，演示坐标轴、刻度、曲线、翻倍阶梯与标注。
-- 水墨与拼贴的物理规范/范例：`recipes/ink-painting/visual.md`、`recipes/illustrated-story/visual.md`，各自带一组 `ref-shots/`；镜头参考文件头格式统一见 `SKILL.md`。
+- 水墨与拼贴的创作纲要/物理规范：`recipes/ink-painting/recipe.md`、`recipes/illustrated-story/recipe.md`，各自带一组 `ref-shots/`；镜头参考文件头格式统一见 `SKILL.md`。
 
 ---
 
@@ -52,12 +52,12 @@
 |---|---|---|
 | `TT` | 总是 | 公共组件集合，见第 5 节 |
 | `CAPTIONS` | 本场有字幕 cue 且有 caption 代码时 | 字幕实现；code 作者不应调用它 |
-| `FONTS` | 总是 | 当前 recipe 顶层的 `fonts`：角色 → manifest 字体键 |
+| `FONTS` | 总是 | 本场字体资源键的恒等映射：manifest 键 → 同名键 |
 | `RULES` | **只有 code 场** | 当前 recipe 的 `rules` 对象；params 模板没有这个标识符 |
 
 `RULES` 只在 `scene.code` 存在的场注入（`platform/compile/emit.mjs`）。params 模板通过 `scene.params` 拿内容，不引用 `RULES`。
 
-`FONTS` 是字体契约，不是这个 recipe 所有视觉值的仓库：字号、行高、版式、动画节奏由 code 场自己算；颜色直接写 hex 或用 kit 默认值。`FONTS` 的 key 是角色名（`display / body / num / hand / caption / brand / serif / round / poster / cutout`），value 是 `assets/fonts/manifest.json` 的字体键。
+`FONTS` 是**本场已加载字体资源**的可查询表，不是视觉值仓库：字号、行高、版式、动画节奏由 code 场自己算；颜色直接写 hex 或用 kit 默认值。`FONTS` 的键和值都是 `assets/fonts/manifest.json` 的字体键；字体先在本场 `resources` 里声明 `{ "type": "font", "name": "sans-400" }`，`src` 由编译期按 manifest 补齐，`FONTS` 才会包含它。字体库对作者开放：manifest 里每个键都可以选，按 `desc` 判断气质，再写进本场 `resources`。字幕字体不放进 `FONTS`：`captions.font` 直接写 manifest 键，字幕资源由字幕层独立加载。
 
 ---
 
@@ -97,7 +97,7 @@ const jitter = rand() * 2 - 1;      // 同一 seed，每帧同一数列
 `FONTS` 只承载字体契约：
 
 ```js
-const body = TT.font(FONTS, 30, 'body');   // FONTS: 角色 → manifest 字体键
+const body = TT.font(FONTS, 30, 'sans-400');  // 字体键须已在本场 resources 声明
 const ink = '#F0ECE4';                     // 颜色直接写 hex，或用 kit 的默认色
 ```
 
@@ -151,7 +151,13 @@ const strokes = [
 TT.pen.track(ctx, strokes, api.t, { sceneScale: fit * scale });
 ```
 
-- `TT.pen.track` 在笔画末端画笔身；同一时刻有多笔未完成时，选 `at` 最新的一笔（同 `at` 取数组后项）；所有笔完成后 80ms 淡出笔身。
+- `TT.pen.track` 在笔画末端画笔身；同一时刻有多笔未完成时，只跟数组中最早排定、尚未收笔的一笔（index 最小），所以 `strokes` 要按 `at` 递增排列；所有笔完成后 80ms 淡出笔身。
+- 笔是添彩，不是计时器：主轮廓放 `heroStrokes` 带笔身，排线 / 刻度 / 雨丝 / 射线放另一个数组，用 `penBody:false` 短揭示（`dur` 0.1–0.2s）。圈重点、下划线、箭头这类强调标注是叙事的一部分，走 `TT.mark` 时传 `penBody:true` + `sceneScale` 自带笔。两遍 `track` 共享同一时间轴，带笔时段彼此不要重叠：
+  ```js
+  TT.pen.track(ctx, detailStrokes, t, { sceneScale: fit * scale, penBody: false });
+  TT.pen.track(ctx, heroStrokes, t, { sceneScale: fit * scale });
+  ```
+- 停顿用笔画之间的空档表达，不要把笔迹进度喂给一个会冻结的 `t` 重映射；`t` 停住时正在进行的笔画会停在半空，看起来像笔卡死。
 - `TT.pen.stroke(ctx, pts, k, opts)` 是单笔即时绘制，`k` 为 0…1；不参与时间轴。
 - `TT.pen.list()` 返回 `marker / pencil / brush / inkbrush / chalk / fineliner`。
 - `TT.pen.bbox()` 返回本帧笔迹在画布逻辑像素里的框；`TT.pen.resetBBox()` 由引擎每帧调用，作者通常不用手动调。
@@ -160,10 +166,10 @@ TT.pen.track(ctx, strokes, api.t, { sceneScale: fit * scale });
 ### 5.3 文字
 
 ```js
-TT.text(ctx, '标注', 300, 400, 30, { role: 'body', color: ink, align: 'left' });
+TT.text(ctx, '标注', 300, 400, 30, { fontKey: 'sans-400', color: ink, align: 'left' });
 ```
 
-`TT.text(ctx, text, x, y, size, opts)` 的 `opts`：`font`（css 或 `TT.font` 结果）、`role`、`color`、`align`、`baseline`、`alpha`、`maxWidth`。默认字体从 `FONTS` 的 `body` 角色取。
+`TT.text(ctx, text, x, y, size, opts)` 的 `opts`：`font`（css 或 `TT.font` 结果）、`fontKey`（manifest 字体键）、`color`、`align`、`baseline`、`alpha`、`maxWidth`。默认字体取 `sans-400`；需要别的字体时写 `fontKey`，并确保本场 `resources` 已声明该键。
 
 - 直接写 `ctx.fillText` 也会被 emit 的包装器记进文字回执；但 `TT.text` 会同时处理 `FONTS` 字体与对齐，推荐优先用。
 - `TT.text.measure(ctx, str)` 返回当前 `ctx.font` 下的宽度；排上下标/公式时先设字体再量。
@@ -200,12 +206,12 @@ TT.num.fmt(1006);                  // '1,006'
 ### 5.6 字体 / 颜色
 
 ```js
-const f = TT.font(FONTS, 30, 'body');
+const f = TT.font(FONTS, 30, 'sans-400');
 ctx.font = f.css;
 ctx.fillStyle = '#F0ECE4';
 ```
 
-`TT.font` 返回 `{css,size,family,lineHeight,ascent,descent}`。族名必须等于本场 `resources[].name`；不要手写字体族名，否则会静默回落到系统字体。颜色不经过 `FONTS`：直接写 hex，或交给 kit 自己的默认色。字号、行高、基线由 code 场按内容自己定，`FONTS` 不提供字号阶梯。
+`TT.font` 返回 `{css,size,family,lineHeight,ascent,descent}`。第三个参数是 manifest 字体键；族名必须等于本场 `resources[].name`。不要手写字体族名，否则会静默回落到系统字体。颜色不经过 `FONTS`：直接写 hex，或交给 kit 自己的默认色。字号、行高、基线由 code 场按内容自己定，`FONTS` 不提供字号阶梯。
 
 ### 5.7 图表几何
 

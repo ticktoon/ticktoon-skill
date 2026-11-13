@@ -170,7 +170,9 @@
 
   function drawTrace(ctx, pts, k, opts = {}) {
     const pen = IDS.includes(opts.pen) ? opts.pen : 'marker';
-    const cut = partial(texturedPoints(pts, pen, opts.seed || 0), k);
+    // smooth 供标注等规整线稿关闭坐标扰动；普通白板笔迹仍保留原有墨迹质感。
+    const source = opts.smooth === true ? pts : texturedPoints(pts, pen, opts.seed || 0);
+    const cut = partial(source, k);
     if (!cut) return null;
     const color = opts.color || (pen === 'inkbrush' ? '#202923' : '#353b3c');
     const width = Number.isFinite(opts.width) ? opts.width : 4;
@@ -191,9 +193,22 @@
         ctx.globalAlpha = baseAlpha * (wash ? 0.055 : pen === 'inkbrush' ? 0.96 : 1);
         for (let i = 1; i < cut.points.length; i += 1) {
           const q = cut.total ? (cut.lengths[i - 1] || 0) / cut.total : 0;
-          const pressure = pen === 'inkbrush'
-            ? 0.16 + Math.pow(Math.sin(Math.PI * clamp01(q)), 0.58) * 1.55
-            : 0.30 + Math.pow(Math.sin(Math.PI * clamp01(q)), 0.72) * 1.22;
+          let pressure;
+          if (pen === 'inkbrush') {
+            pressure = 0.16 + Math.pow(Math.sin(Math.PI * clamp01(q)), 0.58) * 1.55;
+          } else if (opts.taper === 'end') {
+            // 起笔饱满、末端逐渐收尖，适合对勾的长上扬笔。
+            pressure = 0.20 + Math.pow(1 - clamp01(q), 0.72) * 1.30;
+          } else if (opts.taper === 'start') {
+            pressure = 0.20 + Math.pow(clamp01(q), 0.72) * 1.30;
+          } else if (opts.taper === 'soft') {
+            // 两端仍保持圆厚，只在中段轻微加压，适合手写叉。
+            pressure = 0.72 + Math.pow(Math.sin(Math.PI * clamp01(q)), 0.72) * 0.58;
+          } else if (opts.taper === 'none') {
+            pressure = 1;
+          } else {
+            pressure = 0.30 + Math.pow(Math.sin(Math.PI * clamp01(q)), 0.72) * 1.22;
+          }
           ctx.lineWidth = Math.max(0.65, width * pressure + (wash ? 2.2 : 0));
           ctx.beginPath();
           ctx.moveTo(cut.points[i - 1][0], cut.points[i - 1][1]);

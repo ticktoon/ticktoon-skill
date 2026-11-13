@@ -1,24 +1,19 @@
 {
   "id": "blackboard-lesson",
-  "abi": "9",
+  "abi": "1",
   "name": "黑板教学",
-  "keywords": [
-    "黑板",
-    "粉笔",
-    "教学",
-    "推导",
-    "板书",
-    "公式"
+  "keywords": ["黑板", "粉笔", "教学", "推导", "板书", "公式"],
+  "mode": "code",
+  "when": [
+    "需要把一堂课的推导、证明或公式变形过程按书写节拍演出来。",
+    "单场 25–35 秒，5–8 个书写节拍，最后留一段让观众读完板书。",
+    "观众要看的是「答案怎么被写出来」，而不是一张已经排好的讲义。"
   ],
-  "when": "需要把一堂课的推导过程按书写节拍逐笔写在黑板上时",
-  "fonts": {
-    "display": "sans-400",
-    "body": "sans-400",
-    "num": "latin-700",
-    "caption": "sans-900",
-    "hand": "ZTZiYouTi",
-    "serif": "WenYuanSerifSC-Bold"
-  },
+  "notWhen": [
+    "只需要罗列结论或清单；改用固定版式的 params recipe（如 news-broadcast）。",
+    "需要多镜头讲故事或展示实拍；改用 illustrated-story 或 footage-cut。",
+    "想把讲课内容做成 recipe 的课题选项；本 recipe 禁止题材枚举，内容必须在 scene.code 里现写。"
+  ],
   "rules": {
     "safeMargin": 0.06,
     "scale": {
@@ -26,10 +21,7 @@
       "label": 0.8,
       "note": 0.6
     },
-    "stroke": [
-      3,
-      6
-    ],
+    "stroke": [3, 6],
     "pen": {
       "mode": "fixed",
       "value": "chalk"
@@ -49,7 +41,7 @@
   },
   "captions": {
     "style": "plain",
-    "font": "caption",
+    "font": "sans-900",
     "baseSize": 44,
     "lineHeight": 1.34,
     "top": 0.8,
@@ -66,6 +58,5 @@
       "level": 0.04,
       "edge": 0.22
     }
-  },
-  "mode": "code"
+  }
 }

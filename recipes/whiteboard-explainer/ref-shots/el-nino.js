@@ -3,7 +3,12 @@
   "title": "白板常态剖面",
   "note": "信风把暖水堆在西太平洋；静态镜头、手绘排线、分区标注",
   "duration": 6.187,
-  "resources": [],
+  "resources": [
+    {
+      "type": "font",
+      "name": "sans-400"
+    }
+  ],
   "tags": [
     "剖面",
     "气候",
@@ -12,21 +17,20 @@
 }
 */
 /*
- * 白板「常态剖面」单场范例。转折与后果场见同目录的其他示例；
- * 呼吸节拍的时间重映射在整组示例里保持一致。
+ * 白板「常态剖面」单场范例。转折与后果场见同目录的其他示例。
  * 看四点：
  * 1) 舞台 TT.board、笔迹 TT.pen、文字 TT.text、标注 TT.mark，四者各管一段；
  * 2) RULES 给字号 / 线宽 / 边距，规范不散落在上千个数字里；
  * 3) 相机与反像采样走 TT.geom；本片用静态镜头，避免面积序列把推镜误读成落笔；
  * 4) 填充一律改成手绘排线，每笔都进 ink 回执，qa 才抓得到越界与碰撞。
+ * 5) 笔是添彩，不是计时器：主轮廓进 heroStrokes；圈重点、下划线、箭头这类
+ *    强调标注用 penBody:true 自带笔；排线、射线、雨丝只做短揭示，不跟笔。
+ *    所有带笔时段错开，同一时刻只有一支笔，墨迹也不会重复落笔。
  * 不要照抄题材：换主题时换掉剖面内容，骨架不变。
  */
 // 白板手写 · 示例：常态。内容写在 code 里，视觉规范从 RULES 读。
 // 舞台 TT.board、笔迹 TT.pen、文字 TT.text、标注 TT.mark，四者各管一段。
 const T = api.t;
-// 两段落笔：前 1.5s 画底图，1.5–2.6s 停一拍让观众读完，之后加速补完标注。
-// 重映射只作用于笔迹进度；淡入淡出与镜头仍走真实场景时间 T。
-const t = T < 1.5 ? T : (T < 2.6 ? 1.5 : 1.5 + (T - 2.6) * 2.6);
 const clamp01 = TT.clamp01;
 const ease = TT.ease;
 const TAU = Math.PI * 2;
@@ -85,9 +89,12 @@ const cubic = (a, b, c, d, n = 28) => {
   }
   return pts;
 };
+// 两块笔迹：strokes 只落墨，heroStrokes 额外带笔身。笔身不跟次要笔迹。
 const strokes = [];
-const stroke = (pts, at, dur, color = ink, width = 4, dash = []) => {
-  strokes.push({ pts, at, dur, pen: 'marker', color, width, dash, seed: 0 });
+const heroStrokes = [];
+const stroke = (pts, at, dur, color = ink, width = 4, dash = [], hero = false) => {
+  const item = { pts, at, dur, pen: 'marker', color, width, dash, seed: 0 };
+  (hero ? heroStrokes : strokes).push(item);
 };
 // 文字统一走 TT.text：它带 text 回执，qa 才抓得到越界与碰撞。
 const label = (value, x, y, size, color, k, align = 'left', rotate = -0.012) => {
@@ -96,13 +103,13 @@ const label = (value, x, y, size, color, k, align = 'left', rotate = -0.012) => 
   ctx.translate(x, y + (1 - k) * 12);
   ctx.rotate(rotate);
   ctx.globalAlpha = clamp01(k) * alpha;
-  TT.text(ctx, value, 0, 0, size, { color, align, role: 'body' });
+  TT.text(ctx, value, 0, 0, size, { color, align, fontKey: 'sans-400' });
   ctx.restore();
 };
 
-// ---- 常态：先把底图与主体画出来，前 3.8s 落笔，末尾留白给观众读 ----
-label('厄尔尼诺', W * 0.5, 116, titlePx, ink, prog(t, 0.1, 0.9), 'center', -0.018);
-TT.mark.underline(ctx, { from: [680, 145], to: [1240, 145], color: red, width: bold, offset: 0.03, slack: 0.02, progress: prog(t, 0.7, 0.8) });
+// ---- 常态：主轮廓与强调标注带笔，细节短揭示；3.0–3.4s 是不落新笔的读稿空档 ----
+label('厄尔尼诺', W * 0.5, 116, titlePx, ink, prog(T, 0.1, 0.45), 'center', -0.018);
+TT.mark.underline(ctx, { from: [680, 145], to: [1240, 145], color: red, width: bold, progress: prog(T, 0.55, 0.4), penBody: true, sceneScale: fit * scale });
 
 const asia = [
   ...cubic([-40, 515], [45, 405], [122, 426], [178, 505]),
@@ -113,28 +120,35 @@ const america = [
   ...cubic([1765, 340], [1800, 285], [1820, 368], [1855, 326]).slice(1),
   ...cubic([1855, 326], [1895, 304], [1918, 362], [1970, 420]).slice(1),
 ];
-stroke(asia, 1.0, 1.1, ink, bold);
-stroke(america, 1.3, 1.1, ink, bold);
-stroke([[178, 505], [285, 503], [410, 506]], 1.7, 0.6, ink, mid);
-stroke([[1525, 544], [1660, 545], [1740, 542]], 1.8, 0.6, ink, mid);
+stroke(asia, 1.0, 0.65, ink, bold, [], true);
+stroke(america, 1.65, 0.65, ink, bold, [], true);
+stroke([[178, 505], [285, 503], [410, 506]], 2.3, 0.15, ink, mid);
+stroke([[1525, 544], [1660, 545], [1740, 542]], 2.32, 0.12, ink, mid);
 
 const basin = [
   ...cubic([178, 505], [195, 640], [235, 788], [380, 820]),
   ...cubic([380, 820], [720, 868], [1280, 843], [1515, 758]).slice(1),
   ...cubic([1515, 758], [1610, 710], [1640, 625], [1660, 545]).slice(1),
 ];
-stroke(basin, 2.0, 1.0, muted, mid);
+stroke(basin, 2.35, 0.65, muted, mid, [], true);
+
+label('亚洲', 118, 540, notePx, '#4a4c47', prog(T, 1.55, 0.4), 'center', 0.01);
+label('西', 120, 600, westPx, ink, prog(T, 1.8, 0.4), 'center', -0.02);
+label('南美洲', 1760, 580, notePx, '#4a4c47', prog(T, 2.35, 0.4), 'center', -0.01);
+label('东', 1760, 638, westPx, ink, prog(T, 2.5, 0.4), 'center', 0.02);
+label('太 平 洋', 920, 760, oceanPx, blue, prog(T, 3.3, 0.5), 'center', -0.018);
 
 // 海面用淡蓝手绘排线，不用整块色域平涂：每一笔都进 ink 回执。
+// 排线是纹理，不是叙事笔画：短揭示，不跟笔。
 for (let i = 0; i < 5; i += 1) {
   const y = 585 + i * 44;
-  stroke([[270 + i * 16, y], [560 + i * 10, y - 7], [980, y + 4], [1390 - i * 12, y - 5], [1620 - i * 18, y]], 2.4 + i * 0.1, 0.5, '#7ba0aa', thin, [16, 14]);
+  stroke([[270 + i * 16, y], [560 + i * 10, y - 7], [980, y + 4], [1390 - i * 12, y - 5], [1620 - i * 18, y]], 3.4 + i * 0.03, 0.12, '#7ba0aa', thin, [16, 14]);
 }
 
-TT.mark.circle(ctx, { at: [430, 305], rx: 58, ry: 58, color: '#bd8b58', width: bold, progress: prog(t, 2.6, 0.8) });
+TT.mark.circle(ctx, { at: [430, 305], rx: 58, ry: 58, color: '#bd8b58', width: bold, progress: prog(T, 3.4, 0.5), penBody: true, sceneScale: fit * scale });
 for (let i = 0; i < 9; i += 1) {
   const a = TAU * i / 9;
-  stroke([[430 + Math.cos(a) * 82, 305 + Math.sin(a) * 82], [430 + Math.cos(a) * 109, 305 + Math.sin(a) * 109]], 2.9 + i * 0.03, 0.3, '#bd8b58', mid);
+  stroke([[430 + Math.cos(a) * 82, 305 + Math.sin(a) * 82], [430 + Math.cos(a) * 109, 305 + Math.sin(a) * 109]], 3.7 + i * 0.02, 0.1, '#bd8b58', mid);
 }
 
 const cloud = [
@@ -143,21 +157,16 @@ const cloud = [
   ...cubic([1230, 290], [1285, 250], [1340, 300], [1305, 342]).slice(1),
   ...cubic([1305, 342], [1230, 358], [1120, 354], [1045, 350]).slice(1),
 ];
-stroke(cloud, 3.0, 0.8, blue, bold);
+stroke(cloud, 3.95, 0.25, blue, bold);
 for (let i = 0; i < 7; i += 1) {
   const x = 1080 + i * 36;
-  stroke([[x, 378], [x - 8, 420]], 3.3 + i * 0.04, 0.5, '#5c8094', mid, [10, 8]);
+  stroke([[x, 378], [x - 8, 420]], 4.2 + i * 0.02, 0.12, '#5c8094', mid, [10, 8]);
 }
 
-TT.mark.arrow(ctx, { via: [[1450, 435], [1260, 426], [1030, 432], [800, 424]], color: blue, width: mid, dash: [15, 12], progress: prog(t, 3.5, 0.9) });
-
-label('亚洲', 118, 540, notePx, '#4a4c47', prog(t, 1.9, 0.6), 'center', 0.01);
-label('西', 120, 600, westPx, ink, prog(t, 2.1, 0.6), 'center', -0.02);
-label('南美洲', 1760, 580, notePx, '#4a4c47', prog(t, 2.2, 0.6), 'center', -0.01);
-label('东', 1760, 638, westPx, ink, prog(t, 2.3, 0.6), 'center', 0.02);
-label('太 平 洋', 920, 760, oceanPx, blue, prog(t, 2.5, 0.8), 'center', -0.018);
+TT.mark.arrow(ctx, { via: [[1450, 435], [1260, 426], [1030, 432], [800, 424]], color: blue, width: mid, progress: prog(T, 4.35, 0.75), penBody: true, sceneScale: fit * scale });
 
 // 笔与笔迹在同一变换内：sceneScale 让 TT.pen 保留 fit × zoom 这层场景倍率。
-TT.pen.track(ctx, strokes, t, { sceneScale: fit * scale });
+TT.pen.track(ctx, strokes, T, { sceneScale: fit * scale, penBody: false });
+TT.pen.track(ctx, heroStrokes, T, { sceneScale: fit * scale });
 ctx.restore();
 ctx.restore();

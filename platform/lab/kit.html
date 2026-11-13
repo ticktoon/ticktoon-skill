@@ -1,0 +1,772 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kit Lab · ticktoon</title>
+<style>
+  :root {
+    color-scheme: dark;
+    --bg:#0d1117; --panel:#161b22; --panel-2:#1b222b; --line:#30363d;
+    --text:#e6edf3; --muted:#8b949e; --blue:#58a6ff; --red:#ff7b72;
+  }
+  * { box-sizing:border-box; margin:0; }
+  body { height:100vh; overflow:hidden; background:var(--bg); color:var(--text); font:14px/1.55 -apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif; }
+  button,input,select,textarea { font:inherit; }
+  button,a { cursor:pointer; }
+  .hidden { display:none !important; }
+
+  .page-header { flex:none; display:flex; align-items:flex-end; justify-content:space-between; gap:20px; padding:18px 24px 14px; }
+  h1 { font-size:24px; font-weight:650; letter-spacing:.2px; }
+  .title-row { display:flex; align-items:baseline; gap:14px; flex-wrap:wrap; }
+  .subtitle { color:var(--muted); font-size:13px; }
+  .header-actions { display:flex; gap:10px; }
+  .btn { display:inline-flex; align-items:center; justify-content:center; border:1px solid var(--line); border-radius:7px; background:#21262d; color:var(--text); padding:7px 14px; text-decoration:none; }
+  .btn:hover { border-color:var(--blue); filter:brightness(1.08); }
+  .btn.primary { background:#1f6feb; border-color:#1f6feb; color:#fff; }
+  .btn:disabled { opacity:.5; cursor:default; }
+
+  .lab { height:calc(100% - 74px); min-height:0; display:grid; grid-template-columns:minmax(0,1fr) 470px; }
+  .preview-pane { min-width:0; min-height:0; display:flex; flex-direction:column; gap:10px; padding:14px 18px 18px; }
+  .preview-note { color:var(--muted); font-size:12px; }
+  .stage { flex:1; min-height:0; display:flex; align-items:center; justify-content:center; overflow:hidden; }
+  .stage-frame { width:100%; height:100%; max-width:100%; max-height:100%; border:1px solid #222932; border-radius:8px; overflow:hidden; background:#05070a; }
+  .stage-frame.portrait { width:auto; aspect-ratio:9/16; }
+  .stage-frame.landscape { aspect-ratio:16/9; }
+  #panel { display:block; width:100%; height:100%; border:0; background:#000; }
+  .status { min-height:34px; color:var(--muted); font:12px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace; white-space:pre-wrap; }
+  .status.error { color:var(--red); }
+  .status.ok { color:#7ee787; }
+
+  .editor { min-height:0; display:flex; flex-direction:column; gap:14px; padding:16px; background:var(--panel); border-left:1px solid var(--line); overflow:auto; }
+  .section { display:flex; flex-direction:column; gap:9px; }
+  .section-title { font-weight:600; }
+  .field-row { display:grid; grid-template-columns:1fr 1fr; gap:9px; }
+  .field { min-width:0; display:flex; flex-direction:column; gap:4px; color:var(--muted); font-size:12px; }
+  .field input,.field select,.field textarea { width:100%; min-width:0; }
+  input[type=number], input[type=text], textarea, select {
+    background:var(--bg); color:var(--text); border:1px solid var(--line); border-radius:6px; padding:7px 9px;
+  }
+  input[type=color] { height:34px; padding:3px; background:var(--bg); border:1px solid var(--line); border-radius:6px; }
+  textarea { resize:vertical; }
+  .hint { color:var(--muted); font-size:11px; line-height:1.55; }
+  .hint code { color:#9fb0c7; }
+  .tabs { display:grid; grid-template-columns:repeat(3, 1fr); gap:6px; }
+  .tab { border:1px solid var(--line); border-radius:7px; background:var(--panel-2); color:#9fb0c7; padding:8px 6px; font-size:12px; }
+  .tab:hover { border-color:var(--blue); color:var(--text); }
+  .tab.active { border-color:var(--blue); background:#1b2b44; color:#cfe3ff; font-weight:600; }
+  .mode-panel { display:flex; flex-direction:column; gap:10px; padding:12px; border:1px solid var(--line); border-radius:9px; background:var(--bg); }
+  .mode-title { font-weight:600; }
+  .mode-hint { color:var(--muted); font-size:11px; line-height:1.55; }
+  .generated { color:var(--muted); font-size:12px; }
+  .generated summary { cursor:pointer; user-select:none; }
+  #codePreview { margin-top:8px; max-height:230px; overflow:auto; padding:10px; border:1px solid var(--line); border-radius:7px; background:#0b0f14; color:#c7d3df; font:11px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace; white-space:pre; }
+  .editor-actions { display:flex; gap:9px; }
+
+  @media (max-width:1080px) {
+    body { height:auto; overflow:auto; }
+    .lab { height:auto; display:block; }
+    .preview-pane { min-height:520px; }
+    .editor { border-left:0; border-top:1px solid var(--line); }
+  }
+  @media (max-width:620px) {
+    .page-header { padding:14px 16px; align-items:flex-start; }
+    .preview-pane { min-height:340px; padding:10px; }
+    .field-row { grid-template-columns:1fr; }
+    .tabs { grid-template-columns:repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+<header class="page-header">
+  <div>
+    <div class="title-row"><h1>Kit Lab</h1><span class="subtitle">按 kit 分类单独调试</span></div>
+    <div class="subtitle">一次只跑一种 kit · 固定 FONTS / RULES / 画布 · 切换选项自动预览</div>
+  </div>
+  <div class="header-actions"><a class="btn" href="/">← 镜头参考</a></div>
+</header>
+
+<main class="lab">
+  <section class="preview-pane">
+    <div class="preview-note">真实引擎渲染 · 固定 30fps · 当前预览只包含所选 kit，不叠加其他示例</div>
+    <div class="stage"><div id="stageFrame" class="stage-frame landscape"><iframe id="panel" title="Ticktoon 真实预览"></iframe></div></div>
+    <div id="status" class="status">正在准备真实引擎…</div>
+  </section>
+
+  <aside class="editor">
+    <section class="section">
+      <div class="section-title">预览设置</div>
+      <div class="field-row">
+        <label class="field">画幅
+          <select id="orientationSelect">
+            <option value="landscape">横屏 16:9</option>
+            <option value="portrait">竖屏 9:16</option>
+          </select>
+        </label>
+        <label class="field">时长（秒）<input id="durationInput" type="number" min="0.1" max="600" step="0.01" value="4"></label>
+      </div>
+      <div class="hint" id="durationHint">无旁白时使用这里的时长。</div>
+    </section>
+
+    <div class="tabs" role="tablist">
+      <button class="tab active" data-mode="captions">字幕</button>
+      <button class="tab" data-mode="pen">笔</button>
+      <button class="tab" data-mode="mark">标注</button>
+      <button class="tab" data-mode="board">板面</button>
+      <button class="tab" data-mode="chart">图表</button>
+      <button class="tab" data-mode="flash">闪切</button>
+      <button class="tab" data-mode="transition">转场</button>
+    </div>
+
+    <section class="mode-panel" data-panel="captions">
+      <div class="mode-title">字幕类型</div>
+      <div class="field-row">
+        <label class="field">样式<select id="captionStyleSelect"></select></label>
+        <label class="field">字体<select id="captionFontSelect"></select></label>
+      </div>
+      <label class="field">旁白<textarea id="narrationInput" rows="2">字幕跟着声音，逐字亮起来。</textarea></label>
+      <label class="field">语音时长（秒）<input id="speechInput" type="number" min="0" max="120" step="0.01" value="1.6"></label>
+      <label class="field">附加参数（JSON）<textarea id="captionParamsInput" rows="3">{}</textarea></label>
+      <div class="mode-hint">只跑字幕 kit；底色是裸 canvas 色块。样式 <code>none</code> = 关闭字幕。字体选“跟随样式”时，<code>tornpaper</code> 默认江城圆体，其余默认钉钉进步体。</div>
+    </section>
+
+    <section class="mode-panel hidden" data-panel="pen">
+      <div class="mode-title">笔类型</div>
+      <label class="field">笔<select id="penTypeSelect"></select></label>
+      <div class="field-row">
+        <label class="field">颜色<input id="penColorInput" type="color" value="#2b2a25"></label>
+        <label class="field">线宽<input id="penWidthInput" type="number" min="1" max="40" step="1" value="8"></label>
+      </div>
+      <div class="mode-hint">只跑 <code>TT.pen.track</code>；三条测试线分别看起笔、转弯和收笔。底色是裸 canvas 纸色。</div>
+    </section>
+
+    <section class="mode-panel hidden" data-panel="mark">
+      <div class="mode-title">标注类型</div>
+      <label class="field">标注<select id="markTypeSelect"></select></label>
+      <div class="field-row">
+        <label class="field">颜色<input id="markColorInput" type="color" value="#c66b57"></label>
+        <label class="field">粗细<input id="markWidthInput" type="number" min="1" max="30" step="0.5" value="6"></label>
+      </div>
+      <div class="mode-hint">只跑 <code>TT.mark</code>；示例用 <code>api.t</code> 在 0.05–0.5s 驱动 <code>progress</code>；手绘强度由各词条固定。除荧光笔外都可调 <code>width</code>，删除线的 from/to 请对准文字中线。</div>
+    </section>
+
+    <section class="mode-panel hidden" data-panel="board">
+      <div class="mode-title">背景板</div>
+      <label class="field">板面<select id="boardTypeSelect"></select></label>
+      <div class="mode-hint">只跑 <code>TT.board</code>；不叠文字、不叠笔迹。</div>
+    </section>
+
+    <section class="mode-panel hidden" data-panel="chart">
+      <div class="mode-title">图表几何</div>
+      <div class="mode-hint">只跑 <code>TT.chart.bars / niceMax / ticks</code>；条形与刻度用裸 canvas 画，标签用 <code>TT.text</code>。</div>
+    </section>
+
+    <section class="mode-panel hidden" data-panel="flash">
+      <div class="mode-title">闪切效果</div>
+      <label class="field">效果<select id="flashTypeSelect"></select></label>
+      <div class="mode-hint">只跑 <code>TT.flash</code>；底色是裸 canvas 深色。</div>
+    </section>
+
+    <section class="mode-panel hidden" data-panel="transition">
+      <div class="mode-title">两场转场</div>
+      <label class="field">转场预设<select id="transitionPresetSelect"></select></label>
+      <div class="mode-hint">只选固定时长的双帧预设。编译器生成独立转场场，同时绘制前后两张完整画面；方向擦入 / 推移不经过黑色间隙，另含柔和方格和波形形变。单场时长使用上方设置。</div>
+    </section>
+
+    <div class="editor-actions">
+      <button id="runBtn" class="btn primary">重新运行</button>
+    </div>
+
+    <details class="generated">
+      <summary>查看生成的 scene.code</summary>
+      <pre id="codePreview"></pre>
+    </details>
+  </aside>
+</main>
+
+<script>
+const $ = (selector) => document.querySelector(selector);
+const panel = $('#panel');
+const statusEl = $('#status');
+const clamp = (value, lo, hi) => Math.min(hi, Math.max(lo, value));
+const fmt = (seconds) => Number(seconds || 0).toFixed(2);
+const quote = (value) => JSON.stringify(value);
+
+const PEN_TYPES = [
+  { id: 'marker', label: 'marker · 马克笔' },
+  { id: 'pencil', label: 'pencil · 铅笔' },
+  { id: 'brush', label: 'brush · 毛笔' },
+  { id: 'inkbrush', label: 'inkbrush · 水墨笔' },
+  { id: 'chalk', label: 'chalk · 粉笔' },
+  { id: 'fineliner', label: 'fineliner · 细线笔' },
+];
+const MARK_TYPES = [
+  { id: 'highlight', label: 'highlight · 荧光笔' },
+  { id: 'circle', label: 'circle · 圈注' },
+  { id: 'box', label: 'box · 方框' },
+  { id: 'arrow', label: 'arrow · 箭头' },
+  { id: 'underline', label: 'underline · 下划线' },
+  { id: 'strike', label: 'strike · 删除线' },
+  { id: 'check', label: 'check · 对勾' },
+  { id: 'cross', label: 'cross · 叉' },
+  { id: 'numberCircle', label: 'numberCircle · 数字圈' },
+  { id: 'divider', label: 'divider · 分割线' },
+];
+const BOARD_TYPES = [
+  { id: 'paper', label: 'paper · 白纸' },
+  { id: 'blackboard', label: 'blackboard · 黑板' },
+  { id: 'cream', label: 'cream · 米色纸' },
+  { id: 'wash', label: 'wash · 水彩' },
+  { id: 'crayon', label: 'crayon · 蜡笔' },
+  { id: 'stage', label: 'stage · 舞台' },
+  { id: 'stageFrame', label: 'stageFrame · 舞台框' },
+  { id: 'news', label: 'news · 新闻' },
+];
+const CAPTION_FONT_LABELS = {
+  'sans-900': '钉钉进步体',
+  'sans-700': '文渊黑体 Bold',
+  'sans-400': '文渊黑体',
+  'WenYuanSerifSC-Bold': '文源宋体',
+  'JiangChengYuanTi': '江城圆体',
+  'ZTZiYouTi': '卓特自由体',
+  'ZTYueDongHei': '卓特悦动黑',
+  'MaokenAssortedSans': '猫啃什锦黑',
+  'DouYinMeiHaoTi': '抖音美好体',
+  'QianTuBiFengShouXie': '千图笔锋',
+  'TsangerYuMo': '仓耳与墨',
+  'TsangerShuYuan': '仓耳舒圆',
+  'StarLovePencil': '宅在家自动笔',
+};
+const FLASH_TYPES = [
+  { id: 'stagger', label: 'stagger · 逐字弹入' },
+  { id: 'glitchType', label: 'glitchType · 故障字' },
+  { id: 'bands', label: 'bands · 色带滚动' },
+  { id: 'viewfinder', label: 'viewfinder · 取景框' },
+];
+const TRANSITION_PRESETS = [
+  { id: 'dip-fade', label: 'dip-fade · 交叉融合' },
+  { id: 'wipe-left', label: 'wipe-left · 向左擦入' },
+  { id: 'wipe-up', label: 'wipe-up · 向上擦入' },
+  { id: 'push-left', label: 'push-left · 向左推移' },
+  { id: 'push-up', label: 'push-up · 向上推移' },
+  { id: 'zoom-pop', label: 'zoom-pop · 缩放推进' },
+  { id: 'glitch', label: 'glitch · 故障切换' },
+  { id: 'iris', label: 'iris · 圆形揭示' },
+  { id: 'page-turn', label: 'page-turn · 纸张翻页' },
+  { id: 'squares-wire', label: 'squares-wire · 方格填满' },
+  { id: 'morph', label: 'morph · 波形形变' },
+];
+
+const state = {
+  mode: 'captions',
+  captionStyles: [],
+  booted: false,
+  panelReady: false,
+  pendingComposition: null,
+  playAfterLoad: false,
+  autoRun: true,
+  warnings: [],
+  token: 0,
+  runTimer: null,
+};
+
+function setStatus(text, kind = '') {
+  statusEl.textContent = text;
+  statusEl.className = `status${kind ? ` ${kind}` : ''}`;
+}
+
+async function getJson(url, options) {
+  const response = await fetch(url, options);
+  let data = null;
+  try { data = await response.json(); } catch { /* 非 JSON 错误由下面统一报 */ }
+  if (!response.ok) {
+    const message = data?.error || data?.errors?.map((item) => item.msg).join('\n') || `HTTP ${response.status}`;
+    throw new Error(message);
+  }
+  return data;
+}
+
+function fillSelect(select, entries, value) {
+  select.innerHTML = '';
+  for (const entry of entries) {
+    const option = document.createElement('option');
+    option.value = entry.id;
+    option.textContent = entry.label;
+    select.appendChild(option);
+  }
+  if (value) select.value = value;
+}
+
+function syncStage(orientation) {
+  const frame = $('#stageFrame');
+  frame.classList.toggle('portrait', orientation === 'portrait');
+  frame.classList.toggle('landscape', orientation !== 'portrait');
+}
+
+function updateDurationHint() {
+  const captionMode = state.mode === 'captions';
+  const narration = $('#narrationInput').value.trim();
+  const speech = Number($('#speechInput').value);
+  if (state.mode === 'transition') {
+    const duration = clamp(Number($('#durationInput').value) || 3, 0.1, 600);
+    $('#durationHint').textContent = `转场：总时长 ${fmt(duration)}s，每场 ${fmt(duration / 2)}s；A' + T + B' 双帧合成，插入转场不增加片长。`;
+  } else if (!captionMode) {
+    $('#durationHint').textContent = `当前用上面的时长：${fmt(Number($('#durationInput').value) || 0)}s。`;
+  } else if (!narration) {
+    $('#durationHint').textContent = '字幕：旁白留空，不生成 cue；时长用上面的值。';
+  } else if (Number.isFinite(speech) && speech > 0) {
+    $('#durationHint').textContent = `字幕：实际时长 = ${fmt(speech)}s + 0.83s（leadIn 0.28 + hold 0.55），上面的时长不生效。`;
+  } else {
+    $('#durationHint').textContent = '字幕：语音时长留空时按字数估算；上面的时长不生效。';
+  }
+}
+
+function captionCode() {
+  return [
+    "ctx.fillStyle = '#20252e';",
+    'ctx.fillRect(0, 0, W, H);',
+  ].join('\n');
+}
+
+function penCode() {
+  const pen = $('#penTypeSelect').value || 'marker';
+  const color = $('#penColorInput').value || '#2b2a25';
+  const width = clamp(Number($('#penWidthInput').value) || 8, 1, 40);
+  return [
+    "ctx.fillStyle = '#F4F0E5';",
+    'ctx.fillRect(0, 0, W, H);',
+    `const pen = ${quote(pen)};`,
+    `const color = ${quote(color)};`,
+    `const width = ${width};`,
+    'const wave = Array.from({ length: 48 }, (_, i) => [',
+    '  W * 0.16 + W * 0.68 * (i / 47),',
+    '  H * 0.34 + Math.sin(i / 5.5) * H * 0.045,',
+    ']);',
+    'const loop = Array.from({ length: 64 }, (_, i) => {',
+    '  const a = -Math.PI / 2 + (i / 63) * Math.PI * 2;',
+    '  return [W * 0.5 + Math.cos(a) * W * 0.13, H * 0.62 + Math.sin(a) * H * 0.16];',
+    '});',
+    'const ticks = Array.from({ length: 33 }, (_, i) => [',
+    '  W * 0.16 + W * 0.68 * (i / 32),',
+    '  H * 0.82 + (i % 2 ? -12 : 12),',
+    ']);',
+    'TT.pen.track(ctx, [',
+    '  { pts: wave, at: 0.10, dur: 0.65, pen, color, width },',
+    '  { pts: loop, at: 0.85, dur: 0.60, pen, color, width },',
+    '  { pts: ticks, at: 1.55, dur: 0.35, pen, color, width },',
+    '], api.t);',
+  ].join('\n');
+}
+
+function markCode() {
+  const type = $('#markTypeSelect').value || 'circle';
+  const color = $('#markColorInput').value || '#c66b57';
+  const width = $('#markWidthInput').value || '6';
+  const specs = {
+    highlight: '{ rect: [cx - 68, cy - 35, 136, 70], color, alpha: 0.42, progress }',
+    circle: '{ at: [cx, cy], rx: 155, ry: 90, color, width, progress }',
+    box: '{ rect: [cx - 150, cy - 70, 300, 140], color, shape: "round", radius: 14, width, progress }',
+    arrow: '{ from: [cx + 230, cy - 150], to: [cx + 120, cy - 8], bend: 0.18, color, width, head: "solid", progress }',
+    underline: '{ from: [cx - 92, cy + 46], to: [cx + 92, cy + 46], color, width, progress }',
+    strike: '{ from: [cx - 96, cy + 2], to: [cx + 96, cy + 2], color, width, progress }',
+    check: '{ at: [cx + 210, cy], size: 150, color, width, progress }',
+    cross: '{ at: [cx + 210, cy], size: 130, color, width, progress }',
+    numberCircle: '{ at: [cx + 210, cy - 70], r: 46, text: "3", color, width, progress }',
+    divider: '{ at: [cx, cy], length: 460, orient: "h", color, width, progress }',
+  };
+  const text = 'TT.text(ctx, "重点", cx, cy, 64, { fontKey: "sans-900", color: "#26231F", align: "center", baseline: "middle" });';
+  const mark = `TT.mark.${type}(ctx, ${specs[type] || specs.circle});`;
+  // 会和文字并排的标注：先写字，再把标注压上去。
+  const withText = new Set(['circle', 'box', 'arrow', 'underline', 'strike', 'check', 'cross']);
+  const lines = [
+    "ctx.fillStyle = '#F7F4EC';",
+    'ctx.fillRect(0, 0, W, H);',
+    'const cx = W * 0.5;',
+    'const cy = H * 0.5;',
+    `const color = ${quote(color)};`,
+    `const width = ${width};`,
+    'const progress = TT.clamp01((api.t - 0.05) / 0.45);',
+  ];
+  if (type === 'highlight') {
+    // 底色必须先于文字。
+    lines.push(mark, text);
+  } else if (withText.has(type)) {
+    lines.push(text, mark);
+  } else {
+    // numberCircle 自带文字；divider 是独立分隔线。
+    lines.push(mark);
+  }
+  return lines.join('\n');
+}
+
+function boardCode() {
+  const kind = $('#boardTypeSelect').value || 'paper';
+  return `TT.board.${kind}(ctx, api);`;
+}
+
+function chartCode() {
+  return [
+    "ctx.fillStyle = '#F7F4EC';",
+    'ctx.fillRect(0, 0, W, H);',
+    'const rows = [',
+    '  { label: "A", value: 42 },',
+    '  { label: "B", value: 173 },',
+    '  { label: "C", value: 96 },',
+    '  { label: "D", value: 58 },',
+    '];',
+    'const rect = { x: W * 0.14, y: H * 0.22, w: W * 0.72, h: H * 0.56 };',
+    'const geo = TT.chart.bars(rect, rows, { labelW: 0.14 });',
+    'const max = TT.chart.niceMax(Math.max(...rows.map((row) => row.value)));',
+    'const k = TT.ease.outCubic(TT.clamp01(api.t / 1.2));',
+    'ctx.strokeStyle = "rgba(43,42,37,0.22)";',
+    'ctx.lineWidth = 1;',
+    'for (const tick of TT.chart.ticks(max, 4)) {',
+    '  const x = geo[0].barX + geo[0].full * (tick / max);',
+    '  ctx.beginPath();',
+    '  ctx.moveTo(x, rect.y);',
+    '  ctx.lineTo(x, rect.y + rect.h);',
+    '  ctx.stroke();',
+    '}',
+    'for (const bar of geo) {',
+    '  const w = bar.full * (bar.row.value / max) * k;',
+    '  ctx.fillStyle = "#C66B57";',
+    '  ctx.fillRect(bar.barX, bar.y, Math.max(1, w), bar.h);',
+    '  TT.text(ctx, bar.row.label, bar.labelX, bar.y + bar.h * 0.5 + 10, 26, { fontKey: "sans-400", color: "#2B2A25" });',
+    '  TT.text(ctx, String(bar.row.value), bar.barX + w + 14, bar.y + bar.h * 0.5 + 10, 24, { fontKey: "sans-400", color: "#6B6458" });',
+    '}',
+  ].join('\n');
+}
+
+function flashCode() {
+  const type = $('#flashTypeSelect').value || 'stagger';
+  const head = ["ctx.fillStyle = '#0B0C0F';", 'ctx.fillRect(0, 0, W, H);'];
+  const body = {
+    stagger: [
+      'TT.flash.stagger(ctx, api, {',
+      '  text: "万物皆动", x: W * 0.5, y: H * 0.5, size: 220, t: api.t, dur: 0.32,',
+      '  align: "center", baseline: "middle",',
+      '});',
+    ],
+    glitchType: [
+      'TT.flash.glitchType(ctx, api, {',
+      '  text: "故障字", x: W * 0.5, y: H * 0.5, size: 220, t: api.t,',
+      '  align: "center", baseline: "middle",',
+      '});',
+    ],
+    bands: [
+      'TT.flash.bands(ctx, {',
+      '  rect: { x: 0, y: H * 0.34, w: W, h: H * 0.32 },',
+      '  text: "FLASH · KIT · ", t: api.t, size: 58,',
+      '});',
+    ],
+    viewfinder: [
+      'TT.flash.viewfinder(ctx, {',
+      '  rect: { x: W * 0.18, y: H * 0.2, w: W * 0.64, h: H * 0.6 },',
+      '  color: "#E8E8E8", crosshair: true,',
+      '});',
+    ],
+  }[type] || ['TT.flash.stagger(ctx, api, { text: "万物皆动", x: W * 0.5, y: H * 0.5, size: 220, t: api.t });'];
+  return [...head, ...body].join('\n');
+}
+
+function transitionSceneCode(which) {
+  const second = which === 'B';
+  const paper = second ? '#173A3D' : '#F3E7CE';
+  const ink = second ? '#F4EBD8' : '#30271F';
+  const accent = second ? '#E7B65A' : '#C65E4B';
+  return [
+    `ctx.fillStyle = ${quote(paper)};`,
+    'ctx.fillRect(0, 0, W, H);',
+    `ctx.strokeStyle = ${quote(accent)};`,
+    'ctx.lineWidth = Math.max(3, Math.min(W, H) * 0.008);',
+    'ctx.lineCap = "round";',
+    'ctx.beginPath();',
+    second
+      ? 'ctx.arc(W * 0.5, H * 0.40, Math.min(W, H) * 0.19, 0, Math.PI * 2);'
+      : 'ctx.rect(W * 0.31, H * 0.21, W * 0.38, H * 0.38);',
+    'ctx.stroke();',
+    'ctx.beginPath();',
+    second
+      ? 'ctx.moveTo(W * 0.32, H * 0.40); ctx.lineTo(W * 0.68, H * 0.40);'
+      : 'ctx.moveTo(W * 0.31, H * 0.40); ctx.lineTo(W * 0.69, H * 0.40);',
+    'ctx.stroke();',
+    `TT.text(ctx, ${quote(second ? 'B · 后场' : 'A · 前场')}, W * 0.5, H * 0.72, 96 * RULES.scale.title, { fontKey: "sans-900", color: ${quote(ink)}, align: "center", baseline: "middle" });`,
+    `TT.text(ctx, ${quote(second ? '完整画面 B' : '完整画面 A')}, W * 0.5, H * 0.81, 36 * RULES.scale.note, { fontKey: "sans-400", color: ${quote(accent)}, align: "center", baseline: "middle" });`,
+  ].join('\n');
+}
+
+function buildPayload() {
+  const orientation = $('#orientationSelect').value;
+  if (state.mode === 'captions') {
+    const style = $('#captionStyleSelect').value || 'perchar';
+    let params = {};
+    const raw = $('#captionParamsInput').value.trim();
+    if (raw) {
+      try {
+        params = JSON.parse(raw);
+      } catch (error) {
+        throw new Error(`字幕附加参数不是合法 JSON：${error.message}`);
+      }
+    }
+    if (!params || typeof params !== 'object' || Array.isArray(params)) {
+      throw new Error('字幕附加参数必须是 JSON 对象');
+    }
+    const narration = $('#narrationInput').value;
+    const speechRaw = $('#speechInput').value.trim();
+    const speech = narration.trim() && speechRaw !== '' ? Number(speechRaw) : null;
+    if (speech !== null && !(Number.isFinite(speech) && speech > 0 && speech <= 120)) {
+      throw new Error('语音时长必须是 0–120 秒');
+    }
+    const captions = { ...params, style };
+    const font = $('#captionFontSelect').value;
+    if (font) captions.font = font;
+    return {
+      code: captionCode(),
+      narration,
+      speech,
+      captions,
+      duration: clamp(Number($('#durationInput').value) || 4, 0.1, 600),
+      orientation,
+    };
+  }
+  if (state.mode === 'transition') {
+    return {
+      code: transitionSceneCode('A'),
+      nextCode: transitionSceneCode('B'),
+      transition: $('#transitionPresetSelect').value || 'dip-fade',
+      narration: '',
+      speech: null,
+      captions: null,
+      duration: clamp(Number($('#durationInput').value) || 3, 0.1, 600) / 2,
+      orientation,
+    };
+  }
+  const code = {
+    pen: penCode,
+    mark: markCode,
+    board: boardCode,
+    chart: chartCode,
+    flash: flashCode,
+  }[state.mode]();
+  return {
+    code,
+    narration: '',
+    speech: null,
+    captions: null,
+    duration: clamp(Number($('#durationInput').value) || 4, 0.1, 600),
+    orientation,
+  };
+}
+
+function modeSummary() {
+  if (state.mode === 'pen') {
+    const type = $('#penTypeSelect').value;
+    return `笔 / ${type} / 宽 ${Number($('#penWidthInput').value) || 8}`;
+  }
+  if (state.mode === 'mark') return `标注 / ${$('#markTypeSelect').value}`;
+  if (state.mode === 'board') return `板面 / ${$('#boardTypeSelect').value}`;
+  if (state.mode === 'chart') return '图表 / bars';
+  if (state.mode === 'flash') return `闪切 / ${$('#flashTypeSelect').value}`;
+  if (state.mode === 'transition') return `转场 / ${$('#transitionPresetSelect').value}`;
+  const font = $('#captionFontSelect').value;
+  return '字幕 / ' + ($('#captionStyleSelect').value || 'perchar') + (font ? ` / ${font}` : '');
+}
+
+function updateCodePreview(payload, error) {
+  const pre = $('#codePreview');
+  const transitionSource = payload && [
+    `/* scene[0].transition = ${JSON.stringify(payload.transition)} */`,
+    payload.code,
+    '/* 编译器在 scene[0] 与 scene[1] 之间生成双帧转场场 */',
+    payload.nextCode,
+  ].join('\n\n');
+  pre.textContent = error
+    ? `/* 当前参数无法生成代码 */\n// ${error}`
+    : state.mode === 'transition' ? transitionSource : payload.code;
+}
+
+function selectMode(mode) {
+  if (mode !== state.mode) {
+    $('#durationInput').value = mode === 'transition' ? 3 : 4;
+  }
+  state.mode = mode;
+  for (const tab of document.querySelectorAll('.tab')) {
+    tab.classList.toggle('active', tab.dataset.mode === mode);
+  }
+  for (const node of document.querySelectorAll('.mode-panel')) {
+    node.classList.toggle('hidden', node.dataset.panel !== mode);
+  }
+  updateDurationHint();
+  scheduleRun(0);
+}
+
+function postToPanel(type, payload = {}) {
+  panel.contentWindow?.postMessage({ __source: 'ticktoon-preview-page', type, ...payload }, '*');
+}
+
+function loadComposition() {
+  if (!state.pendingComposition) return;
+  setStatus('引擎装载中…');
+  postToPanel('load', { composition: state.pendingComposition, controls: true });
+  state.pendingComposition = null;
+}
+
+async function run() {
+  const token = ++state.token;
+  let payload;
+  try {
+    payload = buildPayload();
+  } catch (error) {
+    updateCodePreview(null, error.message);
+    setStatus(error.message, 'error');
+    return;
+  }
+  updateCodePreview(payload, null);
+  updateDurationHint();
+  syncStage(payload.orientation);
+  const previewDuration = state.mode === 'transition' ? payload.duration * 2 : payload.duration;
+  const label = payload.narration.trim()
+    ? `${modeSummary()} / 旁白 ${fmt(payload.speech ?? 0)}s`
+    : `${modeSummary()} / ${fmt(previewDuration)}s`;
+  setStatus(`拼装中… ${label}`);
+  try {
+    const data = await getJson('/api/kit-build', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (token !== state.token) return;
+    if (!data.ok) {
+      const lines = (data.errors || []).map((item) => `[${item.code}] ${item.path ? item.path + ' — ' : ''}${item.msg}`);
+      setStatus(`拼装失败：\n${lines.join('\n') || '未知错误'}`, 'error');
+      return;
+    }
+    state.warnings = data.report?.warnings || [];
+    const warnings = state.warnings.length
+      ? `\n提示：${state.warnings.map((item) => `[${item.code}] ${item.msg}`).join('；')}`
+      : '';
+    setStatus(`已生成 · ${fmt(data.report?.duration)}s${warnings}`, warnings ? '' : 'ok');
+    state.pendingComposition = data.composition;
+    state.playAfterLoad = true;
+    if (state.panelReady) loadComposition();
+  } catch (error) {
+    if (token !== state.token) return;
+    setStatus(`拼装失败：${error.message}`, 'error');
+  }
+}
+
+function scheduleRun(delay = 160) {
+  clearTimeout(state.runTimer);
+  state.runTimer = setTimeout(run, delay);
+}
+
+function maybeAutoRun() {
+  if (!state.booted || !state.panelReady) return;
+  if (state.pendingComposition) {
+    loadComposition();
+    return;
+  }
+  if (state.autoRun) {
+    state.autoRun = false;
+    run();
+  }
+}
+
+async function boot() {
+  const data = await getJson('/api/kits');
+  state.captionStyles = data.captions || [];
+  fillSelect($('#captionStyleSelect'), state.captionStyles
+    .filter((style) => style !== 'none')
+    .map((style) => ({ id: style, label: style })), state.captionStyles.includes('perchar') ? 'perchar' : '');
+  const none = document.createElement('option');
+  none.value = 'none';
+  none.textContent = 'none · 关闭字幕';
+  $('#captionStyleSelect').appendChild(none);
+
+  const captionFonts = data.captionFonts || [];
+  fillSelect($('#captionFontSelect'), [
+    { id: '', label: '跟随样式' },
+    ...captionFonts.map((key) => ({
+      id: key,
+      label: `${CAPTION_FONT_LABELS[key] || key} · ${key}`,
+    })),
+  ], '');
+
+  fillSelect($('#penTypeSelect'), PEN_TYPES, 'marker');
+  fillSelect($('#markTypeSelect'), MARK_TYPES, 'circle');
+  fillSelect($('#boardTypeSelect'), BOARD_TYPES, 'paper');
+  fillSelect($('#flashTypeSelect'), FLASH_TYPES, 'stagger');
+  fillSelect($('#transitionPresetSelect'), TRANSITION_PRESETS, 'dip-fade');
+
+  updateDurationHint();
+  state.booted = true;
+  if (!panel.getAttribute('src')) panel.src = '/preview-panel.html';
+  maybeAutoRun();
+}
+
+window.addEventListener('message', (event) => {
+  if (!panel.contentWindow || event.source !== panel.contentWindow) return;
+  const data = event.data;
+  if (!data || !data.__source || data.__source !== 'ticktoon-preview-panel') return;
+
+  if (data.type === 'ready') {
+    state.panelReady = true;
+    maybeAutoRun();
+    return;
+  }
+  if (data.type === 'loading') {
+    setStatus('引擎装载中…');
+  } else if (data.type === 'loaded') {
+    const warnings = state.warnings.length
+      ? `\n提示：${state.warnings.map((item) => `[${item.code}] ${item.msg}`).join('；')}`
+      : '';
+    setStatus(`已就绪 · ${fmt(data.duration)}s${warnings}`, state.warnings.length ? '' : 'ok');
+    if (state.playAfterLoad) {
+      state.playAfterLoad = false;
+      postToPanel('play');
+    }
+  } else if (data.type === 'error') {
+    state.playAfterLoad = false;
+    setStatus(`引擎错误：${data.message}`, 'error');
+  }
+});
+
+for (const tab of document.querySelectorAll('.tab')) {
+  tab.addEventListener('click', () => selectMode(tab.dataset.mode));
+}
+$('#runBtn').onclick = run;
+$('#orientationSelect').onchange = () => {
+  syncStage($('#orientationSelect').value);
+  scheduleRun(0);
+};
+$('#durationInput').oninput = () => {
+  updateDurationHint();
+  scheduleRun();
+};
+$('#captionStyleSelect').onchange = scheduleRun;
+$('#captionFontSelect').onchange = scheduleRun;
+$('#narrationInput').oninput = () => {
+  updateDurationHint();
+  scheduleRun(250);
+};
+$('#speechInput').oninput = () => {
+  updateDurationHint();
+  scheduleRun(250);
+};
+$('#captionParamsInput').onchange = scheduleRun;
+$('#penTypeSelect').onchange = scheduleRun;
+$('#penColorInput').oninput = scheduleRun;
+$('#penWidthInput').oninput = scheduleRun;
+$('#markTypeSelect').onchange = scheduleRun;
+$('#markColorInput').oninput = scheduleRun;
+$('#markWidthInput').oninput = scheduleRun;
+$('#boardTypeSelect').onchange = scheduleRun;
+$('#flashTypeSelect').onchange = scheduleRun;
+$('#transitionPresetSelect').onchange = scheduleRun;
+
+boot().catch((error) => {
+  setStatus(`启动失败：${error.message}`, 'error');
+});
+</script>
+</body>
+</html>
