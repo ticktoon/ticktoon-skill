@@ -191,7 +191,10 @@ export function planStoryboard({ storyboard, resolved, format, bag, captionPx = 
     const speech = resolved.scenes[si]?.speech ?? null;
     let duration;
     if (speech != null) {
-      duration = round3(pacing.leadIn + speech + pacing.hold);
+      duration = round3(Math.max(
+        pacing.leadIn + speech + pacing.hold,
+        pacing.minNarrationDuration || 0,
+      ));
     } else {
       duration = round3(scene.duration);
     }

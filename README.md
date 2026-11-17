@@ -150,7 +150,7 @@ At 60–120Hz the old path's fixed waits alone were 4.2–4.7s—comparable to t
 
 ## Live preview and annotations: from review to revision
 
-`tt preview --dir my-video` opens a local read-only preview. The picture is played by the same engine `compositor.tick(t)` used by export—there is no second renderer and no visual editor. After editing the storyboard, run `tt build`; the page watches `composition.json`'s mtime and refreshes itself.
+`tt preview --dir my-video` opens a local read-only preview. The picture is played by the same engine `compositor.tick(t)` used by export—there is no second renderer and no visual editor. After editing the storyboard, run `tt build`; the page watches `composition.json`'s mtime and refreshes itself. When no changes are needed, click **完成预览** to record a receipt for the current storyboard and close the server.
 
 When something looks wrong, draw on the frame and leave a note in the bottom annotation dock:
 
@@ -171,11 +171,10 @@ Requirements: Node.js 18+ (22 LTS recommended), Chrome 120+, and a Chrome-compat
 ```bash
 git clone https://github.com/ticktoon/ticktoon-skill
 cd ticktoon-skill
-npm install
-node scripts/doctor.mjs
+node scripts/doctor.mjs --install
 ```
 
-`doctor` checks Node, the Ticktoon engine artifacts, npm dependencies, Chrome, WebGL2, and optional TTS/asset providers. If it reports missing `deps`, run `npm install` in the skill directory; the skill drives the locally installed Chrome (≥120) directly over CDP and does not download its own browser. On a headless server, set `DH_VIDEO_WEBGL=swiftshader`.
+`doctor --install` checks Node, the Ticktoon engine artifacts, npm dependencies, Chrome, WebGL2, and optional TTS/asset providers. It runs npm install only when `ws` or `msedge-tts` is missing, then continues the checks in the same command; existing dependencies leave npm untouched. The skill drives the locally installed Chrome (≥120) directly over CDP and does not download its own browser. On a headless server, set `DH_VIDEO_WEBGL=swiftshader`. When `chrome-headless-shell` is selected without an explicit WebGL setting, SwiftShader is enabled automatically to avoid WebCodecs texture-readback failures on some Windows systems.
 
 The default path needs no API keys: edge-tts plus bundled demo assets. Optional Volc TTS and Pexels upgrades are configured with `node scripts/auth.mjs set <KEY> <value>`; credentials are read from environment variables or `~/.dh-video/credentials.json` and never stored in a storyboard or project.
 
@@ -201,7 +200,7 @@ node platform/cli.mjs build --dir my-video --tts edge               # recompile 
 node scripts/render.mjs my-video/out/composition.json -o my-video/video.mp4
 ```
 
-`tt` refers to `node platform/cli.mjs` (or `npm run tt --`). `storyboard.json` is the only file you write. Everything under `out/` is a build product; do not hand-edit it. Run `build` again after changes and the preview refreshes automatically. Export MP4 only when it is explicitly wanted; a build without `--tts` has no narration track.
+`tt` refers to `node platform/cli.mjs` (or `npm run tt --`). `storyboard.json` is the only file you write. Everything under `out/` is a build product; do not hand-edit it. Run `build` again after changes and the preview refreshes automatically. Export MP4 only when it is explicitly wanted. Rendering requires a preview receipt for the current storyboard; edits invalidate it, while `--without-preview` is reserved for an explicit user request to skip preview. A build without `--tts` has no narration track.
 
 Useful commands:
 

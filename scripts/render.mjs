@@ -1,12 +1,14 @@
 /**
  * Ticktoon 渲染驱动
  *
- * 用法: node scripts/render.mjs <composition.json> [-o out.mp4] [--quantizer 20] [--bitrate 8000000] [--codec avc1...] [--keep-preview]
+ * 用法: node scripts/render.mjs <composition.json> [-o out.mp4] [--quantizer 20] [--bitrate 8000000] [--codec avc1...] [--keep-preview] [--without-preview]
  *
  * 本地静态服务 + headless Chrome 调用与预览相同的 compositor.tick 导出。
+ * 默认要求当前 storyboard 已完成 Preview Studio 预览；显式 --without-preview 才跳过。
  * 浏览器直接产出 moov 前置的普通 MP4，字节分片回传 Node，无 FFmpeg 后处理。
  */
 import { createWriteStream, readFileSync, statSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -24,7 +26,7 @@ const ASSETS_DIR = path.join(SKILL_ROOT, 'assets');
 
 const args = process.argv.slice(2);
 if (args.length === 0 || args.includes('--help')) {
-  console.log('用法: node scripts/render.mjs <composition.json> [-o out.mp4] [--quantizer 20] [--bitrate 8000000] [--codec avc1...] [--keep-preview]');
+  console.log('用法: node scripts/render.mjs <composition.json> [-o out.mp4] [--quantizer 20] [--bitrate 8000000] [--codec avc1...] [--keep-preview] [--without-preview]');
   console.log('默认 QP20 优先、自适应码率回退；仅传 --bitrate 时按目标码率编码。');
   process.exit(args.length === 0 ? 1 : 0);
 }
@@ -32,6 +34,7 @@ const compositionFile = path.resolve(args[0]);
 const outIdx = args.indexOf('-o');
 const outFile = path.resolve(outIdx >= 0 ? args[outIdx + 1] : compositionFile.replace(/\.json$/i, '') + '.mp4');
 const keepPreview = args.includes('--keep-preview');
+const skipPreviewCheck = args.includes('--without-preview');
 const readIntegerOption = (name, minimum) => {
   const index = args.indexOf(name);
   if (index < 0) return undefined;
@@ -49,8 +52,10 @@ const disableOpfs = process.env.TICKTOON_DISABLE_OPFS === '1';
 const disableQuantizer = process.env.TICKTOON_DISABLE_QUANTIZER === '1';
 
 let composition;
+let compositionSource;
 try {
-  composition = assertComposition(JSON.parse(readFileSync(compositionFile, 'utf-8')));
+  compositionSource = readFileSync(compositionFile, 'utf-8');
+  composition = assertComposition(JSON.parse(compositionSource));
 } catch (error) {
   console.error(error instanceof Error ? error.message : String(error));
   process.exit(1);
@@ -58,6 +63,23 @@ try {
 const { width, height } = composition;
 const orientation = width >= height ? 'horizontal' : 'vertical';
 const JOB_DIR = path.dirname(compositionFile);
+if (!skipPreviewCheck) {
+  const projectDir = path.basename(JOB_DIR) === 'out' ? path.dirname(JOB_DIR) : JOB_DIR;
+  let previewed = false;
+  try {
+    const storyboardSha256 = createHash('sha256')
+      .update(readFileSync(path.join(projectDir, 'storyboard.json')))
+      .digest('hex');
+    const receipt = JSON.parse(readFileSync(path.join(JOB_DIR, 'preview-receipt.json'), 'utf-8'));
+    previewed = receipt.storyboardSha256 === storyboardSha256;
+  } catch { /* 缺失或损坏都按未预览处理 */ }
+  if (!previewed) {
+    console.error('[render] 当前 storyboard 尚未完成 Preview Studio 预览，已停止导出。');
+    console.error(`[render] 先运行: node platform/cli.mjs preview --dir ${JSON.stringify(projectDir)}`);
+    console.error('[render] 在预览页点击「完成预览」后再导出；只有用户明确要求跳过预览时才使用 --without-preview。');
+    process.exit(1);
+  }
+}
 const assetBasenameMap = buildAssetBasenameMap({ assetsDir: ASSETS_DIR });
 
 // 常见事故：先 `tt build`（无 TTS）再直接 render，画面和字幕都有，MP4 却只有 BGM/SFX。

@@ -34,4 +34,4 @@ try {
 } catch { /* du 不可用时跳过体积报告 */ }
 console.log(`[pack] 干净分发包 → ${dest}${sizeMB ? `（${sizeMB}）` : ''}`);
 console.log('[pack] 已包含 Ticktoon dist；已排除 node_modules/ output/ .git/ .cc-tasks/ snapshots/');
-console.log('[pack] 安装后在目标机器运行: npm install && node scripts/doctor.mjs');
+console.log('[pack] 安装后在目标机器运行: node scripts/doctor.mjs --install（仅在缺包时安装依赖）');

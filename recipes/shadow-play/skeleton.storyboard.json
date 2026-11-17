@@ -11,7 +11,7 @@
   "scenes": [
     {
       "id": "s01",
-      "duration": 3,
+      "duration": 8,
       "code": [
         "// 场景骨架：根据本场 narration 重新组织人物、建筑、器物与光影。",
         "// 规范读 recipe.md，完整写法看 ref-shots/；可用 W / H / ctx / api / TT / RULES。",

@@ -7,7 +7,7 @@ description: 用 Ticktoon 生成整幅场景化短视频。recipe 给一类成�
 
 唯一产物是 protocol v1.0 `composition.json`（`scenes[]` + `audio[]`）。
 
-下文 `SKILL_DIR` 指本文件所在目录。脚本用绝对路径调用，cwd 保持在用户工程目录。首次使用或环境异常先运行 `node "$SKILL_DIR/scripts/doctor.mjs"`；若 `deps` 报缺包，先在 `$SKILL_DIR` 执行 `npm install`（只装 ws / msedge-tts；Chrome 通过 CDP 直接驱动本机安装，不下载浏览器），再重跑 doctor。
+下文 `SKILL_DIR` 指本文件所在目录。脚本用绝对路径调用，cwd 保持在用户工程目录。首次使用或环境异常运行 `node "$SKILL_DIR/scripts/doctor.mjs" --install`：它会检查全部环境，只在缺少 ws / msedge-tts 时自动执行 npm install，然后继续检查，不要拆成 doctor → 手动安装 → 重跑 doctor。Chrome 通过 CDP 直接驱动本机安装，不下载浏览器。
 
 ## 结构
 
@@ -15,7 +15,7 @@ description: 用 Ticktoon 生成整幅场景化短视频。recipe 给一类成�
 
 ## 读取顺序（只读需要的）
 
-1. 先用 `tt recipe list` 选 recipe：它的输出（id / 名称 / 关键词 / 适用时机 `when` / 不适用时机 `notWhen`）就是当前货架，本文件不复制清单。按 `keywords` 和 `when` 找最贴的，用 `notWhen` 排除明显不合适的；选中后才读文档。需要看规则时用 `tt recipe show <id>`，它给出 `when / notWhen / mode / rules / captions / audio / template`。
+1. 先用 `tt recipe list` 选 recipe：它的输出（id / 名称 / 关键词 / 适用时机 `when` / 不适用时机 `notWhen`）就是当前货架，本文件不复制清单。按 `keywords` 和 `when` 找最贴的，用 `notWhen` 排除明显不合适的；选中后才读文档。需要看规则时用 `tt recipe show <id>`，它给出 `when / notWhen / mode / rules / captions / audio / pacing / template`。
 2. 选定后只读该 recipe 的 `recipe.md` 与 `skeleton.storyboard.json`；code 型再读 `ref-shots/`。`recipe.md` 是选中后的唯一创作纲要：先讲内容怎么写，再讲画面怎么画。`recipe.json` 只用于核对 `mode / rules / captions / audio / template`。不要预读其他 recipe。
 3. 动手写 storyboard 前读 `references/storyboard.md`。
 4. 写 `scene.code` 时才读 `references/authoring-code.md`，再读该 recipe 的 `ref-shots/` 里 1–2 个镜头参考。镜头参考文件头的格式见下文「recipe 目录与镜头参考格式」；params 型不读 `ref-shots/`。
@@ -80,15 +80,28 @@ recipes/<id>/
 ```bash
 node "$SKILL_DIR/platform/cli.mjs" new <dir> --recipe <id>   # 1. 建工程，skeleton 预填；<id> 从 tt recipe list 选
 # 2. 改 <dir>/storyboard.json —— 这是你唯一要写的文件
-node "$SKILL_DIR/platform/cli.mjs" build --dir <dir>                  # 3. 快速编译（估时，无配音；供预览/qa/det）
-node "$SKILL_DIR/platform/cli.mjs" preview --dir <dir> --port 5123    # 4. 只读预览：用户可多帧标注；发送后预览关闭，命令直接返回批注批次
-node "$SKILL_DIR/platform/cli.mjs" annotations --dir <dir>             # 5. 预览不在本会话启动时手动读最新未处理批次；--ack 标记整批已处理
-node "$SKILL_DIR/platform/cli.mjs" stills 0.6 3.1 9.4 --dir <dir>     # 6. 静帧 + 布局凭据
-node "$SKILL_DIR/platform/cli.mjs" build --dir <dir> --tts edge         # 7. 出片前重编译：带真实旁白
-node "$SKILL_DIR/scripts/render.mjs" <dir>/out/composition.json -o <dir>/video.mp4   # 8. 仅明确要求时
+node "$SKILL_DIR/platform/cli.mjs" build --dir <dir>          # 3. 快速编译（估时，无配音）
+node "$SKILL_DIR/platform/cli.mjs" qa --dir <dir>             # 4. 全片采样 + 12 格联系表；must=0 并实际读图
+node "$SKILL_DIR/platform/cli.mjs" preview --dir <dir> --port 5123  # 5. 打开 Preview Studio，交用户人工检查；到此停止
 ```
 
-创作、检查与预览走 `platform/cli.mjs`（下称 `tt`），`tt` 命令支持 `--json`。MP4 导出是独立入口 `scripts/render.mjs`，只在用户明确要求时调用。
+创作、检查与预览走 `platform/cli.mjs`（下称 `tt`），`tt` 命令支持 `--json`。**默认创作终点是 Preview Studio，不是 MP4。** 最初的“制作 / 生成视频”请求不等于授权导出 MP4，也不等于允许跳过预览。QA `must=0` 且联系表没有明显问题后，直接打开 Preview Studio；不要为了再次确认构图、稳定帧或入场透明度追加 `stills`，不要继续做无实际缺陷支撑的反复检查。
+
+预览无需修改时点「完成预览」；有修改时发送批注，改 storyboard 后重新 `build → qa → preview`。预览命令返回后仍等待用户指示，不自动接 TTS、det 或 render。
+
+只有用户在预览后**另外明确要求导出 MP4**时，才执行：
+
+```bash
+node "$SKILL_DIR/platform/cli.mjs" det --twice --dir <dir>
+node "$SKILL_DIR/platform/cli.mjs" build --dir <dir> --tts edge
+node "$SKILL_DIR/scripts/render.mjs" <dir>/out/composition.json -o <dir>/video.mp4
+```
+
+MP4 导出会校验当前 storyboard 的预览凭据；未预览或预览后又改稿会拒绝导出，配音重编译不要求重复人工预览。只有用户明确要求跳过预览时，才给 render 加 `--without-preview`。
+
+**本机普通 Chrome 可用时，不要设置 `TICKTOON_CHROME_PATH` / `CHROME_PATH` 指向 Playwright 的 `chrome-headless-shell`；省略这两个变量，让启动器使用普通 Chrome 和本机 GPU。** headless shell 会默认走 SwiftShader，导出明显更慢；只有普通 Chrome 不可用或用户明确指定时才使用它。
+
+**全片视觉检查默认只跑 `tt qa` 并读取 `review/qa-sheet.png`；不要自造时间点运行 `tt stills` 来代替 QA。** `stills` 只用于用户指定时刻，或需要该时刻布局凭据（receipts）的定点排障，不是标准创作步骤。
 
 ### 镜头参考调试（可选）
 
@@ -98,9 +111,9 @@ code recipe 的 `ref-shots/` 可以用 `tt lab [--recipe <id>] [--port N]` 打�
 
 - storyboard 是唯一手写文件；完整契约见 `references/storyboard.md`。`narration` 与 `duration` 互斥，未知场景键直接报错。
 - `mode: "code"` 的 recipe 只写 `scene.code`，不写 `scene.params`；`mode: "params"` 的 recipe 只写 `scene.params`，不写 `scene.code`。`maxChars` 超了拆场而不是缩字。
-- 反馈、stills/receipts、批注读回与 TTS 语义见 `references/iterate.md`；改稿只改 storyboard，然后重编译。预览页的批注先在页面内多帧累积，用户点「发送批注」后整批写入 `<工程>/annotations/<batch>/` 并关闭预览；用 `tt annotations` 读回，不要读页面事件。
+- 反馈、stills/receipts、批注读回与 TTS 语义见 `references/iterate.md`；改稿只改 storyboard，然后重编译。预览无需修改时点「完成预览」；批注先在页面内多帧累积，用户点「发送批注」后整批写入 `<工程>/annotations/<batch>/` 并关闭预览；用 `tt annotations` 读回，不要读页面事件。
 
-## 交付前自检（别跳过）
+## 导出前自检（仅用户明确要求导出时）
 
 ```bash
 node "$SKILL_DIR/platform/cli.mjs" qa --dir <dir>             # 全片质量：must 必须 0，同时产出 12 格联系表
@@ -111,7 +124,7 @@ node "$SKILL_DIR/platform/cli.mjs" det --twice --dir <dir>    # 编译指纹，�
 
 ## recipe 契约
 
-recipe 是一类成片的创作单位：它决定场景写法（`mode`），并固定 `rules`、`captions`、`audio`；`mode: "params"` 的 recipe 还带 `template`（`draw / params / resources / needs / defaultSfx / sfxTrack / motion / inkless`）。字体不归 recipe 管：字体库在 `assets/fonts/manifest.json`，每个键带 `desc`；code 场把选中的键写进 `scene.resources`（`{"type":"font","name":"sans-400"}`），params 模板写死字体键并在 `template.resources` 声明。颜色由 kit 自带默认值或场景自己写 hex，背景由场景代码 / 模板自己铺满。字号、行高、版式、动效由场景代码或模板本地决定。不同片型对应不同 recipe，由 `tt recipe list` 选择；所有取值静态可追踪。
+recipe 是一类成片的创作单位：它决定场景写法（`mode`），并固定 `rules`、`captions`、`audio`、`pacing`；`mode: "params"` 的 recipe 还带 `template`（`draw / params / resources / needs / defaultSfx / sfxTrack / motion / inkless`）。字体不归 recipe 管：字体库在 `assets/fonts/manifest.json`，每个键带 `desc`；code 场把选中的键写进 `scene.resources`（`{"type":"font","name":"sans-400"}`），params 模板写死字体键并在 `template.resources` 声明。颜色由 kit 自带默认值或场景自己写 hex，背景由场景代码 / 模板自己铺满。字号、行高、版式、动效由场景代码或模板本地决定。不同片型对应不同 recipe，由 `tt recipe list` 选择；所有取值静态可追踪。
 
 ## 公共 kit
 

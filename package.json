@@ -9,6 +9,7 @@
     "render": "node scripts/render.mjs",
     "preview": "node scripts/preview.mjs",
     "doctor": "node scripts/doctor.mjs",
+    "test": "node --test scripts/lib/*.test.mjs",
     "snapshot": "node scripts/snapshot.mjs",
     "pack": "node scripts/tools/pack-skill.mjs"
   },

@@ -49,6 +49,11 @@
   "captions": {
     "style": "none"
   },
+  "pacing": {
+    "leadIn": 1.2,
+    "hold": 2.2,
+    "minNarrationDuration": 6.5
+  },
   "audio": {
     "mood": "tense",
     "volume": 0.11,

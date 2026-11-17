@@ -112,5 +112,5 @@ export async function resolveStoryboard({ storyboard, recipe, catalog, tts }) {
       }
     : null;
 
-  return { scenes, bgm, sfx, warnings, ttsUsed, pacing: PACING };
+  return { scenes, bgm, sfx, warnings, ttsUsed, pacing: { ...PACING, ...(recipe?.pacing || {}) } };
 }

@@ -150,7 +150,7 @@ pause → seek(t) → await video.settle(t) → 同步 tick(t) 重绘 → PNG
 
 ## 实时预览与圈注修改：看到问题，直接标给 Agent
 
-`tt preview --dir my-video` 启动本地只读预览，画面由引擎同一套 `compositor.tick(t)` 实时播放；它不是另一套渲染器，也不是可视化编辑器。改完 storyboard 重新 `tt build`，预览页按 `composition.json` 的 mtime 自动刷新，不需要重启。
+`tt preview --dir my-video` 启动本地只读预览，画面由引擎同一套 `compositor.tick(t)` 实时播放；它不是另一套渲染器，也不是可视化编辑器。改完 storyboard 重新 `tt build`，预览页按 `composition.json` 的 mtime 自动刷新，不需要重启。无需修改时点「完成预览」，记录当前 storyboard 的预览凭据并关闭服务。
 
 看到问题后，在画面上直接画笔圈注，并在底部批注坞写一句描述：
 
@@ -171,11 +171,10 @@ pause → seek(t) → await video.settle(t) → 同步 tick(t) 重绘 → PNG
 ```bash
 git clone https://github.com/ticktoon/ticktoon-skill
 cd ticktoon-skill
-npm install
-node scripts/doctor.mjs
+node scripts/doctor.mjs --install
 ```
 
-`doctor` 会检查 Node、Ticktoon 引擎产物、npm 依赖、Chrome、WebGL2，以及可选的 TTS/素材 provider。若报 `deps` 缺失，在 skill 目录执行 `npm install`；skill 通过 CDP 直接驱动本机 Chrome（≥120），不会下载自带浏览器。无 GPU 服务器可设置 `DH_VIDEO_WEBGL=swiftshader`。
+`doctor --install` 会检查 Node、Ticktoon 引擎产物、npm 依赖、Chrome、WebGL2，以及可选的 TTS/素材 provider，只在缺少 ws / msedge-tts 时自动执行 npm install，随后继续检查，无需手动重跑；已有依赖时不会执行 npm。skill 通过 CDP 直接驱动本机 Chrome（≥120），不会下载自带浏览器。无 GPU 服务器可设置 `DH_VIDEO_WEBGL=swiftshader`；使用 `chrome-headless-shell` 且未显式配置时会自动启用 SwiftShader，避免部分 Windows 环境的 WebCodecs 纹理回读失败。
 
 默认链路不需要 API key：edge-tts + 内置演示素材。可选的 Volc TTS 与 Pexels 通过 `node scripts/auth.mjs set <KEY> <value>` 配置；凭证只从环境变量或 `~/.dh-video/credentials.json` 读取，不写入 storyboard 或工程。
 
@@ -201,7 +200,7 @@ node platform/cli.mjs build --dir my-video --tts edge               # 带真实�
 node scripts/render.mjs my-video/out/composition.json -o my-video/video.mp4
 ```
 
-`tt` 指 `node platform/cli.mjs`（或 `npm run tt --`）。`storyboard.json` 是唯一需要手写的文件。`out/` 下都是构建产物，不要手改；改完重新 `build`，预览会自动刷新。只在明确需要时导出 MP4；不带 `--tts` 的 build 没有旁白音轨。
+`tt` 指 `node platform/cli.mjs`（或 `npm run tt --`）。`storyboard.json` 是唯一需要手写的文件。`out/` 下都是构建产物，不要手改；改完重新 `build`，预览会自动刷新。只在明确需要时导出 MP4；render 默认要求当前 storyboard 已完成预览，改稿后需重新预览，用户明确要求跳过时才可传 `--without-preview`。不带 `--tts` 的 build 没有旁白音轨。
 
 常用命令：
 

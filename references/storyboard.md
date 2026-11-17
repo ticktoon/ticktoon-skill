@@ -22,7 +22,7 @@
 }
 ```
 
-- **`narration` 与 `duration` 结构互斥**：有旁白写旁白（时长 = leadIn + 语音 + hold），静默场写 `duration`。两个都写直接报错。
+- **`narration` 与 `duration` 结构互斥**：有旁白写旁白（时长 = leadIn + 语音 + hold，recipe 可再声明最短旁白场时长），静默场写 `duration`。两个都写直接报错。
 - 场景起点由编译器按数组顺序累加，总时长是各场时长之和。
 - 场景没有 `bg` 字段：背景由 `scene.code` / params 模板自己铺满整帧。`camera` 包住场景内容、不包字幕。
 - 场景只收 `id / narration / duration / camera / code / params / resources / note / transition`，**未知键直接报错**。`transition` 只写固定预设名，声明在两个 code 场边界的前一场；双帧视觉时间轴见 `references/transition.md`。

@@ -46,7 +46,7 @@ ticktoon CanvasCompositor.tick(t)
 | 层 | 当前位置 | 职责 | Agent 是否直接读 |
 |---|---|---|---|
 | 操作契约 | `SKILL.md` | 路由、创作闭环、红线、交付自检 | 每次读 |
-| recipe 规范 | `recipes/*/recipe.json`、`recipe.md`、`skeleton.storyboard.json`，以及 code 型的 `ref-shots/`、params 型的 `template.js` | `keywords / when / notWhen` 是 `tt recipe list` 的选择元数据；`mode / rules / captions / audio` 是成片规范，params 型另有 `template`（`draw / params / resources / needs / defaultSfx / sfxTrack / motion / inkless`） | 选择时只读 `tt recipe list`；选中后只读该 recipe 的 1 份文档 |
+| recipe 规范 | `recipes/*/recipe.json`、`recipe.md`、`skeleton.storyboard.json`，以及 code 型的 `ref-shots/`、params 型的 `template.js` | `keywords / when / notWhen` 是 `tt recipe list` 的选择元数据；`mode / rules / captions / audio / pacing` 是成片规范，params 型另有 `template`（`draw / params / resources / needs / defaultSfx / sfxTrack / motion / inkless`） | 选择时只读 `tt recipe list`；选中后只读该 recipe 的 1 份文档 |
 | 运行时参考 | `references/` | `scene.code`、`scene.params` 与公共 kit 的 API 手册 | 需要时读对应 1 篇 |
 | 内容 | `<工程>/storyboard.json` | 本片叙事、场景、字幕、素材、code、params | **写** |
 | 公共 kit | `platform/kit/` | 舞台、笔、文字、标注、相机、转场、字幕等纯函数 | 通过注入使用 |

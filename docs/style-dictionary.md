@@ -106,4 +106,4 @@
 
 - 加条目：写一行表格，六列都要填满。**填不满说明你还没想清楚这个风格长什么样，别加。**
 - 删条目：被三个片子用过就不要再删，先看能否沉淀进 recipe 的 `recipe.md` 或 `template.js`。
-- 改 recipe 视觉：code 型改 `recipe.md` 的画法规范 / `rules`，params 型改 `template.js`；音画约束改 `recipe.json`（`rules` / `captions` / `audio`），跑 `tt recipe audit`。**词典这一行不用改**——描述和数值本来就该能各自演进。
+- 改 recipe 视觉：code 型改 `recipe.md` 的画法规范 / `rules`，params 型改 `template.js`；音画与节拍约束改 `recipe.json`（`rules` / `captions` / `audio` / `pacing`），跑 `tt recipe audit`。**词典这一行不用改**——描述和数值本来就该能各自演进。

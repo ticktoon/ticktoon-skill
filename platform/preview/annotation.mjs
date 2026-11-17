@@ -5,6 +5,7 @@
  * 页面内的待发送列表；点「发送批注」后一次性 POST /api/annotations，
  * 由 scripts/preview.mjs 落到 <工程>/annotations/<batch>/request.json + PNG。
  * 发送成功即请求 /shutdown，预览进程退出，Agent 从 tt annotations 接手改稿。
+ * 无需修改时点「完成预览」也会关闭页面并记录当前版本的人工预览凭据。
  * 页面仍是只读的：没有任何写回 composition 的通道。
  */
 const PAGE_TAG = 'ticktoon-preview-page';
@@ -74,7 +75,9 @@ const addButton = annotationButton('完成批注', () => void finish());
 const cancelButton = annotationButton('取消', () => cancel());
 const sendButton = annotationButton('发送批注', () => void sendDrafts());
 sendButton.id = 'skill-annotation-send';
-dock.append(annotateButton, description, undoButton, clearButton, addButton, cancelButton, sendButton);
+const doneButton = annotationButton('完成预览', () => void completePreview());
+doneButton.id = 'skill-annotation-done';
+dock.append(annotateButton, description, undoButton, clearButton, addButton, cancelButton, sendButton, doneButton);
 bottom.prepend(dock);
 
 const list = document.createElement('div');
@@ -223,6 +226,7 @@ function updateButtons() {
   addButton.disabled = !active || !hasInk || activePointer !== null || finishing;
   cancelButton.disabled = !active || finishing;
   sendButton.disabled = drafts.length === 0 || active || starting || finishing || sending;
+  doneButton.disabled = drafts.length > 0 || active || starting || finishing || sending;
   sendButton.textContent = drafts.length ? `发送批注（${drafts.length}）` : '发送批注';
   sendButton.classList.toggle('ready', drafts.length > 0 && !active && !sending);
 }
@@ -545,6 +549,24 @@ async function sendDrafts() {
   }
 }
 
+async function completePreview() {
+  if (drafts.length || active || sending) return;
+  sending = true;
+  errorLabel.textContent = '';
+  status.textContent = '正在完成预览…';
+  updateButtons();
+  try {
+    const response = await fetch('/shutdown', { method: 'POST' });
+    const reply = await response.json().catch(() => ({}));
+    if (!response.ok || !reply.ok) throw new Error(reply.error || `完成预览失败: HTTP ${response.status}`);
+    status.textContent = '预览已完成，等待你的下一步指示。';
+  } catch (error) {
+    errorLabel.textContent = error instanceof Error ? error.message : String(error);
+    sending = false;
+    updateButtons();
+  }
+}
+
 function canvasToBlob(canvas) {
   return new Promise((resolve, reject) => {
     canvas.toBlob((blob) => {
@@ -591,7 +613,7 @@ copyBoardButton.addEventListener('click', async () => {
   }
 });
 
-status.textContent = '画一笔并写描述，可连续标注多帧；标注完成后点「发送批注」。';
+status.textContent = '无需修改点「完成预览」；需要改稿时用画笔批注，可连续标注多帧后统一发送。';
 updateButtons();
 window.addEventListener('resize', alignInk);
 panel.addEventListener('load', () => setTimeout(alignInk, 0));

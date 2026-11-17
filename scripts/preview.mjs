@@ -3,13 +3,14 @@
  *
  * 用法: node scripts/preview.mjs <composition.json> [--port N]
  * 改完 storyboard 重新 `tt build` 后，页面按 composition mtime 自动刷新。
- * 关闭: render 成功后自动关闭，或 POST /shutdown / Ctrl+C。
+ * 关闭: 页面「完成预览」/「发送批注」，或 POST /shutdown / Ctrl+C；render 成功后也会回收。
  *
  * `/api/track` 这个路由名是引擎 preview-page 的既有契约，不要跟着改名。
  * 批注闭环: 页面「发送批注」POST /api/annotations → <工程>/annotations/<batch>/request.json + 每条三张 PNG；
  *           页面随后请求 /shutdown，`tt preview` 退出时把批次交回 Agent。
  */
 import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createStaticServer } from './lib/serve.mjs';
@@ -41,6 +42,7 @@ const JOB_DIR = path.dirname(compositionFile);
 /** 批注落盘到工程根，而不是 out/（out 是构建产物，重编译不应清掉用户输入）。 */
 const PROJECT_DIR = path.basename(JOB_DIR) === 'out' ? path.dirname(JOB_DIR) : JOB_DIR;
 const ANNOTATIONS_DIR = path.join(PROJECT_DIR, 'annotations');
+const PREVIEW_RECEIPT = path.join(JOB_DIR, 'preview-receipt.json');
 let annotationSequence = 0;
 const assetBasenameMap = buildAssetBasenameMap({ assetsDir: ASSETS_DIR });
 /** 每次请求重读：build 落盘后页面刷新就能拿到新 composition。非法产物在这里就拦住。 */
@@ -217,7 +219,22 @@ const { server, port } = await createStaticServer({
 });
 
 registerPreview(compositionFile, port);
+function writePreviewReceipt() {
+  const storyboardSha256 = createHash('sha256')
+    .update(readFileSync(path.join(PROJECT_DIR, 'storyboard.json')))
+    .digest('hex');
+  writeFileSync(PREVIEW_RECEIPT, JSON.stringify({
+    version: 1,
+    storyboardSha256,
+    previewedAt: new Date().toISOString(),
+  }, null, 2));
+}
 function shutdownPreview() {
+  try {
+    writePreviewReceipt();
+  } catch (error) {
+    console.error(`[preview] 预览凭据写入失败: ${error instanceof Error ? error.message : String(error)}`);
+  }
   unregisterPreview(compositionFile);
   server.close();
   process.exit(0);

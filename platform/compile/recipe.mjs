@@ -2,7 +2,7 @@
  * recipe —— 一类成片的视觉规范与模板契约。
  *
  * 两种模式：
- *   code   recipe 只给 recipe.md / ref-shots / rules / captions / audio，
+ *   code   recipe 只给 recipe.md / ref-shots / rules / captions / audio / pacing，
  *          storyboard 写 scene.code；字体由 scene.resources 的 font 条目声明。
  *   params recipe 自带 template（draw / params / resources / needs / defaultSfx /
  *          sfxTrack / motion / inkless），storyboard 写 scene.params；字体写死在
@@ -18,7 +18,8 @@ import { isPlainObject } from './diag.mjs';
 
 const DIMENSION_MODES = new Set(['fixed', 'enum', 'auto', 'random']);
 const RULE_KEYS = new Set(['safeMargin', 'scale', 'stroke', 'pen', 'board', 'forbid']);
-const RECIPE_KEYS = new Set(['id', 'abi', 'name', 'keywords', 'when', 'notWhen', 'mode', 'template', 'rules', 'captions', 'audio']);
+const RECIPE_KEYS = new Set(['id', 'abi', 'name', 'keywords', 'when', 'notWhen', 'mode', 'template', 'rules', 'captions', 'audio', 'pacing']);
+const PACING_KEYS = new Set(['leadIn', 'hold', 'minNarrationDuration']);
 const RECIPE_MODES = new Set(['code', 'params']);
 const TEMPLATE_KEYS = new Set(['draw', 'params', 'resources', 'needs', 'defaultSfx', 'sfxTrack', 'motion', 'inkless']);
 const NEEDS_KEYS = new Set(['image', 'video', 'three']);
@@ -62,6 +63,7 @@ export function validateRecipe(recipe, manifest, recipeDir) {
   validateRules(recipe.rules, fail);
   validateCaptions(recipe.captions, manifest, fail);
   validateAudio(recipe.audio, fail);
+  validatePacing(recipe.pacing, fail);
 
   if (recipe.mode === 'params') {
     if (!recipe.template) {
@@ -207,6 +209,22 @@ function validateCaptions(captions, manifest, fail) {
   } else if (typeof captions.font === 'string' && (!isPlainObject(manifest) || !manifest[captions.font])) {
     fail('RECIPE_CAPTION_FONT_UNKNOWN', 'captions.font',
       `字体 "${captions.font}" 不在 assets/fonts/manifest.json 里；captions.font 直接写 manifest 键`);
+  }
+}
+
+function validatePacing(pacing, fail) {
+  if (pacing === undefined) return;
+  if (!isPlainObject(pacing)) {
+    fail('RECIPE_PACING_INVALID', 'pacing', 'pacing 必须是 { leadIn, hold, minNarrationDuration } 对象');
+    return;
+  }
+  for (const key of Object.keys(pacing)) {
+    if (!PACING_KEYS.has(key)) fail('RECIPE_PACING_KEY_UNKNOWN', `pacing.${key}`, `未知节拍字段 "${key}"`);
+  }
+  for (const key of PACING_KEYS) {
+    if (pacing[key] !== undefined && !(isFiniteNumber(pacing[key]) && pacing[key] >= 0)) {
+      fail('RECIPE_PACING_NUMBER_INVALID', `pacing.${key}`, `${key} 必须是非负秒数`);
+    }
   }
 }
 

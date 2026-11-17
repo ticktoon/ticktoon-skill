@@ -1,10 +1,13 @@
 /**
  * 渲染、抽帧与环境自检共用的 Chrome 启动参数。
- * 默认保持本机 GPU 路径；无 GPU 的服务器可显式选择 SwiftShader 软件 WebGL。
+ * 普通 Chrome 默认保持本机 GPU；chrome-headless-shell 的 Canvas→WebCodecs
+ * GPU 纹理回读在部分 Windows 环境会失败，因此未显式配置时默认使用 SwiftShader。
  */
 export function chromiumArgs(env = process.env) {
   const args = ['--enable-features=MediaCodec'];
-  const webgl = String(env.DH_VIDEO_WEBGL || 'auto').toLowerCase();
+  const executable = env.TICKTOON_CHROME_PATH || env.CHROME_PATH || '';
+  const defaultWebgl = /headless[-_]?shell/i.test(executable) ? 'swiftshader' : 'auto';
+  const webgl = String(env.DH_VIDEO_WEBGL || defaultWebgl).toLowerCase();
   if (!['auto', 'swiftshader'].includes(webgl)) {
     throw new Error(`DH_VIDEO_WEBGL 仅支持 auto / swiftshader，当前为 ${webgl}`);
   }

@@ -390,6 +390,8 @@ async function cmdPreview() {
     if (pending.length) {
       console.log('\n[preview] 收到批注，预览已关闭：');
       cmdAnnotations();
+    } else if (code === 0) {
+      console.log('\n[preview] 本次预览已完成；等待用户反馈，不会自动导出 MP4。');
     }
     process.exit(code ?? 0);
   });
@@ -670,6 +672,7 @@ function cmdRecipeShow() {
     rules: recipe.rules ?? null,
     captions: recipe.captions ?? null,
     audio: recipe.audio ?? null,
+    pacing: recipe.pacing ?? null,
     recipeErrors: recipe.recipeErrors ?? [],
   };
   if (json) {
@@ -692,6 +695,7 @@ function cmdRecipeShow() {
   pretty('rules', view.rules);
   pretty('captions', view.captions);
   pretty('audio', view.audio);
+  pretty('pacing', view.pacing);
   pretty('template', view.template);
   if (view.recipeErrors.length) {
     console.log('\n  recipe 校验错误');
@@ -707,7 +711,7 @@ function usage() {
   tt build [--dir <工程>] [--tts <provider>]   编译出 out/composition.json + report.json
   tt assets fetch --project <工程> [--provider pexels] [--orientation landscape|portrait]
                 [--strict]                  检索、下载、署名并回写 job:media；默认失败时明确降级 bundled
-  tt stills <t…> [--dir <工程>]   静帧 + 布局凭据（receipts）
+  tt stills <t…> [--dir <工程>]   指定时刻静帧 + 布局凭据；仅定点排障，不代替全片 QA
   tt probe --t <秒> [--dir <工程>] 该时刻全部凭据（kind/单元/label/bbox/安全框/字幕带）
   tt qa [--count N] [--cols C]    轻量渲染校验（渲染异常/空墨迹）+ 12 格联系表，must=0
   tt det [--twice] [--verify H]   确定性指纹

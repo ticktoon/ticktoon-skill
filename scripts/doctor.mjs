@@ -1,11 +1,13 @@
 /**
  * Ticktoon Skill 环境自检
  *
- * 用法: node scripts/doctor.mjs [--json]
- * 检查 Node / Ticktoon 产物 / npm 依赖 / Chrome + WebGL2。
+ * 用法: node scripts/doctor.mjs [--json] [--install]
+ * 检查 Node / Ticktoon 产物 / npm 依赖 / Chrome + WebGL2；--install 仅在缺包时安装依赖。
  * Provider 状态仅作能力报告，不影响退出码。普通 MP4 直出，无 FFmpeg 检查。
  */
 import { existsSync, readFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { credentialSource, hasCredential, hasVolcTts } from './config.mjs';
@@ -40,6 +42,39 @@ const runtimeDeps = [
   ['ws', 'Chrome CDP 驱动 / edge-tts 旁白'],
   ['msedge-tts', 'edge-tts 旁白'],
 ];
+const require = createRequire(import.meta.url);
+const unresolvedDeps = runtimeDeps.map(([name]) => name).filter((name) => {
+  try {
+    require.resolve(name);
+    return false;
+  } catch {
+    return true;
+  }
+});
+let installAttempted = false;
+let installError = '';
+if (process.argv.includes('--install') && unresolvedDeps.length > 0) {
+  installAttempted = true;
+  if (!asJson) console.log(`[doctor] 安装缺少的依赖: ${unresolvedDeps.join(' / ')}`);
+  const installCommand = `${process.platform === 'win32' ? 'npm.cmd' : 'npm'} install --no-audit --no-fund --prefer-offline`;
+  const result = spawnSync(installCommand, {
+    cwd: ROOT,
+    stdio: asJson ? 'pipe' : 'inherit',
+    encoding: 'utf8',
+    shell: true,
+    windowsHide: true,
+  });
+  if (result.error || result.status !== 0) {
+    installError = result.error
+      ? `npm 启动失败：${result.error.message}`
+      : `npm install 失败（退出码 ${result.status ?? '未知'}）`;
+    if (asJson) {
+      if (result.stdout) process.stderr.write(result.stdout);
+      if (result.stderr) process.stderr.write(result.stderr);
+    }
+  }
+}
+// 安装后再真实 import 一次，避免只存在目录但包已损坏时误报通过。
 const missingDeps = [];
 for (const [name] of runtimeDeps) {
   try {
@@ -49,10 +84,13 @@ for (const [name] of runtimeDeps) {
   }
 }
 const depsOk = missingDeps.length === 0;
+const depsDetail = depsOk
+  ? `ws / msedge-tts ${installAttempted ? '已自动安装并验证' : '已安装'}`
+  : `缺少 ${missingDeps.join(' / ')}${installError ? `；${installError}` : ''}`;
 check(
   'deps',
   depsOk,
-  depsOk ? 'ws / msedge-tts 已安装' : `缺少 ${missingDeps.join(' / ')}`,
+  depsDetail,
   `cd "${ROOT}" && npm install（安装 ws / msedge-tts；Chrome 直接使用本机安装，不下载浏览器）`,
 );
 
