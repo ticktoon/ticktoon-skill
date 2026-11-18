@@ -173,7 +173,7 @@ node "$SKILL_DIR/platform/cli.mjs" stills 1.4 2.2 \
 | `QianTuBiFengShouXie` | QianTuBiFengShouXie | `QTBFSXT.woff2` | 400；笔锋手写，适合国风题款 |
 | `TsangerYuMo` | TsangerYuMo | `CEYM-W02.woff2` | 400；毛笔墨韵，适合水墨题款与东方情绪标题 |
 | `TsangerShuYuan` | TsangerShuYuan | `CESYT03.woff2` | 400；圆润舒展，适合轻松日常与亲和标题 |
-| `StarLovePencil` | StarLovePencil | `ZZJZDB.woff2` | 400；自动铅笔手写感，适合手账、批注与草稿 |
+| `StarLovePencil` | StarLovePencil | `ZZJZDB.woff2` | 400；自动铅笔手写感，适合手账、圈注与草稿 |
 
 资源键与 FontFace 族名一律用 manifest 键；manifest 的 `family` 只做说明，不写进 `captions.font`。
 

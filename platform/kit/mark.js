@@ -442,7 +442,7 @@
       const width = widthOf(o);
       const color = colorOf(o, 'ink');
       const seed = seedOf(o);
-      const wobble = BASE_WOBBLE;
+      const wobble = 0.045;
       const via = Array.isArray(o.via) ? o.via.map(pointOf).filter(Boolean) : [];
       const curved = via.length >= 2 || (finite(o.bend) && Math.abs(o.bend) > 0.02);
       const points = via.length >= 2 ? via : (!from || !to ? null : (() => {
@@ -463,7 +463,7 @@
       // 直线箭头压低扰动，弧线箭头放宽；短线再自动衰减。
       const amp = Math.min(total * (curved ? 0.034 : 0.018), curved ? 26 : 14)
         * shortAttenuation(total, 90);
-      const shaft = smoothWobble(points, wobble, seed + 17, amp);
+      const shaft = o.smooth === true ? points : smoothWobble(points, wobble, seed + 17, amp);
       const head = ['open', 'solid', 'none'].includes(o.head) ? o.head : 'open';
       const double = !!o.double;
       const last = shaft[shaft.length - 1];

@@ -1,8 +1,8 @@
 /**
- * 预览页的 skill 层补丁：底部批注坞 + 右上角「复制 board JSON」。
+ * 预览页的 skill 层补丁：底部圈注坞 + 右上角「复制 board JSON」。
  *
- * 引擎页面本身没有轨道区，只留 #bottom 扩展槽。用户可连续标注多帧，批注先进入
- * 页面内的待发送列表；点「发送批注」后一次性 POST /api/annotations，
+ * 引擎页面本身没有轨道区，只留 #bottom 扩展槽。用户可连续圈注多帧，圈注先进入
+ * 页面内的待发送列表；点「发送圈注」后一次性 POST /api/annotations，
  * 由 scripts/preview.mjs 落到 <工程>/annotations/<batch>/request.json + PNG。
  * 发送成功显示 2 秒半透明提示并落盘；后续由对话驱动修改。
  * 「导出 MP4」写入导出请求，关闭预览窗口与服务，由 tt preview 接续构建和渲染。
@@ -52,7 +52,7 @@ panel.before(shell);
 shell.appendChild(panel);
 const ink = document.createElement('canvas');
 ink.id = 'skill-annotation-ink';
-ink.setAttribute('aria-label', '画笔批注层');
+ink.setAttribute('aria-label', '画笔圈注层');
 shell.appendChild(ink);
 const inkContext = ink.getContext('2d');
 if (!inkContext) throw new Error('Unable to create the annotation canvas');
@@ -64,16 +64,16 @@ top.appendChild(copyBoardButton);
 
 const dock = document.createElement('div');
 dock.id = 'skill-annotation-dock';
-const annotateButton = annotationButton('画笔批注', () => void start());
+const annotateButton = annotationButton('画笔圈注', () => void start());
 const description = document.createElement('input');
 description.id = 'skill-annotation-description';
 description.placeholder = '描述要改什么，例如：把圈出的标题放大';
 description.disabled = true;
 const undoButton = annotationButton('撤销笔迹', () => undo());
 const clearButton = annotationButton('清空', () => clearStrokes());
-const addButton = annotationButton('完成批注', () => void finish());
+const addButton = annotationButton('完成圈注', () => void finish());
 const cancelButton = annotationButton('取消', () => cancel());
-const sendButton = annotationButton('发送批注', () => void sendDrafts());
+const sendButton = annotationButton('发送圈注', () => void sendDrafts());
 sendButton.id = 'skill-annotation-send';
 dock.append(annotateButton, description, undoButton, clearButton, addButton, cancelButton, sendButton);
 bottom.prepend(dock);
@@ -96,7 +96,7 @@ let annotationTime = 0;
 let currentTime = 0;
 let querySequence = 0;
 const pendingQueries = new Map();
-/** 待发送批注；images 保留 Blob，发送时才转 data URL。 */
+/** 待发送圈注；images 保留 Blob，发送时才转 data URL。 */
 const drafts = [];
 
 function annotationButton(text, onClick) {
@@ -224,7 +224,7 @@ function updateButtons() {
   addButton.disabled = !active || !hasInk || activePointer !== null || finishing;
   cancelButton.disabled = !active || finishing;
   sendButton.disabled = drafts.length === 0 || active || starting || finishing || sending;
-  sendButton.textContent = drafts.length ? `发送批注（${drafts.length}）` : '发送批注';
+  sendButton.textContent = drafts.length ? `发送圈注（${drafts.length}）` : '发送圈注';
   sendButton.classList.toggle('ready', drafts.length > 0 && !active && !sending);
 }
 
@@ -451,7 +451,7 @@ function addDraft(draft) {
   errorLabel.textContent = '';
   renderList();
   updateButtons();
-  status.textContent = `${drafts.length} 条待发送：可继续标注其他时刻`;
+  status.textContent = `${drafts.length} 条待发送：可继续圈注其他时刻`;
 }
 
 function removeDraft(draft) {
@@ -461,7 +461,7 @@ function removeDraft(draft) {
   URL.revokeObjectURL(draft.thumbnailUrl);
   renderList();
   updateButtons();
-  status.textContent = drafts.length ? `${drafts.length} 条待发送` : '画一笔并写描述，可连续标注多帧；标注完成后点「发送批注」。';
+  status.textContent = drafts.length ? `${drafts.length} 条待发送` : '画一笔并写描述，可连续圈注多帧；圈注完成后点「发送圈注」。';
 }
 
 function renderList() {
@@ -471,7 +471,7 @@ function renderList() {
     card.className = 'skill-annotation-card';
     const image = document.createElement('img');
     image.src = draft.thumbnailUrl;
-    image.alt = `t=${draft.t.toFixed(2)}s 的批注`;
+    image.alt = `t=${draft.t.toFixed(2)}s 的圈注`;
     image.title = '点击跳转到该时刻';
     image.addEventListener('click', () => {
       post('pause');
@@ -487,7 +487,7 @@ function renderList() {
     const remove = document.createElement('button');
     remove.className = 'remove';
     remove.textContent = '×';
-    remove.title = '移除这条批注';
+    remove.title = '移除这条圈注';
     remove.addEventListener('click', () => removeDraft(draft));
     head.append(time, remove);
     const text = document.createElement('div');
@@ -513,7 +513,7 @@ function showSentConfirmation(count) {
   card.style.cssText = 'position:relative;max-width:560px;padding:15px 20px;border:1px solid rgba(139,163,190,.35);border-radius:12px;background:rgba(27,35,48,.78);backdrop-filter:blur(12px);box-shadow:0 10px 34px rgba(0,0,0,.25);pointer-events:auto;';
   const title = document.createElement('div');
   title.style.cssText = 'margin-bottom:5px;color:#ffffff;font-size:15px;font-weight:650;';
-  title.textContent = `已发送 ${count} 条标注`;
+  title.textContent = `已发送 ${count} 条圈注`;
   const working = document.createElement('div');
   working.style.cssText = 'color:#b2bdd0;font-size:12px;';
   working.textContent = 'Agent已收到，正在逐条解读截图并修改。';
@@ -554,7 +554,7 @@ async function sendDrafts() {
     for (const draft of drafts) URL.revokeObjectURL(draft.thumbnailUrl);
     drafts.length = 0;
     renderList();
-    status.textContent = `已发送 ${count} 条批注，Agent 开始解读和修改。`;
+    status.textContent = `已发送 ${count} 条圈注，Agent 开始解读和修改。`;
     sending = false;
     updateButtons();
     showSentConfirmation(count);
@@ -614,7 +614,7 @@ copyBoardButton.addEventListener('click', async () => {
 window.addEventListener('ticktoon-preview-loaded', () => {
   document.getElementById('skill-annotation-sent')?.remove();
 });
-status.textContent = '需要改稿时用画笔批注；需要导出时，在任务对话里直接说明。';
+status.textContent = '需要改稿时用画笔圈注；需要导出时，在任务对话里直接说明。';
 updateButtons();
 window.addEventListener('resize', alignInk);
 panel.addEventListener('load', () => setTimeout(alignInk, 0));

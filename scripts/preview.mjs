@@ -3,10 +3,10 @@
  *
  * 用法: node scripts/preview.mjs <composition.json> [--port N]
  * 改完 storyboard 重新 `tt build` 后，页面按 composition mtime 自动刷新。
- * 常驻服务：批注与导出都不停止；仅显式 POST /shutdown 或 Ctrl+C 关闭。
+ * 常驻服务：圈注与导出都不停止；仅显式 POST /shutdown 或 Ctrl+C 关闭。
  *
  * `/api/track` 这个路由名是引擎 preview-page 的既有契约，不要跟着改名。
- * 批注闭环: 页面「发送批注」POST /api/annotations → <工程>/annotations/<batch>/request.json + 每条三张 PNG；
+ * 圈注闭环: 页面「发送圈注」POST /api/annotations → <工程>/annotations/<batch>/request.json + 每条三张 PNG；
  *           发送后显示 2 秒提示并落盘，后续由对话驱动修改；预览服务保持运行。
  */
 import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
@@ -40,7 +40,7 @@ const portIdx = args.indexOf('--port');
 const wantPort = portIdx >= 0 ? Number(args[portIdx + 1]) || 0 : 0;
 let JOB_DIR = path.dirname(compositionFile);
 const projectRootOf = (file) => path.basename(path.dirname(file)) === 'out' ? path.dirname(path.dirname(file)) : path.dirname(file);
-/** 批注落盘到工程根；切换工程时这些路径随 composition 一起更新。 */
+/** 圈注落盘到工程根；切换工程时这些路径随 composition 一起更新。 */
 let PROJECT_DIR = projectRootOf(compositionFile);
 let ANNOTATIONS_DIR = path.join(PROJECT_DIR, 'annotations');
 let annotationSequence = 0;
@@ -64,7 +64,7 @@ function readJsonBody(req, limit = 100 * 1024 * 1024) {
       size += chunk.length;
       if (size > limit) {
         req.destroy();
-        reject(new Error('批注数据过大（上限 100MB）'));
+        reject(new Error('圈注数据过大（上限 100MB）'));
         return;
       }
       chunks.push(chunk);
@@ -73,7 +73,7 @@ function readJsonBody(req, limit = 100 * 1024 * 1024) {
       try {
         resolve(JSON.parse(Buffer.concat(chunks).toString('utf8')));
       } catch (error) {
-        reject(new Error(`批注 JSON 解析失败: ${error.message}`));
+        reject(new Error(`圈注 JSON 解析失败: ${error.message}`));
       }
     });
     req.on('error', reject);
@@ -89,21 +89,21 @@ function decodePng(value, label) {
 }
 
 /**
- * 批注闭环：页面点「发送批注」后 POST 到这里，整批落盘。
+ * 圈注闭环：页面点「发送圈注」后 POST 到这里，整批落盘。
  * 一批 = 一个目录 <工程>/annotations/<batch>/，里面是 request.json + 每条三项 PNG；
  * request.json 最后写，保证 `tt annotations` 永远看不到缺图的半成品。
  */
 function saveBatch(payload) {
-  if (!payload || typeof payload !== 'object') throw new Error('批注 payload 必须是对象');
+  if (!payload || typeof payload !== 'object') throw new Error('圈注 payload 必须是对象');
   const items = payload.items;
-  if (!Array.isArray(items) || !items.length) throw new Error('批注批次缺少 items');
+  if (!Array.isArray(items) || !items.length) throw new Error('圈注批次缺少 items');
   const normalized = items.map((item, index) => {
-    if (!item || typeof item !== 'object') throw new Error(`第 ${index + 1} 条批注不是对象`);
+    if (!item || typeof item !== 'object') throw new Error(`第 ${index + 1} 条圈注不是对象`);
     const t = Number(item.t);
-    if (!Number.isFinite(t) || t < 0) throw new Error(`第 ${index + 1} 条批注缺少合法时间 t`);
-    if (!Array.isArray(item.strokes) || !item.strokes.length) throw new Error(`第 ${index + 1} 条批注缺少笔迹 strokes`);
+    if (!Number.isFinite(t) || t < 0) throw new Error(`第 ${index + 1} 条圈注缺少合法时间 t`);
+    if (!Array.isArray(item.strokes) || !item.strokes.length) throw new Error(`第 ${index + 1} 条圈注缺少笔迹 strokes`);
     const images = item.images;
-    if (!images || typeof images !== 'object') throw new Error(`第 ${index + 1} 条批注缺少 images`);
+    if (!images || typeof images !== 'object') throw new Error(`第 ${index + 1} 条圈注缺少 images`);
     return {
       t,
       desc: String(item.desc ?? ''),
@@ -261,5 +261,5 @@ process.once('exit', () => unregisterPreview(compositionFile));
 const previewUrl = `http://127.0.0.1:${port}`;
 console.log(`[preview] 只读预览页: ${previewUrl}`);
 console.log(`[preview] composition: ${compositionFile}`);
-console.log(`[preview] 批注落盘: ${ANNOTATIONS_DIR}（用 tt annotations 读取）`);
-console.log('[preview] 常驻服务: 批注和导出均不停止；仅显式 POST /shutdown 或 Ctrl+C 关闭。');
+console.log(`[preview] 圈注落盘: ${ANNOTATIONS_DIR}（用 tt annotations 读取）`);
+console.log('[preview] 常驻服务: 圈注和导出均不停止；仅显式 POST /shutdown 或 Ctrl+C 关闭。');

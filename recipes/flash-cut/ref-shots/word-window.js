@@ -1,23 +1,18 @@
 /* @ticktoon-ref-shot
 {
   "title": "字是窗口",
-  "note": "以字为遮罩露出实拍，三拍；画面里始终有真实素材",
+  "note": "以字为遮罩露出图片，三拍；图片降低对比度并缓慢放大",
   "duration": 1.393,
   "tags": [
-    "实拍",
+    "图片",
     "遮罩",
     "窗口"
   ],
   "resources": [
     {
-      "type": "video",
-      "name": "tech",
-      "src": "skill:assets/demo/tech.mp4"
-    },
-    {
-      "type": "video",
-      "name": "nature",
-      "src": "skill:assets/demo/nature.mp4"
+      "type": "image",
+      "name": "bg",
+      "src": "skill:assets/image/pexels-jakubzerdzicki.jpg"
     },
     {
       "type": "font",
@@ -30,20 +25,52 @@
   ]
 }
 */
-// 示例 · 3 拍：字是窗口，里面是实拍。
+// 示例 · 3 拍：字是窗口，图片降低对比度并缓慢放大。
 const T = api.t;
 const W = api.W;
 const H = api.H;
 const S = '#FFFFFF';
-const B = '#0A0A0A';
 const A = '#FF4D00';
 const M = '#8A8A8A';
-const frame = api.video('tech');
-const bg = TT.flash.contrastColor(api, frame, { light: '#F2F0E8', dark: B });
-ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
-const fg = bg === B ? S : B;
-const size = TT.flash.fit(ctx, 'MOVE', W * 0.82, { maxPx: 540, fontKey: 'sans-900' });
-TT.flash.mask(ctx, api, { text: 'MOVE', x: W * 0.5, y: H * 0.5, size, fill: 'image', image: frame, fit: 'cover', focus: [0.52, 0.38], zoom: 1.12, t: T, dur: 0.28, reveal: TT.clamp01((T - 0.04) / 0.3), revealDir: 'l' });
+const img = api.img('bg');
+ctx.fillStyle = '#0A0A0A';
+ctx.fillRect(0, 0, W, H);
+const fg = S;
+if (img) {
+  // 离屏图片层：cover 填满后缓慢放大，降低对比度但保留原图色调。
+  const OW = 1200;
+  const OH = 420;
+  const off = api.canvas(OW, OH);
+  const o = off.ctx;
+  const zoom = 1 + 0.1 * (api.t / api.d);
+  const scale = Math.max(OW / img.naturalWidth, OH / img.naturalHeight) * zoom;
+  o.filter = 'contrast(0.75) brightness(1.02)';
+  o.drawImage(
+    img,
+    (OW - img.naturalWidth * scale) / 2,
+    (OH - img.naturalHeight * scale) / 2,
+    img.naturalWidth * scale,
+    img.naturalHeight * scale,
+  );
+  o.filter = 'none';
+
+  // 独立字形 mask：一次 destination-in，让图片只留在字口里。
+  const mask = api.canvas(OW, OH);
+  const m = mask.ctx;
+  m.font = TT.font(FONTS, 320, 'sans-900').css;
+  m.textAlign = 'center';
+  m.textBaseline = 'middle';
+  m.lineWidth = 20;
+  m.lineJoin = 'round';
+  m.miterLimit = 2;
+  m.fillText('MOVE', OW / 2, OH / 2);
+  m.strokeText('MOVE', OW / 2, OH / 2);
+
+  o.globalCompositeOperation = 'destination-in';
+  o.drawImage(mask.canvas, 0, 0);
+  o.globalCompositeOperation = 'source-over';
+  ctx.drawImage(off.canvas, (W - OW) / 2, (H - OH) / 2);
+}
 TT.flash.micro(ctx, { text: '02 / 09 — EVERY', x: W * 0.04, y: H * 0.165, size: 18, color: fg });
 TT.flash.micro(ctx, { text: 'BRAND FILM / 4:5', x: W * 0.96, y: H * 0.165, size: 16, color: fg, align: 'right' });
 TT.flash.micro(ctx, { text: 'EVERY = 1 FOOTNOTE = 1/5', x: W * 0.04, y: H * 0.835, size: 16, color: fg });

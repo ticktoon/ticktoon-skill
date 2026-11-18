@@ -11,11 +11,11 @@
   "resources": [
     {
       "type": "font",
-      "name": "sans-900"
+      "name": "sans-400"
     },
     {
       "type": "font",
-      "name": "sans-400"
+      "name": "DouYinMeiHaoTi"
     }
   ]
 }
@@ -31,8 +31,8 @@ const L = '#12305C';
 const M = '#8A8A8A';
 const B = '#0A0A0A';
 TT.flash.pattern(ctx, { kind: 'halftone', rect: { x: W * 0.62, y: 0, w: W * 0.38, h: H }, colorA: A, colorB: B, dotGap: 20, dot: 7, alpha: 0.16, seed: 1 });
-const size = TT.flash.fit(ctx, '万物皆动', W * 0.88, { maxPx: 380, fontKey: 'sans-900' });
-TT.flash.stagger(ctx, api, { text: '万物皆动', x: W * 0.5, y: H * 0.5, size, t: T, dur: 0.34, stagger: 0.09, direction: 'scale', fromScale: 2.1, ease: 'back', colors: [S, S, A, S] });
+const size = TT.flash.fit(ctx, '万物皆动', W * 0.88, { maxPx: 380, fontKey: 'DouYinMeiHaoTi' });
+TT.flash.stagger(ctx, api, { text: '万物皆动', x: W * 0.5, y: H * 0.5, size, t: T, dur: 0.34, stagger: 0.09, direction: 'scale', fromScale: 2.1, ease: 'back', fontKey: 'DouYinMeiHaoTi', colors: [S, S, A, S] });
 TT.flash.micro(ctx, { text: '01 / 09', x: W * 0.04, y: H * 0.08, size: 22, color: M });
 TT.flash.micro(ctx, { text: 'EVERY = 1 FOOTNOTE = 1/5', x: W * 0.96, y: H * 0.08, size: 18, color: M, align: 'right' });
 TT.flash.micro(ctx, { text: '129.2 BPM', x: W * 0.04, y: H * 0.94, size: 18, color: L, bar: { x: W * 0.04, y: H * 0.955, w: W * 0.18, h: 4, value: 0.2, color: A } });

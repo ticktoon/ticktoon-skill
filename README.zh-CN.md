@@ -42,7 +42,7 @@ schema → resolve → plan → emit → check → assemble
 composition.json
    ↓
 ticktoon tick(t)                 同一条同步渲染路径
-   ├─ 只读预览 / 画笔批注
+   ├─ 只读预览 / 画笔圈注
    ├─ stills / probe / qa / det
    └─ WebCodecs + Mediabunny → MP4（H.264 + AAC）
 ```
@@ -94,7 +94,7 @@ recipe 覆盖讲解、叙事、快闪、突发新闻与实拍。每条要么用�
 - **7 种字幕样式 + `none`**——plain、perchar、karaoke、collage、handnote、vertical、tornpaper，支持逐字时间与主体避让。
 - **旁白与声音**——内部自动选择：火山凭证齐备时用 Volc TTS，否则零密钥 Edge TTS；BGM/SFX 支持淡入淡出与人声闪避。
 - **实拍素材**——Pexels 检索、下载、署名、缓存与内置素材降级。
-- **预览与审片**——只读预览、静帧、probe 凭据；预览页可逐帧画笔标注，发送后立即把批次交给 Agent 解读修改；重编译后重新预览，开始下一轮。
+- **预览与审片**——只读预览、静帧、probe 凭据；预览页可逐帧画笔圈注，发送后立即把批次交给 Agent 解读修改；重编译后重新预览，开始下一轮。
 - **质量门禁**——`tt qa` 只做轻门禁：`RENDER_PAGE_ERROR` 与 `QA_INK_EMPTY` 两项 must 检查，并输出 12 格联系表；`tt det` 检查编译确定性。
 - **直接出 MP4**——通过 WebCodecs 与 Mediabunny 输出 H.264 + AAC，不调用外部 FFmpeg 可执行文件。
 - **画幅**——1920×1080@30 与 1080×1920@30。
@@ -151,13 +151,13 @@ pause → seek(t) → await video.settle(t) → 同步 tick(t) 重绘 → PNG
 
 ## 实时预览与圈注修改：看到问题，直接标给 Agent
 
-`tt preview --dir my-video` 启动或复用全局唯一的常驻预览服务，由 WorkBuddy 或其他宿主打开内置页面；不会额外启动外部 Chrome。切换工程时原服务直接切换 composition，不另开端口或审片器。改完 storyboard 重新 `tt build`，页面自动刷新。批注只落盘；导出通过对话发起，预览服务保持运行。
+`tt preview --dir my-video` 启动或复用全局唯一的常驻预览服务，由 WorkBuddy 或其他宿主打开内置页面；不会额外启动外部 Chrome。切换工程时原服务直接切换 composition，不另开端口或审片器。改完 storyboard 重新 `tt build`，页面自动刷新。圈注只落盘；导出通过对话发起，预览服务保持运行。
 
-看到问题后，在画面上直接画笔圈注，并在底部批注坞写一句描述：
+看到问题后，在画面上直接画笔圈注，并在底部圈注坞写一句描述：
 
-1. 点「画笔批注」暂停在当前帧，画笔画选 / 圈出问题区域；
-2. 写描述，点「完成批注」进入页面内待发送列表；可以继续跳到其他时间点标注，也可以删除某条；
-3. 点「发送批注」：整批 POST 到本地预览服务，写入 `<工程>/annotations/<batch>/`。每条包含描述、时间、命中的 clip，以及三张 PNG：原始帧、纯笔迹、合成后的批注图；
+1. 点「画笔圈注」暂停在当前帧，画笔画选 / 圈出问题区域；
+2. 写描述，点「完成圈注」进入页面内待发送列表；可以继续跳到其他时间点圈注，也可以删除某条；
+3. 点「发送圈注」：整批 POST 到本地预览服务，写入 `<工程>/annotations/<batch>/`。每条包含描述、时间、命中的 clip，以及三张 PNG：原始帧、纯笔迹、合成后的圈注图；
 4. 发送成功后页面顶部显示 2 秒半透明提示；后续在对话里要求处理时，Agent 先确认数量与逐条摘要，再读图修改，重编译后预览自动刷新。也可以用 `tt annotations` 读最新未处理批次。Agent 打开 `annotatedFrame` 看圈注，结合 `desc` / `t` / `clip` 定位要改的场；
 5. 改 `storyboard.json` → 重新 `build` → 再 `tt preview`。处理完用 `tt annotations --dir my-video --ack <batch-id>` 标记整批已处理。
 
@@ -191,13 +191,12 @@ node scripts/doctor.mjs --install
 
 ```bash
 node platform/cli.mjs new my-video --recipe whiteboard-explainer   # 建工程
-node platform/cli.mjs build --dir my-video                          # 快速编译（估时、无配音）
+node platform/cli.mjs build --dir my-video                          # 编译并自动生成真实音轨
 node platform/cli.mjs stills 0.6 3.1 9.4 --dir my-video             # 静帧 + 布局凭据
 node platform/cli.mjs preview --dir my-video --port 5123            # 只读预览
-node platform/cli.mjs annotations --dir my-video                    # 读取预览页发送的批注批次
+node platform/cli.mjs annotations --dir my-video                    # 读取预览页发送的圈注批次
 node platform/cli.mjs qa --dir my-video                             # must 门禁 + 12 格联系表
 node platform/cli.mjs det --twice --dir my-video                    # 编译确定性检查
-node platform/cli.mjs build --dir my-video                         # 编译并自动选择配音
 node scripts/render.mjs my-video/out/composition.json -o my-video/video.mp4
 ```
 
@@ -208,11 +207,28 @@ node scripts/render.mjs my-video/out/composition.json -o my-video/video.mp4
 | 命令 | 作用 |
 |---|---|
 | `tt recipe list / show <id> / audit` | 列出 recipe、查看单条契约（mode / template）、全量审计骨架与示例 |
-| `tt annotations [--all] [--ack [id]]` | 读取预览页发送的批注批次（默认最新未处理批次），`--ack` 标记整批已处理 |
-| `tt lab [--recipe <id>] [--port N]` | code recipe 镜头参考实验室：每个 `ref-shots/` 文件都走真实 build + 引擎预览；可改代码重跑，不回写文件 |
+| `tt annotations [--wait] [--all] [--ack [id]]` | 读取圈注批次；`--wait` 等待下一批，`--ack` 标记整批已处理 |
+| `tt lab [--recipe <id>] [--port N]` | 启动镜头参考与 Kit 实验室：真实 build + 引擎预览；可改代码重跑，不回写文件 |
 | `tt ci [--deep]` | 全量回归：audit + 双编译确定性；`--deep` 对每条 recipe 跑 QA |
 | `tt ci --baseline [--write]` | 对比骨架 / 镜头参考合成片的编译指纹；人审后刷新基线 |
 | `tt pack [dir]` | 打干净分发包（Skill + 引擎 dist） |
+
+### 镜头与 Kit 实验室
+
+```bash
+# Node 方式
+node platform/cli.mjs lab --port 5199
+
+# npm 方式（lab 是子命令，注意 -- 后有空格）
+npm run tt -- lab --port 5199
+```
+
+启动后可访问：
+
+- `http://127.0.0.1:5199/`：recipe 的 `ref-shots/` 镜头参考实验室。
+- `http://127.0.0.1:5199/kit`：Kit Lab，调试公共绘制词法和转场。
+
+未指定 `--port` 时默认使用 5125。
 
 ## 文件夹结构
 
@@ -237,7 +253,7 @@ ticktoon-skill/
 │   ├── inspect/                 # stills、probe、qa、det
 │   ├── project/                 # new、build、audit、ref-shots
 │   ├── kit/                     # 公共 kit 命名空间 + 字幕样式
-│   └── preview/                 # 只读预览 + 画笔批注
+│   └── preview/                 # 只读预览 + 画笔圈注
 ├── scripts/                     # render、doctor、auth、snapshot、pack
 ├── assets/                      # 字体、BGM、SFX、演示素材、README 案例图
 ├── docs/                        # 人类 / 开发文档（不参与运行时）

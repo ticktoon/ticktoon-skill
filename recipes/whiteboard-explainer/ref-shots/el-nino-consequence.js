@@ -6,7 +6,7 @@
   "resources": [
     {
       "type": "font",
-      "name": "sans-400"
+      "name": "TsangerYuMo"
     }
   ],
   "tags": [
@@ -87,7 +87,7 @@ const label = (value, x, y, size, color, k, align = 'left', rotate = -0.012) => 
   ctx.translate(x, y + (1 - k) * 12);
   ctx.rotate(rotate);
   ctx.globalAlpha = clamp01(k) * alpha;
-  TT.text(ctx, value, 0, 0, size, { color, align, fontKey: 'sans-400' });
+  TT.text(ctx, value, 0, 0, size, { color, align, fontKey: 'TsangerYuMo' });
   ctx.restore();
 };
 

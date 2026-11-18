@@ -471,7 +471,7 @@ async function cmdPreview() {
   }
 }
 
-/** 允许 --dir 直接指到 out/：批注始终挂在工程根。 */
+/** 允许 --dir 直接指到 out/：圈注始终挂在工程根。 */
 function projectRootOf(target) {
   return path.basename(target) === 'out' ? path.dirname(target) : target;
 }
@@ -541,7 +541,7 @@ function readAnnotationBatches(projectDir) {
 }
 
 /**
- * 预览批注的读回端：页面「发送批注」把整批写到 <工程>/annotations/<batch>/，
+ * 预览圈注的读回端：页面「发送圈注」把整批写到 <工程>/annotations/<batch>/，
  * 这里默认给出最新未处理批次（每条含图片绝对路径），--ack 标记整批已处理。
  */
 async function cmdAnnotations(selection = null) {
@@ -569,7 +569,7 @@ async function cmdAnnotations(selection = null) {
             const detail = item.desc || `t=${item.t.toFixed(1)}s`;
             return `第 ${index + 1} 条（${String(detail).slice(0, 60)}）`;
           }).join('，');
-          console.log(`[annotations] 请先回复用户再调用工具：已收到你发的 ${items.length} 条批注：${summary}，我会逐条检查并修复，完成后刷新预览。`);
+          console.log(`[annotations] 请先回复用户再调用工具：已收到你发的 ${items.length} 条圈注：${summary}，我会逐条检查并修复，完成后刷新预览。`);
         }
       } else {
         await new Promise((resolve) => setTimeout(resolve, 500));
@@ -579,14 +579,14 @@ async function cmdAnnotations(selection = null) {
 
   if (!existsSync(annDir)) {
     if (json) console.log(JSON.stringify({ batches: [] }, null, 2));
-    else console.log(`没有批注：${annDir} 不存在。先在 tt preview 里标注并发送。`);
+    else console.log(`没有圈注：${annDir} 不存在。先在 tt preview 里圈注并发送。`);
     return;
   }
 
   if (ack) {
     const target = ackId ? batches.find((batch) => batch.id === ackId) : batches.find((batch) => !batch.acked);
     if (!target) {
-      console.error(`✗ 没有可标记的批注批次${ackId ? `：${ackId}` : '（全部已处理）'}`);
+      console.error(`✗ 没有可标记的圈注批次${ackId ? `：${ackId}` : '（全部已处理）'}`);
       process.exit(1);
     }
     const ackedAt = new Date().toISOString();
@@ -599,7 +599,7 @@ async function cmdAnnotations(selection = null) {
   selected = selected || (all ? batches : batches.filter((batch) => !batch.acked).slice(0, 1));
   if (!selected.length) {
     if (json) console.log(JSON.stringify({ batches: [] }, null, 2));
-    else console.log('没有未处理的批注。用 --all 查看历史批次。');
+    else console.log('没有未处理的圈注。用 --all 查看历史批次。');
     return;
   }
   if (json) {
@@ -608,12 +608,12 @@ async function cmdAnnotations(selection = null) {
   }
   for (const batch of selected) {
     console.log('');
-    console.log(`批注批次 ${batch.id}${batch.acked ? '（已处理）' : ''}  ${batch.createdAt}  共 ${batch.items.length} 条`);
+    console.log(`圈注批次 ${batch.id}${batch.acked ? '（已处理）' : ''}  ${batch.createdAt}  共 ${batch.items.length} 条`);
     console.log(`  composition  ${batch.composition || '-'}`);
     for (const [index, item] of batch.items.entries()) {
       console.log(`  ${index + 1}. t=${item.t.toFixed(3)}s${item.clip?.id ? `  场景 ${item.clip.id}` : ''}`);
       if (item.desc) console.log(`     描述    ${item.desc}`);
-      console.log(`     批注图  ${item.images.annotatedFrame || '-'}`);
+      console.log(`     圈注图  ${item.images.annotatedFrame || '-'}`);
       if (item.images.frame) console.log(`     原始帧  ${item.images.frame}`);
       if (item.images.ink) console.log(`     笔迹    ${item.images.ink}`);
     }
@@ -818,9 +818,9 @@ function usage() {
   tt probe --t <秒> [--dir <工程>] 该时刻全部凭据（kind/单元/label/bbox/安全框/字幕带）
   tt qa [--count N] [--cols C]    轻量渲染校验（渲染异常/空墨迹）+ 12 格联系表，must=0
   tt det [--twice] [--verify H]   确定性指纹
-  tt preview [--port N]           启动/复用预览，输出 ready 后返回；--wait 同时等待批注
+  tt preview [--port N]           首次以后台任务启动；复用时输出 ready 即返回
   tt lab [--port N] [--recipe <id>]   code recipe 镜头参考实验室：真实编译 + 引擎预览，可改代码重跑
-  tt annotations [--wait] [--all] [--ack [id]]  读取批注；--wait 作为后台任务等待下一批并带回结果
+  tt annotations [--wait] [--all] [--ack [id]]  读取圈注；--wait 作为后台任务等待下一批并带回结果
   tt recipe list / show <id> / audit   recipe 货架（id/名称/关键词/when）/ 单条详情（mode+rules+template）/ 全量审计（骨架 + 示例）
   tt ci [--deep] [--count N]      全量回归：audit + 逐条 det 两次；--deep 复用 tt qa 管线
   tt ci --baseline [--write]       recipe 骨架 / 示例合成片的编译指纹与构建状态基线（新 recipe 自动纳入）；--write 刷新基线

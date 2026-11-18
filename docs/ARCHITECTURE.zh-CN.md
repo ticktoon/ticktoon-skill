@@ -23,7 +23,7 @@ schema → resolve → plan → emit → check → assemble
 composition.json / events.json / subs.srt / report.json
    ↓
 ticktoon CanvasCompositor.tick(t)
-   ├─ 只读预览 / 画笔批注
+   ├─ 只读预览 / 画笔圈注
    ├─ stills / probe / qa（轻量渲染异常 + 空墨迹校验 + 12 格联系表）
    ├─ det
    └─ WebCodecs + Mediabunny → 普通 MP4（H.264 + AAC）
@@ -379,8 +379,8 @@ sceneDur ──累加──► scene.start
 | `tt stills` / `tt probe` | 指定帧 / 单帧凭据 |
 | `tt qa` | 轻量质量管线：渲染异常 + 空墨迹 + 12 格联系表 |
 | `tt det` | 编译指纹 |
-| `tt preview` | 只读预览 + 多帧画笔批注；发送后写工程 `annotations/` 并关闭 |
-| `tt annotations [--all] [--ack [id]]` | 读取批注批次：默认最新未处理批次；`--ack` 标记整批已处理 |
+| `tt preview` | 只读预览 + 多帧画笔圈注；发送后写工程 `annotations/` 并关闭 |
+| `tt annotations [--all] [--ack [id]]` | 读取圈注批次：默认最新未处理批次；`--ack` 标记整批已处理 |
 | `tt lab [--recipe <id>] [--port N]` | code recipe 镜头参考实验室：`ref-shots/` 逐个走真实编译 + 引擎面板，可改代码重跑、不回写 |
 | `tt ci [--deep] [--baseline]` | 快速/深度/基线回归 |
 | `tt recipe list / show / audit` | recipe 清单 / 详情（mode + template）/ 全量审计 |
@@ -393,12 +393,12 @@ sceneDur ──累加──► scene.start
 ├── storyboard.json       # Agent 唯一要写的文件
 ├── assets/               # 本工程素材（可选）
 ├── out/                  # 编译产物，禁止手改
-├── annotations/          # 预览页发送的批注批次（用户输入，勿手改；tt annotations 读取）
+├── annotations/          # 预览页发送的圈注批次（用户输入，勿手改；tt annotations 读取）
 ├── review/               # 联系表（qa-sheet.png）与可选采样静帧
 └── video.mp4             # 仅明确要求导出时生成
 ```
 
-预览是只读常驻宿主：POST `/api/track` 返回 405；全局服务唯一，存在即复用并切换 composition，不存在才启动。页面按 `composition.json` mtime 自动刷新；批注只落盘，预览服务保持运行。引擎页面本身已去掉轨道区，只留空的 `#bottom` 扩展槽；skill 层补丁往槽里挂批注坞，并在右上角提供「复制 board JSON」。用户逐帧标注，点「完成批注」进入页面内待发送列表，点「发送批注」时整批 POST `/api/annotations`（每条 JSON + 三张 PNG data URL），预览服务写到 `<工程>/annotations/<batch>/request.json` 与 `<batch>/NN.{annotated,frame,ink}.png`；后续由对话驱动 Agent 用 `tt annotations` 读取批次，常驻预览服务继续运行。`tt annotations` 读回最新批次，`--ack` 写 `<batch>/.ack` 标记整批已处理。页面不再派发批注事件，Agent 的契约入口只有 CLI。
+预览是只读常驻宿主：POST `/api/track` 返回 405；全局服务唯一，存在即复用并切换 composition，不存在才启动。页面按 `composition.json` mtime 自动刷新；圈注只落盘，预览服务保持运行。引擎页面本身已去掉轨道区，只留空的 `#bottom` 扩展槽；skill 层补丁往槽里挂圈注坞，并在右上角提供「复制 board JSON」。用户逐帧圈注，点「完成圈注」进入页面内待发送列表，点「发送圈注」时整批 POST `/api/annotations`（每条 JSON + 三张 PNG data URL），预览服务写到 `<工程>/annotations/<batch>/request.json` 与 `<batch>/NN.{annotated,frame,ink}.png`；后续由对话驱动 Agent 用 `tt annotations` 读取批次，常驻预览服务继续运行。`tt annotations` 读回最新批次，`--ack` 写 `<batch>/.ack` 标记整批已处理。页面不再派发圈注事件，Agent 的契约入口只有 CLI。
 
 ---
 
@@ -413,7 +413,7 @@ sceneDur ──累加──► scene.start
 | 场景代码安全 | 无沙箱；可信作者输入，词法扫描只拦常见问题 |
 | 母带响度 | 不做 LUFS；导出后交给外部工具 |
 | 自动作曲 | 不做；BGM 从 manifest 选 |
-| 可视化编辑器 | 不做；只读预览 + 批注 |
+| 可视化编辑器 | 不做；只读预览 + 圈注 |
 | 实拍精剪 / 多机位 / 口播剪辑 | 不支持 |
 | 资源内存 | 池按 `src` 去重且不淘汰，长片驻留 |
 | 质量门禁 | 只有 `tt qa` 的 `must` 阻断；`should` 与审美判断不阻断 |
@@ -432,7 +432,7 @@ sceneDur ──累加──► scene.start
 - `references/ticktoon-authoring.md`：引擎级 scene API 与扩展契约
 - `references/authoring-code.md`：`scene.code` 写作、注入与验收
 - `references/qa.md`：交付前检查、12 格联系表读法
-- `references/iterate.md`：反馈、预览批注与 TTS 语义
+- `references/iterate.md`：反馈、预览圈注与 TTS 语义
 - `docs/style-dictionary.md`：40 条风格描述词典（人读参考，不是 recipe 实现清单）
 - `references/pexels.md`：实拍素材检索、缓存与降级
 - `references/captions.md` / `mark.md` / `pen.md` / `board.md` / `newsbg.md` / `transition.md` / `flash.md`：公共 kit 契约

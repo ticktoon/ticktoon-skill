@@ -6,7 +6,7 @@
   "resources": [
     {
       "type": "font",
-      "name": "sans-400"
+      "name": "TsangerYuMo"
     }
   ],
   "tags": [
@@ -114,7 +114,7 @@ const label = (value, x, y, size, color, k, align = 'left', rotate = -0.012) => 
   ctx.translate(x, y + (1 - clamp01(k)) * 10);
   ctx.rotate(rotate);
   ctx.globalAlpha = clamp01(k) * alpha;
-  TT.text(ctx, value, 0, 0, size, { color, align, fontKey: 'sans-400' });
+  TT.text(ctx, value, 0, 0, size, { color, align, fontKey: 'TsangerYuMo' });
   ctx.restore();
 };
 
@@ -128,7 +128,7 @@ label('100 元', 300, 352, bigPx, ink, prog(1.9, 0.6));
 stroke([[302, 360], [430, 363], [560, 358]], 2.05, 0.2, ink, mid, [], true);
 
 const formula = '100 × (1 + 8%)';
-const formulaFont = TT.font(FONTS, notePx, 'sans-400');
+const formulaFont = TT.font(FONTS, notePx, 'TsangerYuMo');
 ctx.font = formulaFont.css;
 const formulaW = TT.text.measure(ctx, formula);
 label(formula, 300, 425, notePx, muted, prog(2.5, 0.7));

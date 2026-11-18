@@ -22,7 +22,7 @@
 
 每个词条返回 `{ box: {x,y,w,h}, length }`（画布坐标墨迹框），失败返回 `null`。
 
-**手绘强度固定，不开放 `wobble` / `dash`**：`circle = 1`、`box = 0.6`、`underline = 0.3`、`numberCircle = 1`、`divider = 0.4`；箭头、对勾、叉使用内部基准值，删除线始终平直。`mark` 只做低频轮廓形变，并关闭 `pen` 的逐点高频坐标扰动；粗细用 `width`，笔种用 `pen`。
+**手绘强度默认固定，不开放 `wobble` / `dash`；只有 `arrow` 可用 `smooth:true` 关闭曲线扰动**：`circle = 1`、`box = 0.6`、`underline = 0.3`、`numberCircle = 1`、`divider = 0.4`；箭头、对勾、叉使用内部基准值，删除线始终平直。`mark` 只做低频轮廓形变，并关闭 `pen` 的逐点高频坐标扰动；粗细用 `width`，笔种用 `pen`。
 
 ## 10 个词条
 
@@ -30,7 +30,7 @@
 
 | id | 关键参数 | 什么时候用 |
 |---|---|---|
-| `arrow` | `from`, `to`, `bend`(带符号曲率), `via`, `head:'open'\|'solid'\|'none'`, `double` | 指向方向、增长、因果；直线箭头扰动更轻，弧线放宽，短线自动衰减 |
+| `arrow` | `from`, `to`, `bend`(带符号曲率), `via`, `head:'open'\|'solid'\|'none'`, `double`, `smooth` | 指向方向、增长、因果；默认扰动 0.045，短线自动衰减；`smooth:true` 关闭曲线扰动，适合几何循环 |
 | `circle` | `at`, `rx`, `ry`, `rotate` | 圈住人物/数字/局部；一笔带长起笔尾，轮廓为明显的低频不规则曲线，起止点错开 |
 | `box` | `rect`, `radius`, `shape:'rect'\|'round'\|'cloud'`, `width` | 不规则手画框；边缘密采样后只做低频形变，云朵用于概念/气泡 |
 | `highlight` | `rect`, `color`, `alpha:0.28`, `seed` | 一笔涂抹词/句的底色；**必须先 highlight 后写字** |

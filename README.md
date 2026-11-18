@@ -155,9 +155,9 @@ At 60–120Hz the old path's fixed waits alone were 4.2–4.7s—comparable to t
 
 When something looks wrong, draw on the frame and leave a note in the bottom annotation dock:
 
-1. Click **画笔批注** (pen annotation); the preview pauses at the current frame, and you can circle or mark the problem area with the pen.
-2. Write the description and click **完成批注** (finish annotation). It enters the in-page send list. You can jump to another timestamp, add more, or remove a draft.
-3. Click **发送批注** (send annotations). The whole batch is POSTed to the local preview server and written to `<project>/annotations/<batch>/`. Each item carries the description, time, matching scene clip, and three PNGs: the original frame, the ink-only layer, and the composed annotated frame.
+1. Click **画笔圈注** (pen annotation); the preview pauses at the current frame, and you can circle or mark the problem area with the pen.
+2. Write the description and click **完成圈注** (finish annotation). It enters the in-page send list. You can jump to another timestamp, add more, or remove a draft.
+3. Click **发送圈注** (send annotations). The whole batch is POSTed to the local preview server and written to `<project>/annotations/<batch>/`. Each item carries the description, time, matching scene clip, and three PNGs: the original frame, the ink-only layer, and the composed annotated frame.
 4. Sending shows a two-second translucent notice and saves the batch. When the user asks for revisions, the agent acknowledges the count and per-item summary, then reads and fixes the images; the preview refreshes after the rebuild. `tt annotations` can also read the latest unhandled batch at any time.
 5. Edit `storyboard.json` → `tt build` → `tt preview` again. When done, `tt annotations --dir my-video --ack <batch-id>` marks the batch handled.
 
@@ -191,13 +191,12 @@ Example request:
 
 ```bash
 node platform/cli.mjs new my-video --recipe whiteboard-explainer   # scaffold a project
-node platform/cli.mjs build --dir my-video                          # fast compile (estimated timing, no voice)
+node platform/cli.mjs build --dir my-video                          # compile with real audio tracks
 node platform/cli.mjs stills 0.6 3.1 9.4 --dir my-video             # stills + layout receipts
 node platform/cli.mjs preview --dir my-video --port 5123            # read-only preview
 node platform/cli.mjs annotations --dir my-video                    # read the batch sent from the preview
 node platform/cli.mjs qa --dir my-video                             # must-gate + 12-cell contact sheet
 node platform/cli.mjs det --twice --dir my-video                    # compile-determinism check
-node platform/cli.mjs build --dir my-video                         # build with automatic narration provider selection
 node scripts/render.mjs my-video/out/composition.json -o my-video/video.mp4
 ```
 
@@ -208,11 +207,28 @@ Useful commands:
 | Command | Purpose |
 |---|---|
 | `tt recipe list / show <id> / audit` | list recipes, inspect one contract (mode / template), audit all skeletons and ref-shot sets |
-| `tt annotations [--all] [--ack [id]]` | read annotation batches sent from the preview (latest unacked by default); `--ack` marks the batch handled |
-| `tt lab [--recipe <id>] [--port N]` | code-recipe ref-shot lab: preview each `ref-shots/` file through real build + engine; edit code and rerun without writing back |
+| `tt annotations [--wait] [--all] [--ack [id]]` | read annotation batches; `--wait` waits for the next batch, `--ack` marks it handled |
+| `tt lab [--recipe <id>] [--port N]` | launch the ref-shot and Kit labs with real builds and engine previews; edit and rerun without writing back |
 | `tt ci [--deep]` | full regression: audit + double-build determinism; `--deep` runs QA for every recipe |
 | `tt ci --baseline [--write]` | compare skeleton / ref-shot-set compile fingerprints; refresh the baseline after review |
 | `tt pack [dir]` | build a clean distribution (Skill + engine dist) |
+
+### Ref-shot and Kit labs
+
+```bash
+# Node
+node platform/cli.mjs lab --port 5199
+
+# npm (lab is a subcommand; note the space after --)
+npm run tt -- lab --port 5199
+```
+
+Then open:
+
+- `http://127.0.0.1:5199/`: the recipe's `ref-shots/` lab.
+- `http://127.0.0.1:5199/kit`: Kit Lab for shared drawing primitives and transitions.
+
+Without `--port`, the default is 5125.
 
 ## Folder structure
 
