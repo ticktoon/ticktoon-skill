@@ -60,7 +60,8 @@
   "captions": {
     "style": "tornpaper",
     "font": "JiangChengYuanTi",
-    "accent": "#343A3B",
+    "accent": "#82CDB6",
+    "highlight": "#1F6F54",
     "baseSize": 44,
     "lineHeight": 1.34,
     "top": 0.8,

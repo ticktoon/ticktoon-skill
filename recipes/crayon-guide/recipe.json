@@ -43,11 +43,11 @@
       "再铺第二层纸底；纸纹只来自 TT.board.crayon",
       "用纯色矩形和平滑矢量图标代替蜡笔排线与颗粒",
       "把每帧随机抖动当作手绘感；纹理和轮廓偏移必须由固定序号决定",
-      "主体或场景内文字侵入底部字幕带；公共 captions 只有 handnote 一层"
+      "主体或场景内文字侵入底部字幕带；公共 captions 只有 tornpaper 一层"
     ]
   },
   "captions": {
-    "style": "handnote",
+    "style": "tornpaper",
     "font": "ZTZiYouTi",
     "baseSize": 42,
     "lineHeight": 1.34,

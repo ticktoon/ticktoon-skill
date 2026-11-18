@@ -9,7 +9,6 @@ export const CAPTION_STYLE_DEFAULTS = {
   perchar: { font: 'sans-900', at: 'bottom', band: true },
   karaoke: { font: 'sans-900', at: 'bottom', band: true, highlight: '#FFD166' },
   collage: { font: 'sans-900', at: 'auto', band: true, rotation: 6 },
-  handnote: { font: 'ZTZiYouTi', at: 'bottom', band: true, highlight: '#F4D35E' },
   vertical: { font: 'WenYuanSerifSC-Bold', at: 'auto', band: false },
   tornpaper: { font: 'JiangChengYuanTi', at: 'bottom', band: true },
 };

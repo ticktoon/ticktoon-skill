@@ -90,8 +90,8 @@ recipe 覆盖讲解、叙事、快闪、突发新闻与实拍。每条要么用�
 
 除此之外：
 
-- **带 kit 的场景代码**——`TT.text`、`TT.pen`、`TT.mark`、`TT.board`、`TT.geom`、`TT.flash`、`TT.chart`、`TT.newsBg` 等；编译器只注入场景实际用到的成员，转场边界另注入 `TT.transition` 生成双帧合成场。
-- **7 种字幕样式 + `none`**——plain、perchar、karaoke、collage、handnote、vertical、tornpaper，支持逐字时间与主体避让。
+- **带 kit 的场景代码**——`TT.text`、`TT.pen`、`TT.mark`、`TT.board`、`TT.geom`、`TT.chart`、`TT.newsBg` 等；编译器只注入场景实际用到的成员，转场边界另注入 `TT.transition` 生成双帧合成场。
+- **6 种字幕样式 + `none`**——plain、perchar、karaoke、collage、vertical、tornpaper，支持逐字时间与主体避让。
 - **旁白与声音**——内部自动选择：火山凭证齐备时用 Volc TTS，否则零密钥 Edge TTS；BGM/SFX 支持淡入淡出与人声闪避。
 - **实拍素材**——Pexels 检索、下载、署名、缓存与内置素材降级。
 - **预览与审片**——只读预览、静帧、probe 凭据；预览页可逐帧画笔圈注，发送后立即把批次交给 Agent 解读修改；重编译后重新预览，开始下一轮。
@@ -117,7 +117,7 @@ storyboard 只需要在边界前一场选择固定预设：
 { "id": "s01", "duration": 4, "transition": "push-up", "code": "/* 完整前场 */" }
 ```
 
-内置 11 种固定预设：交叉融合、向左 / 向上擦入与推移、缩放、故障、圆形揭示、纸张翻页，以及参考 GL Transitions 的 `squares-wire`、`morph`。方向由完整预设名区分，不开放出入场、圆心等零散参数。图案转场仍使用确定性 Canvas 路径与切片，不引入 WebGL 或像素回读。双帧转场用于 `scene.code` 边界；画面中的文字也只是完整画面的一部分，不做字幕特例。
+内置 10 种固定预设：交叉融合、向左 / 向上擦入与推移、缩放、故障、圆形揭示，以及参考 GL Transitions 的 `squares-wire`、`morph`。方向由完整预设名区分，不开放出入场、圆心等零散参数。图案转场仍使用确定性 Canvas 路径与切片，不引入 WebGL 或像素回读。双帧转场用于 `scene.code` 边界；画面中的文字也只是完整画面的一部分，不做字幕特例。
 
 视觉时间轴采用 `(A-D/2) + T(D) + (B-D/2)`，总片长不变。旁白、SFX、BGM 与 SRT 仍按原始 A/B 逻辑时间轴生成，不随视觉节点移动。详见 [转场协议](references/transition.md)。
 

@@ -71,7 +71,15 @@ if (img) {
   o.globalCompositeOperation = 'source-over';
   ctx.drawImage(off.canvas, (W - OW) / 2, (H - OH) / 2);
 }
-TT.flash.micro(ctx, { text: '02 / 09 — EVERY', x: W * 0.04, y: H * 0.165, size: 18, color: fg });
-TT.flash.micro(ctx, { text: 'BRAND FILM / 4:5', x: W * 0.96, y: H * 0.165, size: 16, color: fg, align: 'right' });
-TT.flash.micro(ctx, { text: 'EVERY = 1 FOOTNOTE = 1/5', x: W * 0.04, y: H * 0.835, size: 16, color: fg });
-TT.flash.micro(ctx, { text: 'MOVE / 02', x: W * 0.96, y: H * 0.835, size: 16, color: fg, align: 'right' });
+TT.text(ctx, '02 / 09 — EVERY', W * 0.04, H * 0.165, 18, {
+  color: fg, align: 'left', baseline: 'alphabetic', fontKey: 'sans-400',
+});
+TT.text(ctx, 'BRAND FILM / 4:5', W * 0.96, H * 0.165, 16, {
+  color: fg, align: 'right', baseline: 'alphabetic', fontKey: 'sans-400',
+});
+TT.text(ctx, 'EVERY = 1 FOOTNOTE = 1/5', W * 0.04, H * 0.835, 16, {
+  color: fg, align: 'left', baseline: 'alphabetic', fontKey: 'sans-400',
+});
+TT.text(ctx, 'MOVE / 02', W * 0.96, H * 0.835, 16, {
+  color: fg, align: 'right', baseline: 'alphabetic', fontKey: 'sans-400',
+});

@@ -1,0 +1,23 @@
+{
+  "recipe": "news-broadcast",
+  "format": {
+    "w": 1080,
+    "h": 1920,
+    "fps": 30
+  },
+  "meta": {
+    "title": "突发新闻·APEC第三十三次领导人非正式会议在深圳举行"
+  },
+  "scenes": [
+    {
+      "id": "s01",
+      "duration": 10.5,
+      "params": {
+        "title": "APEC第三十三次\n*领导人非正式会议",
+        "content": "11月18日至19日\n在深圳举行\n\n聚焦开放 创新 合作\n人工智能与贸易便利化\n*区域增长预期3.4%",
+        "source": "APEC秘书处",
+        "brand": "APEC2026·深圳"
+      }
+    }
+  ]
+}

@@ -135,10 +135,10 @@ export function scanSceneCode(code, { sceneId = '', resources = [] } = {}) {
 
   const hasFont = Array.isArray(resources)
     && resources.some((item) => item && typeof item === 'object' && item.type === 'font');
-  if (!hasFont && /\bTT\s*\.\s*(text|flash)\b/.test(scanText)) {
+  if (!hasFont && /\bTT\s*\.\s*text\b/.test(scanText)) {
     errors.push({
       code: 'SCENE_FONTS_MISSING',
-      msg: `scene ${sceneId || '<unknown>'} 调用了 TT.text / TT.flash，但本场 resources 没有 font 条目；` +
+      msg: `scene ${sceneId || '<unknown>'} 调用了 TT.text，但本场 resources 没有 font 条目；` +
         '在 scene.resources 里加 { type: "font", name: "<manifest 字体键>" }，src 由编译期补齐',
     });
   }

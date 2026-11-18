@@ -81,7 +81,7 @@ ticktoon CanvasCompositor.tick(t)
 
 **公共 kit（`platform/kit/index.json`）**
 
-`ease`、`num`（含 `clamp01 / env / rng`）、`text`、`fonts`（`font`）、`chart`、`pen`、`mark`、`transition`、`board`、`geom`、`newsbg`（`newsBg`：新闻径向蓝底 + 地图 + 网格 + 种子流动线）、`flash`（快闪排版与图案）。
+`ease`、`num`（含 `clamp01 / env / rng`）、`text`、`fonts`（`font`）、`chart`、`pen`、`mark`、`transition`、`board`、`geom`、`newsbg`（`newsBg`：新闻径向蓝底 + 地图 + 网格 + 种子流动线）。
 
 字幕 kit 在 `platform/kit/captions/`：`core.js` 提供 `TT.captionKit`，`styles/*.js` 是七种可选样式。它随编译期选中的样式一起注入，不走 `index.json` 的命名空间机制。
 
@@ -96,7 +96,7 @@ ticktoon CanvasCompositor.tick(t)
 
 **字体契约（ABI 1）**
 
-recipe 不承载字体表。字体库由 `assets/fonts/manifest.json` 定义：键即引擎 FontFace 族名，条目带 `src / family / weight / desc`，`desc` 是作者选型依据。code 场在 `scene.resources` 里声明 `{"type":"font","name":"<manifest 键>"}`，`src` 由 schema 阶段按 manifest 补齐；params 模板把字体键写死在模板代码，并在 `template.resources` 声明同样的 font 条目。`FONTS` 是本场 font 资源键的恒等映射，`TT.font` / `TT.text.fontKey` / `TT.flash.fontKey` 全部只认 manifest 键。颜色不属于 recipe：kit 自带默认调色板，调用方需要品牌色时直接传 hex；背景也不属于 recipe，由 `scene.code` / params 模板自己铺满整帧。字号、行高、版式、动效、图表参数同样不归字体表；它们归 recipe `rules` 的白名单字段或模板本地配置。
+recipe 不承载字体表。字体库由 `assets/fonts/manifest.json` 定义：键即引擎 FontFace 族名，条目带 `src / family / weight / desc`，`desc` 是作者选型依据。code 场在 `scene.resources` 里声明 `{"type":"font","name":"<manifest 键>"}`，`src` 由 schema 阶段按 manifest 补齐；params 模板把字体键写死在模板代码，并在 `template.resources` 声明同样的 font 条目。`FONTS` 是本场 font 资源键的恒等映射，`TT.font` / `TT.text.fontKey` 全部只认 manifest 键。颜色不属于 recipe：kit 自带默认调色板，调用方需要品牌色时直接传 hex；背景也不属于 recipe，由 `scene.code` / params 模板自己铺满整帧。字号、行高、版式、动效、图表参数同样不归字体表；它们归 recipe `rules` 的白名单字段或模板本地配置。
 
 ---
 
@@ -291,7 +291,7 @@ sceneDur ──累加──► scene.start
 
 `platform/kit/captions/core.js` 统一处理字体、逐字时间、折行、定位、安全区、淡入淡出与主体避让；`platform/kit/captions/styles/*.js` 只定义盒型与绘制。
 
-7 种样式：`plain / perchar / karaoke / collage / handnote / vertical / tornpaper`，另有 `none`。字幕在场景内容之后、相机变换之外绘制。
+6 种样式：`plain / perchar / karaoke / collage / vertical / tornpaper`，另有 `none`。字幕在场景内容之后、相机变换之外绘制。
 
 ### 6.3 音频事件
 
@@ -408,7 +408,7 @@ sceneDur ──累加──► scene.start
 |---|---|
 | 画幅 | Skill 仅开放 1920×1080@30 和 1080×1920@30 |
 | 轨道 / 多图层合成 | 不支持；只有顺序场景 |
-| 跨场景合成 | 支持 11 个固定双帧转场，含方向擦入 / 推移、纸张翻页与 GL 风格图案转场；编译器生成独立 code scene，同时绘制前后完整画面；仅限 code 场边界 |
+| 跨场景合成 | 支持 10 个固定双帧转场，含方向擦入 / 推移与 GL 风格图案转场；编译器生成独立 code scene，同时绘制前后完整画面；仅限 code 场边界 |
 | 3D | 引擎支持；`scene.code` 未开放，params 模板需声明 `template.needs.three: true` |
 | 场景代码安全 | 无沙箱；可信作者输入，词法扫描只拦常见问题 |
 | 母带响度 | 不做 LUFS；导出后交给外部工具 |
@@ -435,7 +435,7 @@ sceneDur ──累加──► scene.start
 - `references/iterate.md`：反馈、预览圈注与 TTS 语义
 - `docs/style-dictionary.md`：40 条风格描述词典（人读参考，不是 recipe 实现清单）
 - `references/pexels.md`：实拍素材检索、缓存与降级
-- `references/captions.md` / `mark.md` / `pen.md` / `board.md` / `newsbg.md` / `transition.md` / `flash.md`：公共 kit 契约
+- `references/captions.md` / `mark.md` / `pen.md` / `board.md` / `newsbg.md` / `transition.md`：公共 kit 契约
 
 **人类/开发（不进入运行时）**
 

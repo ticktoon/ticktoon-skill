@@ -55,7 +55,7 @@ node "$SKILL_DIR/platform/cli.mjs" stills 1.4 2.2 \
 
 配置优先级为 **CLI `--captions` → storyboard `uses.captions` → recipe `captions`**。
 
-## 七种样式
+## 六种样式
 
 | ID | 视觉特征 | 适合内容 | 常用参数 |
 |---|---|---|---|
@@ -63,9 +63,8 @@ node "$SKILL_DIR/platform/cli.mjs" stills 1.4 2.2 \
 | `perchar` | 圆角背衬跟随实际文本宽度，逐字字幕：未读字弱化，已读字点亮 | 新闻、播报、数据和正式说明 | `background`、`color`、`align`、`band` |
 | `karaoke` | 已读字变白，当前字使用高亮色并放大到 1.12 倍 | 叙事、历史、歌曲和跟读 | `highlight`、`background`、`color` |
 | `collage` | 每字独立色块，色板循环，确定性错位、逐字回弹和最大 ±6° 微旋转；多行有不同横向偏移 | 社交视频、拼贴插画、生活方式和活泼标题 | `palette`、`seed`、`rotation`、`maxWidth`、`avoid` |
-| `handnote` | 手写字、灰色纸带、不规则荧光笔条，字级轻微手绘抖动且不逐帧闪烁 | 白板、手账、教育、轻量解释 | `font`、`highlight`、`background`、`color` |
 | `vertical` | 字从上到下，列从右到左，逐字显现 | 水墨、国风、诗词和东方美学 | `font`、`maxHeight`、`at`、`color`、`band` |
-| `tornpaper` | 白色手撕纸背衬，带柔和投影；上下撕边平缓，纸纤维按 `seed` 固定；左上角斜置一块 accent 和纸色块，深墨字默认江城圆体 | 手账、生活记录、报刊剪贴和轻松叙事 | `background`、`accent`、`color`、`seed`、`band` |
+| `tornpaper` | 白色手撕纸背衬，带柔和投影；上下撕边平缓，纸纤维按 `seed` 固定；左上角斜置 accent 胶带；未读字默认黑色，点亮后使用独立 highlight 深绿色，默认江城圆体 | 手账、生活记录、报刊剪贴和轻松叙事 | `background`、`accent`、`color`、`seed`、`band` |
 
 `collage` 的色块是字形设计本身，不受 `band: false` 抑制。其色块前景色默认按背景亮度自动选择；单色 `palette` 时可用 `color` 指定文字颜色。随机偏移由字符序号与 `seed` 哈希得到，不使用 `Math.random()`，同一输入可重复渲染。
 
@@ -77,7 +76,7 @@ node "$SKILL_DIR/platform/cli.mjs" stills 1.4 2.2 \
 
 | 参数 | 类型 / 范围 | 默认值 | 说明 |
 |---|---|---|---|
-| `style` | 七样式 ID 或 `none`（关闭字幕） | `perchar` | 对象形式时指定样式 |
+| `style` | 六样式 ID 或 `none`（关闭字幕） | `perchar` | 对象形式时指定样式 |
 | `font` | `assets/fonts/manifest.json` 的字体键 | 随样式 | 见下方字体表；直接写键，如 `JiangChengYuanTi`，没有角色层 |
 | `size` | number，`0.5–2.0` | `1` | 相对 recipe `captions.baseSize` 的倍率 |
 | `at` | `bottom` / `top` / `center` / `auto` / `{x,y}` | 随样式 | 字幕整体位置 |
@@ -91,7 +90,7 @@ node "$SKILL_DIR/platform/cli.mjs" stills 1.4 2.2 \
 | `color` | CSS 颜色字符串 | 随样式 | 主文字颜色 |
 | `background` | CSS 颜色字符串 | 随样式 | 整体背衬颜色 |
 | `accent` | CSS 颜色字符串 | `tornpaper: #9FD4BD` | `tornpaper` 左上角斜置色块 |
-| `highlight` | CSS 颜色字符串 | `karaoke: #FFD166`；`handnote: #F4D35E` | 当前字或荧光笔高亮 |
+| `highlight` | CSS 颜色字符串 | `karaoke: #FFD166`；`tornpaper: #1F6F54` | 当前字、点亮文字或荧光笔高亮 |
 | `palette` | 非空 CSS 颜色字符串数组 | collage 六色色板 | 逐字循环的独立色块颜色 |
 | `seed` | integer | `17` | collage 确定性错位、块尺寸和旋转的种子 |
 | `rotation` | number，`0–6` | `6` | collage 最大绝对旋转角度；`0` 关闭旋转 |
@@ -107,7 +106,6 @@ node "$SKILL_DIR/platform/cli.mjs" stills 1.4 2.2 \
 | `perchar` | `sans-900` | `bottom` | `true` |
 | `karaoke` | `sans-900` | `bottom` | `true` |
 | `collage` | `sans-900` | `auto` | `true` |
-| `handnote` | `ZTZiYouTi` | `bottom` | `true` |
 | `vertical` | `WenYuanSerifSC-Bold` | `auto` | `false` |
 | `tornpaper` | `JiangChengYuanTi` | `bottom` | `true` |
 
@@ -166,7 +164,7 @@ node "$SKILL_DIR/platform/cli.mjs" stills 1.4 2.2 \
 | `sans-400` | WenYuanSansSC | `WenYuanSansSC-Medium.woff2` | 400；长句与信息型字幕，阅读更稳 |
 | `WenYuanSerifSC-Bold` | WenYuanSerifSC | `WYST_BOLD.woff2` | 700；宋体，vertical 与国风字幕默认 |
 | `JiangChengYuanTi` | JiangChengYuanTi | `江城圆体.woff2` | 400；柔和圆体，tornpaper 默认 |
-| `ZTZiYouTi` | ZTZiYouTi | `ZTZYT.woff2` | 400；自由手写，handnote 默认 |
+| `ZTZiYouTi` | ZTZiYouTi | `ZTZYT.woff2` | 400；自由手写质感，适合海报短标题、情绪强调字 |
 | `ZTYueDongHei` | ZTYueDongHei | `ZTYDH.woff2` | 400；海报型强调字幕 |
 | `MaokenAssortedSans` | MaokenAssortedSans | `MKSJH.woff2` | 400；不规则字面，适合剪报拼贴 |
 | `DouYinMeiHaoTi` | DouYinMeiHaoTi | `DYMHT.woff2` | 400；活泼标题字 |

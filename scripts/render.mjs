@@ -24,7 +24,7 @@ const ASSETS_DIR = path.join(SKILL_ROOT, 'assets');
 
 const args = process.argv.slice(2);
 if (args.length === 0 || args.includes('--help')) {
-  console.log('用法: node scripts/render.mjs <composition.json> [-o out.mp4] [--quantizer 20] [--bitrate 8000000] [--codec avc1...] [--render-scale 1|2] [--keep-preview]');
+  console.log('用法: node scripts/render.mjs <composition.json> [-o out.mp4] [--quantizer 20] [--bitrate 8000000] [--codec avc1...] [--render-scale 1|2]');
   console.log('默认 QP20、1× 输出；--render-scale 2 可选超采样；仅传 --bitrate 时按目标码率编码。');
   process.exit(args.length === 0 ? 1 : 0);
 }

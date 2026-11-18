@@ -62,7 +62,8 @@
     const seed = Number.isFinite(Number(o.seed)) ? Number(o.seed) : 17;
     const paper = o.background || '#FFFFFF';
     const accent = o.accent || '#9FD4BD';
-    const ink = o.color || '#312D26';
+    const ink = o.color || '#0A0A0A';
+    const highlight = o.highlight || '#1F6F54';
 
     const paint = (g) => {
       g.font = m.f.css;
@@ -141,9 +142,14 @@
         g.restore();
       }
 
-      // 纸面字一次落下，和纸、胶布一起作为整块内容淡入淡出。
-      g.fillStyle = ink;
-      TT.captionKit.eachChar(m, (ch) => g.fillText(ch.text, ch.x, ch.baseline));
+      // 未读字弱化，随 cue 时间逐字点亮；纸和胶布仍共享整体透明度包络。
+      TT.captionKit.eachChar(m, (ch) => {
+        g.save();
+        g.globalAlpha = 1;
+        g.fillStyle = c.sceneT >= ch.start ? highlight : ink;
+        g.fillText(ch.text, ch.x, ch.baseline);
+        g.restore();
+      });
     };
 
     if (o.band === false) {

@@ -9,6 +9,5 @@
   "transition": { "file": "transition.js", "provides": ["transition"] },
   "board":  { "file": "board.js",  "provides": ["board"] },
   "newsbg": { "file": "newsbg.js", "provides": ["newsBg"], "requires": ["num"] },
-  "geom":   { "file": "geom.js",   "provides": ["geom"], "requires": ["ease", "num"] },
-  "flash":  { "file": "flash.js",  "provides": ["flash"], "requires": ["ease", "num", "text", "fonts"] }
+  "geom":   { "file": "geom.js",   "provides": ["geom"], "requires": ["ease", "num"] }
 }

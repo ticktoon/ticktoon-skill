@@ -86,7 +86,7 @@
 
 ## 字幕
 
-`caption: tornpaper | perchar | plain`，默认 `tornpaper`（手撕纸背衬，左上胶布取白板墨色 `#343A3B`）。整幅画面在底部落笔、纸背衬会压住内容时，改 `at: "top"` 或 `plain`；同一幕只用一种字幕样式。
+`caption: tornpaper | perchar | plain`，默认 `tornpaper`（未读字为全黑，点亮后使用独立深绿 `#1F6F54`；左上胶布使用柔和薄荷绿 `#82CDB6`）。整幅画面在底部落笔、纸背衬会压住内容时，改 `at: "top"` 或 `plain`；同一幕只用一种字幕样式。
 
 ## 禁止
 
@@ -107,7 +107,7 @@
 | `RULES.stroke` | `[2.4, 4.5]`，中线 `3.45` |
 | 笔 / 舞台 | `marker` / `pencil`；`paper`（白纸马克笔）或 `blackboard`（自动粉笔） |
 | 字体 | 画面文字 `TsangerYuMo`（在 `resources` 声明）；字幕 `captions.font: "JiangChengYuanTi"` |
-| 字幕 | `tornpaper`（默认）/ `perchar` / `plain`；胶布取白板墨色 `#343A3B` |
+| 字幕 | `tornpaper`（默认）/ `perchar` / `plain`；胶带 `#82CDB6`，亮字深绿 `#1F6F54` |
 | 节拍 | `4–8` 个落笔节拍；间隔 `0.7–1.2s` 或一次 `≥1.5s` 长停顿；停顿占比 `15%–45%` |
 | 收尾 | 最后一笔在结束前 `≥0.6s` 完成，末 12% 不落新笔，结束前留约 `0.8s` 静止 |
 

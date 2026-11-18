@@ -90,8 +90,8 @@ Recipes cover explainers, stories, fast cuts, breaking news, and real footage. A
 
 Also included:
 
-- **Scene code with an injected kit** — `TT.text`, `TT.pen`, `TT.mark`, `TT.board`, `TT.geom`, `TT.flash`, `TT.chart`, `TT.newsBg`, and more. The compiler injects only the members each scene uses; transition boundaries separately receive `TT.transition` in a generated dual-frame scene.
-- **7 caption styles + `none`** — plain, perchar, karaoke, collage, handnote, vertical, tornpaper, with per-character timing and subject avoidance.
+- **Scene code with an injected kit** — `TT.text`, `TT.pen`, `TT.mark`, `TT.board`, `TT.geom`, `TT.chart`, `TT.newsBg`, and more. The compiler injects only the members each scene uses; transition boundaries separately receive `TT.transition` in a generated dual-frame scene.
+- **6 caption styles + `none`** — plain, perchar, karaoke, collage, vertical, tornpaper, with per-character timing and subject avoidance.
 - **Narration and sound** — zero-key edge-tts by default, optional Volc TTS, BGM/SFX with ducking and fades.
 - **Stock footage** — Pexels search, download, attribution, caching, and bundled fallback.
 - **Preview and review** — read-only preview, stills, probe receipts, and per-frame pen annotations. Sending immediately hands the batch to the agent; after revision and rebuild, a fresh preview starts the next round.
@@ -117,7 +117,7 @@ The storyboard only selects a fixed preset on the outgoing scene:
 { "id": "s01", "duration": 4, "transition": "push-up", "code": "/* complete scene A */" }
 ```
 
-The 11 fixed presets cover crossfade, left/up wipes and pushes, zoom, glitch, iris, and a paper-style `page-turn`, plus the GL Transitions–inspired `squares-wire` and `morph`. Direction is part of the complete preset name rather than a separate knob; there are no in/out, center, or duration parameters. Pattern transitions still use deterministic Canvas paths and slices, without WebGL or pixel readback. Dual-frame transitions apply to `scene.code` boundaries. Text already painted into a scene is simply part of the whole frame—there is no special caption compositor.
+The 10 fixed presets cover crossfade, left/up wipes and pushes, zoom, glitch, and iris, plus the GL Transitions–inspired `squares-wire` and `morph`. Direction is part of the complete preset name rather than a separate knob; there are no in/out, center, or duration parameters. Pattern transitions still use deterministic Canvas paths and slices, without WebGL or pixel readback. Dual-frame transitions apply to `scene.code` boundaries. Text already painted into a scene is simply part of the whole frame—there is no special caption compositor.
 
 The visual timeline is `(A-D/2) + T(D) + (B-D/2)`, so total duration is unchanged. Narration, SFX, BGM, and SRT retain the original A/B logical timeline rather than following the generated visual nodes. See the [transition protocol](references/transition.md).
 

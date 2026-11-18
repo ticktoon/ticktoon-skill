@@ -32,10 +32,10 @@ export const TRANSITION_PRESETS = {
     dur: 0.65, color: '#10151d',
     desc: '圆形窗口从中心打开，直接揭示后场', when: '聚焦、揭示、观察对象切换',
   },
-  'page-turn': {
-    dur: 0.8, color: '#10151d',
-    desc: '自适应画幅方向，连续圆柱弧面与透视镜像纸背，无高光', when: '章节翻篇、文档、书本、故事推进',
-  },
+  // 'page-turn': {
+  //   dur: 0.8, color: '#10151d',
+  //   desc: '自适应画幅方向，连续圆柱弧面与透视镜像纸背，无高光', when: '章节翻篇、文档、书本、故事推进',
+  // },
   'squares-wire': {
     dur: 0.6, color: '#080b12',
     desc: '10×10 圆角方格按原 shader 的 smoothness 从左上向右下逐渐填满，最终无空隙', when: '科技、模块化内容、界面切换',

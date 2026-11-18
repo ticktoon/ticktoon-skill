@@ -23,7 +23,6 @@ const demos = [
   { label: 'perchar', note: '文本宽度背衬 · 未读字弱化，已读字点亮', options: { style: 'perchar', at: 'center', size: 1.1 } },
   { label: 'karaoke', note: '当前字高亮 · 逐字跳色', options: { style: 'karaoke', at: 'bottom', size: 1.1, highlight: '#FFD166' } },
   { label: 'collage', note: '独立色块 · 错位 · 逐字弹出', options: { style: 'collage', at: { x: 0.61, y: 0.44 }, size: 1.3, maxWidth: 0.45 } },
-  { label: 'handnote', note: '手写字 · 纸带 · 荧光笔 · 一次出现', options: { style: 'handnote', at: 'bottom', size: 1.15 } },
   { label: 'vertical', note: '竖排 · 从上到下逐字出现', options: { style: 'vertical', at: { x: 0.78, y: 0.47 }, size: 1.05, maxHeight: 0.55, color: '#35413E' } },
   { label: 'tornpaper', note: '手撕纸 · 左上斜色块 · 江城圆体', options: { style: 'tornpaper', at: 'bottom', size: 1.1 } },
 ];

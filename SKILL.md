@@ -100,7 +100,7 @@ node "$SKILL_DIR/scripts/render.mjs" <dir>/out/composition.json -o <dir>/video.m
 
 **本机普通 Chrome 可用时，不要设置 `TICKTOON_CHROME_PATH` / `CHROME_PATH` 指向 Playwright 的 `chrome-headless-shell`；省略这两个变量，让启动器使用普通 Chrome 和本机 GPU。** headless shell 会默认走 SwiftShader，导出明显更慢；只有普通 Chrome 不可用或用户明确指定时才使用它。
 
-**全片视觉检查默认只跑 `tt qa` 并读取 `review/qa-sheet.png`；不要自造时间点运行 `tt stills` 来代替 QA。** `stills` 只用于用户指定时刻，或需要该时刻布局凭据（receipts）的定点排障，不是标准创作步骤。
+**全片视觉检查默认只跑 `tt qa` 并读取 `review/qa-sheet.png`；人工快速验收用 `tt preview`，不要自造时间点运行 `tt stills` 来代替 QA。** `stills` 会同时输出**指定时刻的完整 PNG 静帧和布局凭据（receipts）**，只用于用户指定时刻或定点排障，不是标准创作步骤。**禁止 FFmpeg 抽帧、截图、转码验证，禁止先导出 MP4 再检查画面；`render.mjs` 只负责导出，不提供抽帧参数。**
 
 
 ## 核心契约
@@ -138,7 +138,7 @@ kit 是可复用的绘制词法。用到哪类能力就读 `references/<kit>.md`
 ## 红线
 
 - 不手写生成的 composition；只改 storyboard，然后重编译。
-- 不引入第二套运行时、运行时组件注册、FFmpeg 后处理或拖拽式可视化编辑器。
+- 不引入第二套运行时、运行时组件注册、FFmpeg 后处理或拖拽式可视化编辑器；禁止 FFmpeg 抽帧、截图和转码验证。
 - 不在场景代码中使用 `Date.now`、`Math.random()`、异步绘制或帧间可变历史。
 - 不往公共 kit 里塞内容：kit 只收可穷举 + 复用 ≥3 类 + 人审过的词法；具体实现永远写在 `scene.code` 里。缺新词条先记录缺口，不在本片里临场扩展。
 - 本任务只做内容。新增 recipe 或 kit 属于扩展工作，按 `docs/ARCHITECTURE.zh-CN.md` 的扩展流程单独做，不在一次创作里临场添加。

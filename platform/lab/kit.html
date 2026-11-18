@@ -114,7 +114,6 @@
       <button class="tab" data-mode="mark">标注</button>
       <button class="tab" data-mode="board">板面</button>
       <button class="tab" data-mode="chart">图表</button>
-      <button class="tab" data-mode="flash">闪切</button>
       <button class="tab" data-mode="transition">转场</button>
     </div>
 
@@ -159,12 +158,6 @@
     <section class="mode-panel hidden" data-panel="chart">
       <div class="mode-title">图表几何</div>
       <div class="mode-hint">只跑 <code>TT.chart.bars / niceMax / ticks</code>；条形与刻度用裸 canvas 画，标签用 <code>TT.text</code>。</div>
-    </section>
-
-    <section class="mode-panel hidden" data-panel="flash">
-      <div class="mode-title">闪切效果</div>
-      <label class="field">效果<select id="flashTypeSelect"></select></label>
-      <div class="mode-hint">只跑 <code>TT.flash</code>；底色是裸 canvas 深色。</div>
     </section>
 
     <section class="mode-panel hidden" data-panel="transition">
@@ -237,12 +230,6 @@ const CAPTION_FONT_LABELS = {
   'TsangerShuYuan': '仓耳舒圆',
   'StarLovePencil': '宅在家自动笔',
 };
-const FLASH_TYPES = [
-  { id: 'stagger', label: 'stagger · 逐字弹入' },
-  { id: 'glitchType', label: 'glitchType · 故障字' },
-  { id: 'bands', label: 'bands · 色带滚动' },
-  { id: 'viewfinder', label: 'viewfinder · 取景框' },
-];
 const TRANSITION_PRESETS = [
   { id: 'dip-fade', label: 'dip-fade · 交叉融合' },
   { id: 'wipe-left', label: 'wipe-left · 向左擦入' },
@@ -252,7 +239,7 @@ const TRANSITION_PRESETS = [
   { id: 'zoom-pop', label: 'zoom-pop · 缩放推进' },
   { id: 'glitch', label: 'glitch · 故障切换' },
   { id: 'iris', label: 'iris · 圆形揭示' },
-  { id: 'page-turn', label: 'page-turn · 纸张翻页' },
+  // { id: 'page-turn', label: 'page-turn · 纸张翻页' },
   { id: 'squares-wire', label: 'squares-wire · 方格填满' },
   { id: 'morph', label: 'morph · 波形形变' },
 ];
@@ -437,38 +424,6 @@ function chartCode() {
   ].join('\n');
 }
 
-function flashCode() {
-  const type = $('#flashTypeSelect').value || 'stagger';
-  const head = ["ctx.fillStyle = '#0B0C0F';", 'ctx.fillRect(0, 0, W, H);'];
-  const body = {
-    stagger: [
-      'TT.flash.stagger(ctx, api, {',
-      '  text: "万物皆动", x: W * 0.5, y: H * 0.5, size: 220, t: api.t, dur: 0.32,',
-      '  align: "center", baseline: "middle",',
-      '});',
-    ],
-    glitchType: [
-      'TT.flash.glitchType(ctx, api, {',
-      '  text: "故障字", x: W * 0.5, y: H * 0.5, size: 220, t: api.t,',
-      '  align: "center", baseline: "middle",',
-      '});',
-    ],
-    bands: [
-      'TT.flash.bands(ctx, {',
-      '  rect: { x: 0, y: H * 0.34, w: W, h: H * 0.32 },',
-      '  text: "FLASH · KIT · ", t: api.t, size: 58,',
-      '});',
-    ],
-    viewfinder: [
-      'TT.flash.viewfinder(ctx, {',
-      '  rect: { x: W * 0.18, y: H * 0.2, w: W * 0.64, h: H * 0.6 },',
-      '  color: "#E8E8E8", crosshair: true,',
-      '});',
-    ],
-  }[type] || ['TT.flash.stagger(ctx, api, { text: "万物皆动", x: W * 0.5, y: H * 0.5, size: 220, t: api.t });'];
-  return [...head, ...body].join('\n');
-}
-
 function transitionSceneCode(which) {
   const second = which === 'B';
   const paper = second ? '#173A3D' : '#F3E7CE';
@@ -546,7 +501,6 @@ function buildPayload() {
     mark: markCode,
     board: boardCode,
     chart: chartCode,
-    flash: flashCode,
   }[state.mode]();
   return {
     code,
@@ -566,7 +520,6 @@ function modeSummary() {
   if (state.mode === 'mark') return `标注 / ${$('#markTypeSelect').value}`;
   if (state.mode === 'board') return `板面 / ${$('#boardTypeSelect').value}`;
   if (state.mode === 'chart') return '图表 / bars';
-  if (state.mode === 'flash') return `闪切 / ${$('#flashTypeSelect').value}`;
   if (state.mode === 'transition') return `转场 / ${$('#transitionPresetSelect').value}`;
   const font = $('#captionFontSelect').value;
   return '字幕 / ' + ($('#captionStyleSelect').value || 'perchar') + (font ? ` / ${font}` : '');
@@ -695,7 +648,6 @@ async function boot() {
   fillSelect($('#penTypeSelect'), PEN_TYPES, 'marker');
   fillSelect($('#markTypeSelect'), MARK_TYPES, 'circle');
   fillSelect($('#boardTypeSelect'), BOARD_TYPES, 'paper');
-  fillSelect($('#flashTypeSelect'), FLASH_TYPES, 'stagger');
   fillSelect($('#transitionPresetSelect'), TRANSITION_PRESETS, 'dip-fade');
 
   updateDurationHint();
@@ -761,7 +713,6 @@ $('#markTypeSelect').onchange = scheduleRun;
 $('#markColorInput').oninput = scheduleRun;
 $('#markWidthInput').oninput = scheduleRun;
 $('#boardTypeSelect').onchange = scheduleRun;
-$('#flashTypeSelect').onchange = scheduleRun;
 $('#transitionPresetSelect').onchange = scheduleRun;
 
 boot().catch((error) => {

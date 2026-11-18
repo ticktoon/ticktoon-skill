@@ -575,13 +575,21 @@ function canvasToBlob(canvas) {
 }
 
 async function writeClipboard(text) {
+  try {
+    const response = await fetch('/api/clipboard', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text }),
+    });
+    const reply = await response.json().catch(() => ({}));
+    if (response.ok && reply.ok) return 'server';
+  } catch { /* 继续尝试浏览器剪贴板 */ }
+
   if (navigator.clipboard?.writeText) {
     try {
       await navigator.clipboard.writeText(text);
-      return;
-    } catch {
-      // 非安全上下文或权限被拒时退回 execCommand。
-    }
+      return 'browser';
+    } catch { /* 继续尝试 execCommand */ }
   }
   const area = document.createElement('textarea');
   area.value = text;
@@ -591,7 +599,15 @@ async function writeClipboard(text) {
   area.select();
   const ok = document.execCommand('copy');
   area.remove();
-  if (!ok) throw new Error('当前上下文不能使用剪贴板，请手动复制');
+  if (ok) return 'legacy';
+
+  const url = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = 'composition.json';
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  return 'download';
 }
 
 copyBoardButton.addEventListener('click', async () => {
@@ -602,8 +618,10 @@ copyBoardButton.addEventListener('click', async () => {
     if (!response.ok) throw new Error(`board JSON 读取失败: HTTP ${response.status}`);
     const board = await response.json();
     const text = JSON.stringify(board, null, 2);
-    await writeClipboard(text);
-    status.textContent = `已复制完整 board JSON（${(text.length / 1024).toFixed(1)} KB）`;
+    const method = await writeClipboard(text);
+    status.textContent = method === 'download'
+      ? `当前环境不允许直接写剪贴板，已下载 composition.json（${(text.length / 1024).toFixed(1)} KB）`
+      : `已复制完整 board JSON（${(text.length / 1024).toFixed(1)} KB）`;
   } catch (error) {
     errorLabel.textContent = error instanceof Error ? error.message : String(error);
   } finally {

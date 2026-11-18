@@ -16,7 +16,7 @@
 
 禁止使用墙钟、`Math.random()`、异步绘制、帧间可变历史和 Canvas 像素回读。数学助手使用下方 `TT`，不要假设 `api` 提供 `ease`、`lerp`、`clamp`、`cover` 或 `contain`。
 
-`platform/compile/emit.mjs` 在 scene 前拼接 `TT` 与 `CAPTIONS`（有字幕时），都按 IIFE 挂到全局，只注入本次用到的成员（`new Function('ctx','api', code)` 没有 import）。可用的 `TT` 成员：`TT.ease.*`（缓动）、`TT.clamp01` / `TT.num.fmt` / `TT.env.fade|reveal` / `TT.rng`（数值与包络）、`TT.text`（中文优先断行 + 量测 + 墨迹框）、`TT.font`（本场字体资源键查询，`font().css` 的族名恒等于 `resources[].name`），以及场景 kit `TT.chart` / `TT.pen` / `TT.mark` / `TT.board` / `TT.geom` / `TT.flash`。`TT.transition` 只由编译器注入独立双帧转场场，普通 `scene.code` 不直接调用。code 场额外注入 `FONTS` 与 `RULES`；params 模板在顶层定义 `function draw(g, p)`，每帧由 emit 传入整帧 `G0` 与 `scene.params`，资源来自 `template.resources`（字体同样在模板代码里写 manifest 键）。params 模板不注入 `RULES`。
+`platform/compile/emit.mjs` 在 scene 前拼接 `TT` 与 `CAPTIONS`（有字幕时），都按 IIFE 挂到全局，只注入本次用到的成员（`new Function('ctx','api', code)` 没有 import）。可用的 `TT` 成员：`TT.ease.*`（缓动）、`TT.clamp01` / `TT.num.fmt` / `TT.env.fade|reveal` / `TT.rng`（数值与包络）、`TT.text`（中文优先断行 + 量测 + 墨迹框）、`TT.font`（本场字体资源键查询，`font().css` 的族名恒等于 `resources[].name`），以及场景 kit `TT.chart` / `TT.pen` / `TT.mark` / `TT.board` / `TT.geom`。`TT.transition` 只由编译器注入独立双帧转场场，普通 `scene.code` 不直接调用。code 场额外注入 `FONTS` 与 `RULES`；params 模板在顶层定义 `function draw(g, p)`，每帧由 emit 传入整帧 `G0` 与 `scene.params`，资源来自 `template.resources`（字体同样在模板代码里写 manifest 键）。params 模板不注入 `RULES`。
 
 ## Three layers
 
