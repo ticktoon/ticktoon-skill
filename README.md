@@ -82,6 +82,7 @@ Recipes cover explainers, stories, fast cuts, breaking news, and real footage. A
 | `ink-painting` | Ink lines, washes, and large negative space | `scene.code` | Eastern aesthetics, poetry, culture |
 | `illustrated-story` | Paper collage, cut-out lettering | `scene.code` | short stories, observations, essays |
 | `flash-cut` | Hard cuts, oversized type, one sentence per scene | `scene.code` | punchy opinions, conclusions, promo beats |
+| `flat-motion` | Saturated flat shapes, rounded characters and icons, elastic morphs | `scene.code` | product, brand, app-feature and light-explainer MG |
 | `crayon-guide` | Warm paper, crayon hatching, people and hand-drawn diagrams | `scene.code` | tutorials, cultural ideas, comparisons, kids' explainers |
 | `shadow-play` | Backlit screen, articulated silhouettes, scene-specific props | `scene.code` | fables, folk tales, historical vignettes |
 | `news-broadcast` | Fixed vertical news card: blue radial background, world map, flowing lines | `scene.params` | breaking-news cards, title / body / source |
@@ -93,7 +94,7 @@ Also included:
 - **7 caption styles + `none`** — plain, perchar, karaoke, collage, handnote, vertical, tornpaper, with per-character timing and subject avoidance.
 - **Narration and sound** — zero-key edge-tts by default, optional Volc TTS, BGM/SFX with ducking and fades.
 - **Stock footage** — Pexels search, download, attribution, caching, and bundled fallback.
-- **Preview and review** — read-only preview, stills, probe receipts, and per-frame pen annotations accumulated into a send list; sending writes the whole batch with screenshots into `<project>/annotations/` and closes the preview, read back with `tt annotations`.
+- **Preview and review** — read-only preview, stills, probe receipts, and per-frame pen annotations. Sending immediately hands the batch to the agent; after revision and rebuild, a fresh preview starts the next round.
 - **Quality gates** — `tt qa` with render-error and empty-ink must-checks plus a 12-cell contact sheet; `tt det` for compile determinism.
 - **Direct MP4** — H.264 + AAC through WebCodecs and Mediabunny; no external FFmpeg executable.
 - **Formats** — 1920×1080@30 and 1080×1920@30.
@@ -146,23 +147,23 @@ The machine gate is deliberately light: `RENDER_PAGE_ERROR` and `QA_INK_EMPTY` (
 | Full `tt qa` | — | 4.1s |
 | npm dependency | playwright + core: ~4.1MB download / ~18.7MB on disk, Node ≥20 | reuses existing `ws`, Node ≥18 |
 
-At 60–120Hz the old path's fixed waits alone were 4.2–4.7s—comparable to the current whole QA run. Across 9 recipes in `tt ci --deep`, browser startup alone saves about 18s; the current full run is 42.2s locally. QA, stills, snapshot, and render share the same local-Chrome CDP driver, so there is no extra automation framework layer to install.
+At 60–120Hz the old path's fixed waits alone were 4.2–4.7s—comparable to the current whole QA run. In the earlier 9-recipe `tt ci --deep` benchmark, browser startup alone saved about 18s; the full run was 42.2s locally. QA, stills, snapshot, and render share the same local-Chrome CDP driver, so there is no extra automation framework layer to install.
 
 ## Live preview and annotations: from review to revision
 
-`tt preview --dir my-video` opens a local read-only preview. The picture is played by the same engine `compositor.tick(t)` used by export—there is no second renderer and no visual editor. After editing the storyboard, run `tt build`; the page watches `composition.json`'s mtime and refreshes itself. When no changes are needed, click **完成预览** to record a receipt for the current storyboard and close the server.
+`tt preview --dir my-video` starts or reuses one global persistent preview server. Switching projects retargets the existing server without opening another port or viewer. The page watches composition changes and refreshes itself. Annotations are saved, and exports are requested through chat without stopping the server.
 
 When something looks wrong, draw on the frame and leave a note in the bottom annotation dock:
 
 1. Click **画笔批注** (pen annotation); the preview pauses at the current frame, and you can circle or mark the problem area with the pen.
 2. Write the description and click **完成批注** (finish annotation). It enters the in-page send list. You can jump to another timestamp, add more, or remove a draft.
 3. Click **发送批注** (send annotations). The whole batch is POSTed to the local preview server and written to `<project>/annotations/<batch>/`. Each item carries the description, time, matching scene clip, and three PNGs: the original frame, the ink-only layer, and the composed annotated frame.
-4. The preview closes itself after a successful send, returning control to the agent session that launched it. If the agent launched the preview, the batch is handed back on exit; otherwise `tt annotations` reads the latest unhandled batch. The agent opens `annotatedFrame` to see the marks, and uses `desc` / `t` / `clip` to find the scene to change.
+4. Sending shows a two-second translucent notice and saves the batch. When the user asks for revisions, the agent acknowledges the count and per-item summary, then reads and fixes the images; the preview refreshes after the rebuild. `tt annotations` can also read the latest unhandled batch at any time.
 5. Edit `storyboard.json` → `tt build` → `tt preview` again. When done, `tt annotations --dir my-video --ack <batch-id>` marks the batch handled.
 
 The loop is closed: the agent no longer has to guess which frame or scene unit the user means. The annotation and screenshot are the locating evidence. `annotations/` holds user input, is not written to `out/`, and survives rebuilds. The single source of truth stays the storyboard; no second runtime or visual editor is introduced.
 
-> The preview does not play audio; export an MP4 to hear the narration.
+> The preview uses real TTS tracks from the first build and plays picture, narration, and BGM together. Export reads the same composition without rebuilding audio.
 
 ## How to use
 
@@ -176,7 +177,7 @@ node scripts/doctor.mjs --install
 
 `doctor --install` checks Node, the Ticktoon engine artifacts, npm dependencies, Chrome, WebGL2, and optional TTS/asset providers. It runs npm install only when `ws` or `msedge-tts` is missing, then continues the checks in the same command; existing dependencies leave npm untouched. The skill drives the locally installed Chrome (≥120) directly over CDP and does not download its own browser. On a headless server, set `DH_VIDEO_WEBGL=swiftshader`. When `chrome-headless-shell` is selected without an explicit WebGL setting, SwiftShader is enabled automatically to avoid WebCodecs texture-readback failures on some Windows systems.
 
-The default path needs no API keys: edge-tts plus bundled demo assets. Optional Volc TTS and Pexels upgrades are configured with `node scripts/auth.mjs set <KEY> <value>`; credentials are read from environment variables or `~/.dh-video/credentials.json` and never stored in a storyboard or project.
+Narration providers are selected internally: Volc TTS when its credentials are complete, otherwise zero-key Edge TTS. No provider flag is needed in the authoring workflow. Optional Volc TTS and Pexels upgrades are configured with `node scripts/auth.mjs set <KEY> <value>`; credentials are read from environment variables or `~/.dh-video/credentials.json` and never stored in a storyboard or project.
 
 ### From an agent
 
@@ -196,11 +197,11 @@ node platform/cli.mjs preview --dir my-video --port 5123            # read-only 
 node platform/cli.mjs annotations --dir my-video                    # read the batch sent from the preview
 node platform/cli.mjs qa --dir my-video                             # must-gate + 12-cell contact sheet
 node platform/cli.mjs det --twice --dir my-video                    # compile-determinism check
-node platform/cli.mjs build --dir my-video --tts edge               # recompile with real narration
+node platform/cli.mjs build --dir my-video                         # build with automatic narration provider selection
 node scripts/render.mjs my-video/out/composition.json -o my-video/video.mp4
 ```
 
-`tt` refers to `node platform/cli.mjs` (or `npm run tt --`). `storyboard.json` is the only file you write. Everything under `out/` is a build product; do not hand-edit it. Run `build` again after changes and the preview refreshes automatically. Export MP4 only when it is explicitly wanted. Rendering requires a preview receipt for the current storyboard; edits invalidate it, while `--without-preview` is reserved for an explicit user request to skip preview. A build without `--tts` has no narration track.
+`tt` refers to `node platform/cli.mjs` (or `npm run tt --`). `storyboard.json` is the only file you write. Everything under `out/` is a build product; do not hand-edit it. Run `build` again after changes and the preview refreshes automatically. Export MP4 only when it is explicitly wanted, with no second preview-confirmation gate. If the storyboard is unchanged and narration already exists, render directly; rebuilds reuse cached TTS for identical text and voices. Rendering defaults to 1× output, with `--render-scale 2` available for supersampling.
 
 Useful commands:
 

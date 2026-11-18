@@ -36,7 +36,7 @@ provider 返回 `durationSec: null`（如 volc 流式未带回传）时，`resol
 
 ## 已知边界
 
-- `tt build` 不带 `--tts` 时只有估时，没有 narration 事件；导出的 MP4 只含 BGM/SFX。预览页不回放音频。出片前必须用 `tt build --dir <工程> --tts edge` 重编译，`render` 会对「有字幕 cue 但无 narration 音轨」给出提示。
+- 首次 build / QA / preview 自动生成真实 narration 事件，内部按凭证选择 Volc 或 Edge，无需上层传 provider。预览点击播放后同时播放旁白与 BGM；预览和导出共享同一份 composition，导出不再重编译音频。
 - volc-tts 打开 `enable_timestamp` 可拿词级时间，返回结构未核，接上后 `words` 自动生效，无需改上层。
 - 词级对齐用 indexOf 前进式，旁白若含重复短句且 TTS 合并了相邻重复词，理论上有错位风险；覆盖率 <50% 会自动降级兜底。
 - 不同 provider 的电平差异仍在（Edge 实测约 -23.85 LUFS），这是导出后工序要处理的事，编译层不管。

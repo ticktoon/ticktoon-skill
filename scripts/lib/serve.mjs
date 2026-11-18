@@ -30,7 +30,7 @@ export function createStaticServer({ ENGINE_DIR, ASSETS_DIR, JOB_DIR, port = 0, 
         root = ASSETS_DIR;
         relative = urlPath.slice('/__skill-assets__/'.length);
       } else if (urlPath.startsWith('/__job__/')) {
-        root = JOB_DIR;
+        root = typeof JOB_DIR === 'function' ? JOB_DIR() : JOB_DIR;
         relative = urlPath.slice('/__job__/'.length);
       }
       const file = path.resolve(root, `.${path.sep}${relative.replace(/^[/\\]+/, '')}`);

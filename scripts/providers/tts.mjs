@@ -5,7 +5,7 @@
  *     → { audioFile, webvtt | null, durationSec }
  *
  * provider:
- *   - 'edge-tts'（默认，零密钥）：微软 Edge 大声朗读接口（msedge-tts）。
+ *   - 'edge-tts'（无火山凭证时默认，零密钥）：微软 Edge 大声朗读接口（msedge-tts）。
  *     附带 WordBoundary 逐词时间戳，本模块直接生成 webvtt 字幕，无需 ASR。
  *   - 'volc-tts'：火山引擎 seed-tts-2.0 单向流式（移植自 dh-backend tts_api.py），
  *     需要 VOLC_TTS_APP_ID / VOLC_TTS_ACCESS_TOKEN；不产词级时间戳，逐字字幕按字符等比降级。

@@ -1,22 +1,20 @@
 /**
  * Ticktoon 渲染驱动
  *
- * 用法: node scripts/render.mjs <composition.json> [-o out.mp4] [--quantizer 20] [--bitrate 8000000] [--codec avc1...] [--keep-preview] [--without-preview]
- *
+ * 用法: node scripts/render.mjs <composition.json> [-o out.mp4] [--quantizer 20] [--bitrate 8000000] [--codec avc1...] [--render-scale 1|2] *
  * 本地静态服务 + headless Chrome 调用与预览相同的 compositor.tick 导出。
- * 默认要求当前 storyboard 已完成 Preview Studio 预览；显式 --without-preview 才跳过。
+ * 默认 1× 输出；2× 是可选超采样画质档。预览是创作流程，不是导出前的额外确认门禁。
  * 浏览器直接产出 moov 前置的普通 MP4，字节分片回传 Node，无 FFmpeg 后处理。
  */
 import { createWriteStream, readFileSync, statSync } from 'node:fs';
-import { createHash } from 'node:crypto';
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { launchChrome } from './lib/chrome-cdp.mjs';
 import { createStaticServer } from './lib/serve.mjs';
 import { buildAssetBasenameMap, rewriteLocalRefs } from './lib/refs.mjs';
-import { stopTaskPreview } from './lib/preview-lifecycle.mjs';
 import { getEngineDir } from './lib/engine-runtime.mjs';
+import { stopAnnotationWait } from './lib/annotation-wait.mjs';
 import { assertComposition } from './lib/protocol.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -26,15 +24,13 @@ const ASSETS_DIR = path.join(SKILL_ROOT, 'assets');
 
 const args = process.argv.slice(2);
 if (args.length === 0 || args.includes('--help')) {
-  console.log('用法: node scripts/render.mjs <composition.json> [-o out.mp4] [--quantizer 20] [--bitrate 8000000] [--codec avc1...] [--keep-preview] [--without-preview]');
-  console.log('默认 QP20 优先、自适应码率回退；仅传 --bitrate 时按目标码率编码。');
+  console.log('用法: node scripts/render.mjs <composition.json> [-o out.mp4] [--quantizer 20] [--bitrate 8000000] [--codec avc1...] [--render-scale 1|2] [--keep-preview]');
+  console.log('默认 QP20、1× 输出；--render-scale 2 可选超采样；仅传 --bitrate 时按目标码率编码。');
   process.exit(args.length === 0 ? 1 : 0);
 }
 const compositionFile = path.resolve(args[0]);
 const outIdx = args.indexOf('-o');
 const outFile = path.resolve(outIdx >= 0 ? args[outIdx + 1] : compositionFile.replace(/\.json$/i, '') + '.mp4');
-const keepPreview = args.includes('--keep-preview');
-const skipPreviewCheck = args.includes('--without-preview');
 const readIntegerOption = (name, minimum) => {
   const index = args.indexOf(name);
   if (index < 0) return undefined;
@@ -44,6 +40,8 @@ const readIntegerOption = (name, minimum) => {
 };
 const bitrate = readIntegerOption('--bitrate', 1);
 const quantizer = readIntegerOption('--quantizer', 0);
+const renderScale = readIntegerOption('--render-scale', 1) ?? 1;
+if (![1, 2].includes(renderScale)) throw new Error('--render-scale 仅支持 1 / 2');
 const codecIndex = args.indexOf('--codec');
 const videoCodec = codecIndex >= 0 ? args[codecIndex + 1] : undefined;
 if (codecIndex >= 0 && !videoCodec) throw new Error('--codec 需要完整的 codec 字符串');
@@ -52,10 +50,8 @@ const disableOpfs = process.env.TICKTOON_DISABLE_OPFS === '1';
 const disableQuantizer = process.env.TICKTOON_DISABLE_QUANTIZER === '1';
 
 let composition;
-let compositionSource;
 try {
-  compositionSource = readFileSync(compositionFile, 'utf-8');
-  composition = assertComposition(JSON.parse(compositionSource));
+  composition = assertComposition(JSON.parse(readFileSync(compositionFile, 'utf-8')));
 } catch (error) {
   console.error(error instanceof Error ? error.message : String(error));
   process.exit(1);
@@ -63,34 +59,8 @@ try {
 const { width, height } = composition;
 const orientation = width >= height ? 'horizontal' : 'vertical';
 const JOB_DIR = path.dirname(compositionFile);
-if (!skipPreviewCheck) {
-  const projectDir = path.basename(JOB_DIR) === 'out' ? path.dirname(JOB_DIR) : JOB_DIR;
-  let previewed = false;
-  try {
-    const storyboardSha256 = createHash('sha256')
-      .update(readFileSync(path.join(projectDir, 'storyboard.json')))
-      .digest('hex');
-    const receipt = JSON.parse(readFileSync(path.join(JOB_DIR, 'preview-receipt.json'), 'utf-8'));
-    previewed = receipt.storyboardSha256 === storyboardSha256;
-  } catch { /* 缺失或损坏都按未预览处理 */ }
-  if (!previewed) {
-    console.error('[render] 当前 storyboard 尚未完成 Preview Studio 预览，已停止导出。');
-    console.error(`[render] 先运行: node platform/cli.mjs preview --dir ${JSON.stringify(projectDir)}`);
-    console.error('[render] 在预览页点击「完成预览」后再导出；只有用户明确要求跳过预览时才使用 --without-preview。');
-    process.exit(1);
-  }
-}
+stopAnnotationWait();
 const assetBasenameMap = buildAssetBasenameMap({ assetsDir: ASSETS_DIR });
-
-// 常见事故：先 `tt build`（无 TTS）再直接 render，画面和字幕都有，MP4 却只有 BGM/SFX。
-// 有字幕 cue 却没有 narration 音轨，几乎都是漏了 --tts；给明确修复命令，别让人猜。
-const hasNarrationAudio = composition.audio.some((event) => event.role === 'narration');
-const hasCaptionCues = composition.scenes.some((scene) => Array.isArray(scene.cues) && scene.cues.length > 0);
-if (hasCaptionCues && !hasNarrationAudio) {
-  const projectDir = path.dirname(JOB_DIR);
-  console.warn('[render] ! composition 有字幕 cue 但没有 narration 音轨：MP4 只会包含 BGM/SFX。');
-  console.warn(`[render]   如果这是旁白片，先重编译：node platform/cli.mjs build --dir ${JSON.stringify(projectDir)} --tts edge`);
-}
 
 const t0 = Date.now();
 const elapsed = () => ((Date.now() - t0) / 1000).toFixed(1) + 's';
@@ -265,6 +235,7 @@ try {
       ...(bitrate !== undefined ? { bitrate } : {}),
       ...(quantizer !== undefined ? { quantizer } : {}),
       ...(videoCodec !== undefined ? { videoCodec } : {}),
+      renderScale,
     },
   }, { timeout: 20 * 60 * 1000 });
 
@@ -291,17 +262,11 @@ const video = exportDiagnostics?.videoEncoder;
 const videoSummary = video
   ? `${video.codec} / ${video.rateControl === 'quantizer' ? `QP${video.quantizer}` : `${((video.bitrate ?? 0) / 1e6).toFixed(2)} Mbps`}`
   : 'unknown';
-console.log(`[render] 普通 MP4 直出（${videoSummary}；${exportDiagnostics?.audioCodec ?? 'unknown'} / ${exportDiagnostics?.audioEncoder ?? 'unknown'}；${storageSummary} / faststart，无外部 FFmpeg）`);
+console.log(`[render] 普通 MP4 直出（${videoSummary}；renderScale ${renderScale}×；${exportDiagnostics?.audioCodec ?? 'unknown'} / ${exportDiagnostics?.audioEncoder ?? 'unknown'}；${storageSummary} / faststart，无外部 FFmpeg）`);
 const sizeMB = (statSync(outFile).size / 1048576).toFixed(1);
 console.log(`[render] ✅ 完成: ${outFile} (${sizeMB} MB)，总耗时 ${elapsed()}`);
 await writeFile(outFile + '.meta.json', JSON.stringify({
-  orientation, width, height, outFile, sizeMB: +sizeMB, elapsed: elapsed(), provider: 'ticktoon',
+  orientation, width, height, outFile, sizeMB: +sizeMB, elapsed: elapsed(), provider: 'ticktoon', renderScale,
   engine: readFileSync(path.join(ENGINE_DIR, 'ENGINE_VERSION.txt'), 'utf-8').trim(),
   diagnostics: exportDiagnostics,
 }, null, 2));
-
-if (!keepPreview) {
-  const preview = await stopTaskPreview(compositionFile);
-  if (preview.status === 'stopped') console.log(`[render] 已关闭本任务预览服务（端口 ${preview.port}）`);
-  else if (preview.status === 'error') console.warn(`[render] 预览服务自动关闭失败，可稍后手动关闭：${preview.error}`);
-}

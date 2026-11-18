@@ -1,0 +1,78 @@
+{
+  "id": "flat-motion",
+  "abi": "1",
+  "name": "扁平 MG",
+  "keywords": [
+    "MG",
+    "MG动画",
+    "扁平",
+    "矢量",
+    "万彩",
+    "圆角",
+    "图形动画",
+    "品牌动画"
+  ],
+  "mode": "code",
+  "when": [
+    "产品、应用、服务或品牌介绍，需要用扁平人物、图标、道具和场景把功能演出来。",
+    "轻科普或流程说明，希望用形状变形、图标串联、角色动作和镜头推进表达，而不是实拍或逐笔手绘。",
+    "需要高饱和色块、圆角几何、回弹入场、挤压拉伸和短促有力的 Motion Graphics 节奏。"
+  ],
+  "notWhen": [
+    "只需要大字和硬切卡点；改用 flash-cut，本 recipe 必须有具体物体、角色或图标的空间表演。",
+    "需要真实人物、实拍素材或照片质感；改用 footage-cut。",
+    "需要白板逐笔推导、手账拼贴、水墨留白或皮影戏台；分别使用对应 recipe。",
+    "需要 dense 仪表盘、复杂数据图表或固定新闻版式；本 recipe 只把少量数据转化成可表演的图形。"
+  ],
+  "rules": {
+    "safeMargin": 0.045,
+    "scale": {
+      "title": 2,
+      "label": 0.85,
+      "note": 0.5
+    },
+    "stroke": [
+      4,
+      18
+    ],
+    "forbid": [
+      "把人物、图标、场景或题材整理成 scene.params 枚举；每场按 narration 实时组织 scene.code",
+      "使用纸纹、照片、写实渐变、厚重投影或玻璃拟态；扁平色块就是体积语言",
+      "让所有元素同时淡入；主动作必须有预备、发生、回弹或稳定中的至少三个阶段",
+      "围绕物体中心无差别缩放；缩放和挤压必须锚定地面、关节、尾部或接触点",
+      "每帧随机抖动或高频闪烁；所有运动只由 api.t、固定序号和确定性 seed 决定",
+      "把整段 narration 抄成大字或与 karaoke 字幕重复；画面只提炼关键词，底部字幕区不得另画总结文字或彩条",
+      "满屏只有一行字；必须有图标、人物、道具、建筑或形状变化承担叙事",
+      "在同一场景写 scene.params；本 recipe 只收 scene.code"
+    ]
+  },
+  "captions": {
+    "style": "karaoke",
+    "font": "JiangChengYuanTi",
+    "baseSize": 40,
+    "lineHeight": 1.24,
+    "at": "bottom",
+    "top": 0.89,
+    "size": 1,
+    "maxWidth": 0.82,
+    "band": true,
+    "background": "rgba(21,20,51,0.86)",
+    "color": "#FFF6E9",
+    "highlight": "#FFC62B"
+  },
+  "pacing": {
+    "leadIn": 0.35,
+    "hold": 0.8,
+    "minNarrationDuration": 4
+  },
+  "audio": {
+    "mood": "cut",
+    "volume": 0.1,
+    "fadeIn": 0.6,
+    "fadeOut": 1.4,
+    "duck": {
+      "level": 0.04,
+      "edge": 0.12
+    }
+  }
+}

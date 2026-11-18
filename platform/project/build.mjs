@@ -4,7 +4,7 @@
  * 每步都可能报错，但只有 schema 的错误会让流程停下——因为后面的步骤都建立在
  * "结构合法"这个前提上。其余步骤尽量跑完，一次把问题全给出来。
  */
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { loadCatalog, normalizeStoryboard } from '../compile/schema.mjs';
 import { resolveStoryboard } from '../compile/resolve.mjs';
@@ -164,7 +164,13 @@ function finish({ ok, bag, outDir, write, report, composition, events, planned }
     mkdirSync(outDir, { recursive: true });
     if (composition) writeFileSync(path.join(outDir, 'composition.json'), JSON.stringify(composition, null, 2));
     if (events) writeFileSync(path.join(outDir, 'events.json'), JSON.stringify(events, null, 2));
-    if (composition) writeFileSync(path.join(outDir, 'subs.srt'), buildSrt(planned?.scenes || composition.scenes));
+    if (composition) {
+      const scenes = planned?.scenes || composition.scenes;
+      const hasCaptions = scenes.some((scene) => Array.isArray(scene.cues) && scene.cues.length > 0);
+      const srtFile = path.join(outDir, 'subs.srt');
+      if (hasCaptions) writeFileSync(srtFile, buildSrt(scenes));
+      else rmSync(srtFile, { force: true });
+    }
     writeFileSync(path.join(outDir, 'report.json'), JSON.stringify(report, null, 2));
   }
   return { ok, bag, report, composition, events, planned, outDir };

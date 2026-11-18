@@ -6,13 +6,15 @@
  * plan 侧会对 cue 降级为字符等比摊并 warn，不抛异常。
  */
 import { createHash } from 'node:crypto';
-import { mkdirSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
+import { hasVolcTts } from '../../scripts/config.mjs';
 
-export function createTts({ provider = 'edge-tts', voice, outDir }) {
-  // 短别名与文档口径一致（SKILL.md 写的是 --tts edge / volc），这里归一成 provider 全名。
+export function createTts({ provider, voice, outDir }) {
+  // provider 是内部选择：配置完整的火山凭证时优先火山，否则零密钥 Edge。
   const aliases = { edge: 'edge-tts', volc: 'volc-tts' };
-  const full = aliases[provider] ?? provider;
+  const selected = provider || (hasVolcTts() ? 'volc-tts' : 'edge-tts');
+  const full = aliases[selected] ?? selected;
   let module = null;
   const load = async () => {
     if (!module) module = await import('../../scripts/providers/tts.mjs');
@@ -22,11 +24,27 @@ export function createTts({ provider = 'edge-tts', voice, outDir }) {
   return {
     provider: full,
     async synthesize(text) {
-      const { synthesizeSpeech } = await load();
       mkdirSync(outDir, { recursive: true });
       const key = createHash('sha1').update(`${full}|${voice || ''}|${text}`).digest('hex').slice(0, 12);
       const outFile = path.join(outDir, `${key}.mp3`);
-      const result = await synthesizeSpeech({ script: text, provider: full, voice, outFile });
+      const cacheFile = path.join(outDir, `${key}.json`);
+      let result = null;
+      if (existsSync(outFile) && existsSync(cacheFile)) {
+        try {
+          const cached = JSON.parse(readFileSync(cacheFile, 'utf8'));
+          if (cached && typeof cached === 'object') result = cached;
+        } catch { /* 缓存损坏时重新合成 */ }
+      }
+      if (!result) {
+        const { synthesizeSpeech } = await load();
+        result = await synthesizeSpeech({ script: text, provider: full, voice, outFile });
+        const temp = `${cacheFile}.${process.pid}.tmp`;
+        writeFileSync(temp, JSON.stringify({
+          durationSec: result.durationSec ?? null,
+          boundaries: result.boundaries ?? [],
+        }));
+        renameSync(temp, cacheFile);
+      }
       const words = Array.isArray(result.boundaries) && result.boundaries.length
         ? result.boundaries.map((b) => ({ text: b.text, start: b.offset, end: b.end }))
         : null;

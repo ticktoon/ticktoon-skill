@@ -30,7 +30,7 @@ node platform/cli.mjs assets fetch --project <工程目录> --provider pexels
 node platform/cli.mjs assets fetch --project <工程目录> --provider pexels --orientation portrait
 
 # 编译与导出
-node platform/cli.mjs build --dir <工程目录> --tts edge
+node platform/cli.mjs build --dir <工程目录>
 node scripts/render.mjs <工程目录>/out/composition.json -o <输出.mp4>
 ```
 

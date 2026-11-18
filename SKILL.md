@@ -80,38 +80,34 @@ recipes/<id>/
 ```bash
 node "$SKILL_DIR/platform/cli.mjs" new <dir> --recipe <id>   # 1. 建工程，skeleton 预填；<id> 从 tt recipe list 选
 # 2. 改 <dir>/storyboard.json —— 这是你唯一要写的文件
-node "$SKILL_DIR/platform/cli.mjs" build --dir <dir>          # 3. 快速编译（估时，无配音）
+node "$SKILL_DIR/platform/cli.mjs" build --dir <dir>          # 3. 编译并自动生成真实音轨；provider 由内部按环境选择
 node "$SKILL_DIR/platform/cli.mjs" qa --dir <dir>             # 4. 全片采样 + 12 格联系表；must=0 并实际读图
-node "$SKILL_DIR/platform/cli.mjs" preview --dir <dir> --port 5123  # 5. 打开 Preview Studio，交用户人工检查；到此停止
+node "$SKILL_DIR/platform/cli.mjs" preview --dir <dir> --port 5123  # 5. 首次以后台任务启动；复用时输出 ready 即返回
+node "$SKILL_DIR/platform/cli.mjs" annotations --wait --dir <dir>   # 6. 同时启动唯一的批注等待任务，批注到达后继续修改；导出时关闭
 ```
 
 创作、检查与预览走 `platform/cli.mjs`（下称 `tt`），`tt` 命令支持 `--json`。**默认创作终点是 Preview Studio，不是 MP4。** 最初的“制作 / 生成视频”请求不等于授权导出 MP4，也不等于允许跳过预览。QA `must=0` 且联系表没有明显问题后，直接打开 Preview Studio；不要为了再次确认构图、稳定帧或入场透明度追加 `stills`，不要继续做无实际缺陷支撑的反复检查。
 
-预览无需修改时点「完成预览」；有修改时发送批注，改 storyboard 后重新 `build → qa → preview`。预览命令返回后仍等待用户指示，不自动接 TTS、det 或 render。
+预览服务全局单例，自动复用、切换工程和刷新 composition。
 
-只有用户在预览后**另外明确要求导出 MP4**时，才执行：
+用户明确要求导出 MP4 时，**直接导出，不要求再次点击预览确认**：
 
 ```bash
-node "$SKILL_DIR/platform/cli.mjs" det --twice --dir <dir>
-node "$SKILL_DIR/platform/cli.mjs" build --dir <dir> --tts edge
 node "$SKILL_DIR/scripts/render.mjs" <dir>/out/composition.json -o <dir>/video.mp4
 ```
 
-MP4 导出会校验当前 storyboard 的预览凭据；未预览或预览后又改稿会拒绝导出，配音重编译不要求重复人工预览。只有用户明确要求跳过预览时，才给 render 加 `--without-preview`。
+预览与导出共享同一份 composition 和音轨。**导出只渲染当前数据，禁止再跑 build / TTS / det。**只有 storyboard 更新时才重新构建并生成新版本；未改文案的 TTS 命中缓存。`render` 默认使用 1× 输出避免 1080p 内部 2× 超采样；用户明确要求更高超采样画质时才加 `--render-scale 2`。
 
 **本机普通 Chrome 可用时，不要设置 `TICKTOON_CHROME_PATH` / `CHROME_PATH` 指向 Playwright 的 `chrome-headless-shell`；省略这两个变量，让启动器使用普通 Chrome 和本机 GPU。** headless shell 会默认走 SwiftShader，导出明显更慢；只有普通 Chrome 不可用或用户明确指定时才使用它。
 
 **全片视觉检查默认只跑 `tt qa` 并读取 `review/qa-sheet.png`；不要自造时间点运行 `tt stills` 来代替 QA。** `stills` 只用于用户指定时刻，或需要该时刻布局凭据（receipts）的定点排障，不是标准创作步骤。
 
-### 镜头参考调试（可选）
-
-code recipe 的 `ref-shots/` 可以用 `tt lab [--recipe <id>] [--port N]` 打开镜头参考实验室：卡片静止帧与弹窗播放都来自真实 `tt build` + 引擎面板；页面里可以改 `scene.code`、时长、画幅并重跑。页面里的修改只影响本次预览，不回写 `ref-shots/`。params recipe 没有 `ref-shots/`，不会出现在 lab 里。
 
 ## 核心契约
 
 - storyboard 是唯一手写文件；完整契约见 `references/storyboard.md`。`narration` 与 `duration` 互斥，未知场景键直接报错。
 - `mode: "code"` 的 recipe 只写 `scene.code`，不写 `scene.params`；`mode: "params"` 的 recipe 只写 `scene.params`，不写 `scene.code`。`maxChars` 超了拆场而不是缩字。
-- 反馈、stills/receipts、批注读回与 TTS 语义见 `references/iterate.md`；改稿只改 storyboard，然后重编译。预览无需修改时点「完成预览」；批注先在页面内多帧累积，用户点「发送批注」后整批写入 `<工程>/annotations/<batch>/` 并关闭预览；用 `tt annotations` 读回，不要读页面事件。
+- 反馈、stills/receipts、批注读回与 TTS 语义见 `references/iterate.md`；改稿只改 storyboard，然后重编译。打开或复用预览时，同时启动全局唯一的 `annotations --wait`。批注落盘后任务返回批次，同一 Agent 继续解读修改；重编译后预览自动刷新，并按需建立下一次等待。导出时结束等待任务，预览服务不受影响。用 `tt annotations` 读回，不要读页面事件。
 
 ## 导出前自检（仅用户明确要求导出时）
 

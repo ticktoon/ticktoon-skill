@@ -1,0 +1,28 @@
+{
+  "recipe": "flat-motion",
+  "format": {
+    "w": 1920,
+    "h": 1080,
+    "fps": 30
+  },
+  "meta": {
+    "title": "未命名扁平 MG"
+  },
+  "scenes": [
+    {
+      "id": "s01",
+      "duration": 6,
+      "code": [
+        "// 根据 narration 设计本场人物、图标、道具与动作，不使用题材枚举。",
+        "// 规范读 recipe.md，完整写法看 ref-shots/；可用 W / H / ctx / api / TT / RULES。",
+        "ctx.fillStyle = '#2B2BFF';",
+        "ctx.fillRect(0, 0, W, H);",
+        "// 在这里写地面锚点、主体几何和预备 → 发生 → 稳定动作。"
+      ],
+      "resources": [
+        { "type": "font", "name": "ZTYueDongHei" },
+        { "type": "font", "name": "JiangChengYuanTi" }
+      ]
+    }
+  ]
+}

@@ -3,19 +3,19 @@
  *
  * 用法: node scripts/preview.mjs <composition.json> [--port N]
  * 改完 storyboard 重新 `tt build` 后，页面按 composition mtime 自动刷新。
- * 关闭: 页面「完成预览」/「发送批注」，或 POST /shutdown / Ctrl+C；render 成功后也会回收。
+ * 常驻服务：批注与导出都不停止；仅显式 POST /shutdown 或 Ctrl+C 关闭。
  *
  * `/api/track` 这个路由名是引擎 preview-page 的既有契约，不要跟着改名。
  * 批注闭环: 页面「发送批注」POST /api/annotations → <工程>/annotations/<batch>/request.json + 每条三张 PNG；
- *           页面随后请求 /shutdown，`tt preview` 退出时把批次交回 Agent。
+ *           发送后显示 2 秒提示并落盘，后续由对话驱动修改；预览服务保持运行。
  */
 import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
-import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createStaticServer } from './lib/serve.mjs';
 import { buildAssetBasenameMap, rewriteLocalRefs } from './lib/refs.mjs';
 import { registerPreview, unregisterPreview } from './lib/preview-lifecycle.mjs';
+import { stopAnnotationWait } from './lib/annotation-wait.mjs';
 import { getEngineDir } from './lib/engine-runtime.mjs';
 import { assertComposition } from './lib/protocol.mjs';
 
@@ -31,18 +31,18 @@ if (!args.length || args.includes('--help')) {
   console.log('用法: node scripts/preview.mjs <composition.json> [--port N]');
   process.exit(args.length ? 0 : 1);
 }
-const compositionFile = path.resolve(args[0]);
+let compositionFile = path.resolve(args[0]);
 if (!existsSync(compositionFile)) {
   console.error('✗ 找不到 composition: ' + compositionFile);
   process.exit(1);
 }
 const portIdx = args.indexOf('--port');
 const wantPort = portIdx >= 0 ? Number(args[portIdx + 1]) || 0 : 0;
-const JOB_DIR = path.dirname(compositionFile);
-/** 批注落盘到工程根，而不是 out/（out 是构建产物，重编译不应清掉用户输入）。 */
-const PROJECT_DIR = path.basename(JOB_DIR) === 'out' ? path.dirname(JOB_DIR) : JOB_DIR;
-const ANNOTATIONS_DIR = path.join(PROJECT_DIR, 'annotations');
-const PREVIEW_RECEIPT = path.join(JOB_DIR, 'preview-receipt.json');
+let JOB_DIR = path.dirname(compositionFile);
+const projectRootOf = (file) => path.basename(path.dirname(file)) === 'out' ? path.dirname(path.dirname(file)) : path.dirname(file);
+/** 批注落盘到工程根；切换工程时这些路径随 composition 一起更新。 */
+let PROJECT_DIR = projectRootOf(compositionFile);
+let ANNOTATIONS_DIR = path.join(PROJECT_DIR, 'annotations');
 let annotationSequence = 0;
 const assetBasenameMap = buildAssetBasenameMap({ assetsDir: ASSETS_DIR });
 /** 每次请求重读：build 落盘后页面刷新就能拿到新 composition。非法产物在这里就拦住。 */
@@ -159,7 +159,7 @@ function saveBatch(payload) {
 }
 
 const { server, port } = await createStaticServer({
-  ENGINE_DIR, ASSETS_DIR, JOB_DIR, port: wantPort,
+  ENGINE_DIR, ASSETS_DIR, JOB_DIR: () => JOB_DIR, port: wantPort,
   onRequest(req, res, urlPath) {
     const json = (data, code = 200) => {
       res.writeHead(code, { 'Content-Type': 'application/json; charset=utf-8', 'Access-Control-Allow-Origin': '*' });
@@ -206,7 +206,18 @@ const { server, port } = await createStaticServer({
         .catch((error) => json({ error: error instanceof Error ? error.message : String(error) }, 400));
       return true;
     }
-    if (urlPath === '/api/track-meta' && req.method === 'GET') return json({ mtimeMs: statSync(compositionFile).mtimeMs });
+    if (urlPath === '/api/project' && req.method === 'POST') {
+      readJsonBody(req, 1024 * 1024)
+        .then((payload) => {
+          switchProject(payload?.compositionFile);
+          json({ ok: true, trackFile: compositionFile, port });
+        })
+        .catch((error) => json({ error: error instanceof Error ? error.message : String(error) }, 400));
+      return true;
+    }
+    if (urlPath === '/api/track-meta' && req.method === 'GET') {
+      return json({ mtimeMs: statSync(compositionFile).mtimeMs, trackFile: compositionFile });
+    }
     // 键名 trackFile 是 preview-lifecycle 的既有契约，值是 composition 路径。
     if (urlPath === '/api/preview-info' && req.method === 'GET') return json({ trackFile: compositionFile, pid: process.pid });
     if (urlPath === '/shutdown' && req.method === 'POST') {
@@ -218,24 +229,28 @@ const { server, port } = await createStaticServer({
   },
 });
 
-registerPreview(compositionFile, port);
-function writePreviewReceipt() {
-  const storyboardSha256 = createHash('sha256')
-    .update(readFileSync(path.join(PROJECT_DIR, 'storyboard.json')))
-    .digest('hex');
-  writeFileSync(PREVIEW_RECEIPT, JSON.stringify({
-    version: 1,
-    storyboardSha256,
-    previewedAt: new Date().toISOString(),
-  }, null, 2));
-}
-function shutdownPreview() {
-  try {
-    writePreviewReceipt();
-  } catch (error) {
-    console.error(`[preview] 预览凭据写入失败: ${error instanceof Error ? error.message : String(error)}`);
-  }
+function switchProject(nextFile) {
+  const resolved = path.resolve(String(nextFile || ''));
+  if (!existsSync(resolved)) throw new Error(`找不到 composition: ${resolved}`);
+  assertComposition(JSON.parse(readFileSync(resolved, 'utf-8')));
+  if (resolved === compositionFile) return;
   unregisterPreview(compositionFile);
+  compositionFile = resolved;
+  JOB_DIR = path.dirname(compositionFile);
+  PROJECT_DIR = projectRootOf(compositionFile);
+  ANNOTATIONS_DIR = path.join(PROJECT_DIR, 'annotations');
+  annotationSequence = 0;
+  registerPreview(compositionFile, port);
+  console.log(`[preview] 已切换工程: ${compositionFile}`);
+}
+
+registerPreview(compositionFile, port);
+let shuttingDown = false;
+function shutdownPreview() {
+  if (shuttingDown) return;
+  shuttingDown = true;
+  unregisterPreview(compositionFile);
+  stopAnnotationWait();
   server.close();
   process.exit(0);
 }
@@ -243,7 +258,8 @@ process.once('SIGINT', shutdownPreview);
 process.once('SIGTERM', shutdownPreview);
 process.once('exit', () => unregisterPreview(compositionFile));
 
-console.log(`[preview] 只读预览页: http://127.0.0.1:${port}`);
+const previewUrl = `http://127.0.0.1:${port}`;
+console.log(`[preview] 只读预览页: ${previewUrl}`);
 console.log(`[preview] composition: ${compositionFile}`);
 console.log(`[preview] 批注落盘: ${ANNOTATIONS_DIR}（用 tt annotations 读取）`);
-console.log(`[preview] 关闭: 本任务 render 成功后自动关闭；也可 POST /shutdown 或 Ctrl+C`);
+console.log('[preview] 常驻服务: 批注和导出均不停止；仅显式 POST /shutdown 或 Ctrl+C 关闭。');

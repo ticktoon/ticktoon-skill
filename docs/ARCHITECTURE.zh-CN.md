@@ -71,6 +71,7 @@ ticktoon CanvasCompositor.tick(t)
 | `ink-painting` | `scene.code` | 近黑底 / 水墨浓淡 |
 | `illustrated-story` | `scene.code` | 米色纸 / 拼贴色 |
 | `flash-cut` | `scene.code` | 近黑底 / 橙与深蓝 |
+| `flat-motion` | `scene.code` | 群青 / 珊瑚 / 薄荷色块、圆角人物与图标、弹性变形 |
 | `crayon-guide` | `scene.code` | 暖米纸 / 蜡笔人物 / 手绘图解 |
 | `shadow-play` | `scene.code` | 透光幕布 / 琥珀灯影 / 侧面镂空人物与器物 |
 | `news-broadcast` | `scene.params` | 径向深蓝 / 地图与网格 |
@@ -323,7 +324,7 @@ sceneDur ──累加──► scene.start
 | `tt stills` / `probe` | 指定时刻 | 真实 ink/text/caption 框、亮度、单元可见性 | 全片时间连续性 |
 | `tt qa` | 一次 build + 一次浏览器会话；约 24 个采样帧，联系表 12 格复用其中大部分采样点（首尾追加），单会话约 24–30 帧 | 渲染异常与空墨迹（`RENDER_PAGE_ERROR` / `QA_INK_EMPTY`）、12 格视觉证据 | 全片逐帧无缺陷；安全框、碰撞、审美好坏 |
 | `tt det` | 编译产物 | 规范化 composition 的 SHA-256 指纹 | 像素一致、MP4 字节一致 |
-| `tt ci --baseline` | 9 条 recipe 的骨架 / 镜头参考合成片 | 编译指纹与构建状态回归；指纹变化提示人审后刷新 | 像素/视觉回归 |
+| `tt ci --baseline` | 10 条 recipe 的骨架 / 镜头参考合成片 | 编译指纹与构建状态回归；指纹变化提示人审后刷新 | 像素/视觉回归 |
 | `tt ci [--deep]` | 全货架 | 快速/深度全量回归；`--deep` 复用 `tt qa` 同一管线 | 真机联网、真实素材与导出验收 |
 
 ### 7.1 采样口径
@@ -397,7 +398,7 @@ sceneDur ──累加──► scene.start
 └── video.mp4             # 仅明确要求导出时生成
 ```
 
-预览是只读宿主：POST `/api/track` 返回 405；页面按 `composition.json` mtime 自动刷新。引擎页面本身已去掉轨道区，只留空的 `#bottom` 扩展槽；skill 层补丁往槽里挂批注坞，并在右上角提供「复制 board JSON」。用户逐帧标注，点「完成批注」进入页面内待发送列表，点「发送批注」时整批 POST `/api/annotations`（每条 JSON + 三张 PNG data URL），预览服务写到 `<工程>/annotations/<batch>/request.json` 与 `<batch>/NN.{annotated,frame,ink}.png`；随后页面请求 `/shutdown`，`tt preview` 退出时直接把未处理批次交回 Agent。`tt annotations` 读回最新批次，`--ack` 写 `<batch>/.ack` 标记整批已处理。页面不再派发批注事件，Agent 的契约入口只有 CLI。
+预览是只读常驻宿主：POST `/api/track` 返回 405；全局服务唯一，存在即复用并切换 composition，不存在才启动。页面按 `composition.json` mtime 自动刷新；批注只落盘，预览服务保持运行。引擎页面本身已去掉轨道区，只留空的 `#bottom` 扩展槽；skill 层补丁往槽里挂批注坞，并在右上角提供「复制 board JSON」。用户逐帧标注，点「完成批注」进入页面内待发送列表，点「发送批注」时整批 POST `/api/annotations`（每条 JSON + 三张 PNG data URL），预览服务写到 `<工程>/annotations/<batch>/request.json` 与 `<batch>/NN.{annotated,frame,ink}.png`；后续由对话驱动 Agent 用 `tt annotations` 读取批次，常驻预览服务继续运行。`tt annotations` 读回最新批次，`--ack` 写 `<batch>/.ack` 标记整批已处理。页面不再派发批注事件，Agent 的契约入口只有 CLI。
 
 ---
 

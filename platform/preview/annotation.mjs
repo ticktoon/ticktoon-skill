@@ -4,8 +4,8 @@
  * 引擎页面本身没有轨道区，只留 #bottom 扩展槽。用户可连续标注多帧，批注先进入
  * 页面内的待发送列表；点「发送批注」后一次性 POST /api/annotations，
  * 由 scripts/preview.mjs 落到 <工程>/annotations/<batch>/request.json + PNG。
- * 发送成功即请求 /shutdown，预览进程退出，Agent 从 tt annotations 接手改稿。
- * 无需修改时点「完成预览」也会关闭页面并记录当前版本的人工预览凭据。
+ * 发送成功显示 2 秒半透明提示并落盘；后续由对话驱动修改。
+ * 「导出 MP4」写入导出请求，关闭预览窗口与服务，由 tt preview 接续构建和渲染。
  * 页面仍是只读的：没有任何写回 composition 的通道。
  */
 const PAGE_TAG = 'ticktoon-preview-page';
@@ -75,9 +75,7 @@ const addButton = annotationButton('完成批注', () => void finish());
 const cancelButton = annotationButton('取消', () => cancel());
 const sendButton = annotationButton('发送批注', () => void sendDrafts());
 sendButton.id = 'skill-annotation-send';
-const doneButton = annotationButton('完成预览', () => void completePreview());
-doneButton.id = 'skill-annotation-done';
-dock.append(annotateButton, description, undoButton, clearButton, addButton, cancelButton, sendButton, doneButton);
+dock.append(annotateButton, description, undoButton, clearButton, addButton, cancelButton, sendButton);
 bottom.prepend(dock);
 
 const list = document.createElement('div');
@@ -226,7 +224,6 @@ function updateButtons() {
   addButton.disabled = !active || !hasInk || activePointer !== null || finishing;
   cancelButton.disabled = !active || finishing;
   sendButton.disabled = drafts.length === 0 || active || starting || finishing || sending;
-  doneButton.disabled = drafts.length > 0 || active || starting || finishing || sending;
   sendButton.textContent = drafts.length ? `发送批注（${drafts.length}）` : '发送批注';
   sendButton.classList.toggle('ready', drafts.length > 0 && !active && !sending);
 }
@@ -506,6 +503,26 @@ function renderList() {
   }
 }
 
+function showSentConfirmation(count) {
+  document.getElementById('skill-annotation-sent')?.remove();
+  const overlay = document.createElement('div');
+  overlay.id = 'skill-annotation-sent';
+  overlay.setAttribute('role', 'status');
+  overlay.style.cssText = 'position:fixed;top:96px;left:50%;transform:translateX(-50%);z-index:10000;width:max-content;max-width:calc(100vw - 40px);pointer-events:none;color:#eef2f7;font:13px/1.55 system-ui,sans-serif;';
+  const card = document.createElement('div');
+  card.style.cssText = 'position:relative;max-width:560px;padding:15px 20px;border:1px solid rgba(139,163,190,.35);border-radius:12px;background:rgba(27,35,48,.78);backdrop-filter:blur(12px);box-shadow:0 10px 34px rgba(0,0,0,.25);pointer-events:auto;';
+  const title = document.createElement('div');
+  title.style.cssText = 'margin-bottom:5px;color:#ffffff;font-size:15px;font-weight:650;';
+  title.textContent = `已发送 ${count} 条标注`;
+  const working = document.createElement('div');
+  working.style.cssText = 'color:#b2bdd0;font-size:12px;';
+  working.textContent = 'Agent已收到，正在逐条解读截图并修改。';
+  card.append(title, working);
+  overlay.appendChild(card);
+  document.body.appendChild(overlay);
+  setTimeout(() => overlay.remove(), 2000);
+}
+
 async function sendDrafts() {
   if (!drafts.length || sending || active) return;
   sending = true;
@@ -537,29 +554,10 @@ async function sendDrafts() {
     for (const draft of drafts) URL.revokeObjectURL(draft.thumbnailUrl);
     drafts.length = 0;
     renderList();
-    status.textContent = `已发送 ${count} 条批注，预览即将关闭，Agent 开始修改。`;
-    updateButtons();
-    setTimeout(() => {
-      void fetch('/shutdown', { method: 'POST' }).catch(() => {});
-    }, 1000);
-  } catch (error) {
-    errorLabel.textContent = error instanceof Error ? error.message : String(error);
+    status.textContent = `已发送 ${count} 条批注，Agent 开始解读和修改。`;
     sending = false;
     updateButtons();
-  }
-}
-
-async function completePreview() {
-  if (drafts.length || active || sending) return;
-  sending = true;
-  errorLabel.textContent = '';
-  status.textContent = '正在完成预览…';
-  updateButtons();
-  try {
-    const response = await fetch('/shutdown', { method: 'POST' });
-    const reply = await response.json().catch(() => ({}));
-    if (!response.ok || !reply.ok) throw new Error(reply.error || `完成预览失败: HTTP ${response.status}`);
-    status.textContent = '预览已完成，等待你的下一步指示。';
+    showSentConfirmation(count);
   } catch (error) {
     errorLabel.textContent = error instanceof Error ? error.message : String(error);
     sending = false;
@@ -613,7 +611,10 @@ copyBoardButton.addEventListener('click', async () => {
   }
 });
 
-status.textContent = '无需修改点「完成预览」；需要改稿时用画笔批注，可连续标注多帧后统一发送。';
+window.addEventListener('ticktoon-preview-loaded', () => {
+  document.getElementById('skill-annotation-sent')?.remove();
+});
+status.textContent = '需要改稿时用画笔批注；需要导出时，在任务对话里直接说明。';
 updateButtons();
 window.addEventListener('resize', alignInk);
 panel.addEventListener('load', () => setTimeout(alignInk, 0));

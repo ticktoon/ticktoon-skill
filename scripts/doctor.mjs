@@ -143,7 +143,7 @@ if (hasDriver) {
 const edgeTtsMissing = ['msedge-tts', 'ws'].filter((name) => missingDeps.includes(name));
 const bundled = bundledTopics();
 const reports = [
-  ['tts:edge-tts', edgeTtsMissing.length === 0, edgeTtsMissing.length === 0 ? '默认，零密钥（字幕由 WordBoundary 直接产出）' : `缺少 ${edgeTtsMissing.join(' / ')} → 先在 SKILL 目录 npm install`],
+  ['tts:edge-tts', edgeTtsMissing.length === 0, edgeTtsMissing.length === 0 ? '无火山凭证时的默认降级（字幕由 WordBoundary 直接产出）' : `缺少 ${edgeTtsMissing.join(' / ')} → 先在 SKILL 目录 npm install`],
   ['tts:volc-tts', hasVolcTts(), hasVolcTts() ? `已配置（${credentialSource('VOLC_TTS_APP_ID')}）` : '未配置 VOLC_TTS_APP_ID/VOLC_TTS_ACCESS_TOKEN → node scripts/auth.mjs set'],
   ['assets:pexels', hasCredential('PEXELS_API_KEY'), hasCredential('PEXELS_API_KEY') ? '已配置' : '未配置 PEXELS_API_KEY（pexels.com/api 免费申请）'],
   ['assets:bundled', bundled.length > 0, bundled.length ? `内置演示素材 ${bundled.length} 段：${bundled.map((item) => item.topic).join('/')}` : 'assets/catalog.json 缺失'],

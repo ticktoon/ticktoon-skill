@@ -82,6 +82,7 @@ recipe 覆盖讲解、叙事、快闪、突发新闻与实拍。每条要么用�
 | `ink-painting` | 墨线、晕染与大片留白 | `scene.code` | 东方美学、诗词、文化 |
 | `illustrated-story` | 纸张拼贴、剪报字 | `scene.code` | 小故事、观察随笔 |
 | `flash-cut` | 硬切、大字、一句一场 | `scene.code` | 观点、结论、促销节拍 |
+| `flat-motion` | 高饱和扁平色块、圆角人物与图标、弹性变形 | `scene.code` | 产品、品牌、应用功能与轻科普 MG |
 | `crayon-guide` | 暖米纸、蜡笔斜纹、人物与手绘图解 | `scene.code` | 教程、文化观点、对比、儿童科普 |
 | `shadow-play` | 透光幕布、关节剪影、随剧情变化的器物与场景 | `scene.code` | 寓言、民间故事、历史小段 |
 | `news-broadcast` | 固定竖版新闻卡：蓝色径向底、世界地图、流动线 | `scene.params` | 突发快讯、标题 / 正文 / 来源 |
@@ -91,9 +92,9 @@ recipe 覆盖讲解、叙事、快闪、突发新闻与实拍。每条要么用�
 
 - **带 kit 的场景代码**——`TT.text`、`TT.pen`、`TT.mark`、`TT.board`、`TT.geom`、`TT.flash`、`TT.chart`、`TT.newsBg` 等；编译器只注入场景实际用到的成员，转场边界另注入 `TT.transition` 生成双帧合成场。
 - **7 种字幕样式 + `none`**——plain、perchar、karaoke、collage、handnote、vertical、tornpaper，支持逐字时间与主体避让。
-- **旁白与声音**——默认零密钥 edge-tts，可选 Volc TTS；BGM/SFX 支持淡入淡出与人声闪避。
+- **旁白与声音**——内部自动选择：火山凭证齐备时用 Volc TTS，否则零密钥 Edge TTS；BGM/SFX 支持淡入淡出与人声闪避。
 - **实拍素材**——Pexels 检索、下载、署名、缓存与内置素材降级。
-- **预览与审片**——只读预览、静帧、probe 凭据；预览页可逐帧画笔标注、累积成待发送列表，点「发送批注」后整批连描述与截图写入 `<工程>/annotations/` 并关闭预览，用 `tt annotations` 读回，形成改稿闭环。
+- **预览与审片**——只读预览、静帧、probe 凭据；预览页可逐帧画笔标注，发送后立即把批次交给 Agent 解读修改；重编译后重新预览，开始下一轮。
 - **质量门禁**——`tt qa` 只做轻门禁：`RENDER_PAGE_ERROR` 与 `QA_INK_EMPTY` 两项 must 检查，并输出 12 格联系表；`tt det` 检查编译确定性。
 - **直接出 MP4**——通过 WebCodecs 与 Mediabunny 输出 H.264 + AAC，不调用外部 FFmpeg 可执行文件。
 - **画幅**——1920×1080@30 与 1080×1920@30。
@@ -146,23 +147,23 @@ pause → seek(t) → await video.settle(t) → 同步 tick(t) 重绘 → PNG
 | 整条 `tt qa` | — | 4.1s |
 | npm 依赖 | playwright + core，下载约 4.1MB / 落盘约 18.7MB，Node ≥20 | 复用已有 `ws`，Node ≥18 |
 
-在 60–120Hz 下，旧方案光固定等待就要 4.2–4.7s，已经和现在整条 QA 的 4.1s 同一量级。`tt ci --deep` 跑 9 条 recipe 时，仅浏览器启动一项就少约 18s；本机全量 42.2s。QA、stills、snapshot、render 共用同一套本机 Chrome CDP 驱动，不再为自动化框架多装一层壳。
+在 60–120Hz 下，旧方案光固定等待就要 4.2–4.7s，已经和现在整条 QA 的 4.1s 同一量级。按当时 9 条 recipe 实测，`tt ci --deep` 仅浏览器启动一项就少约 18s；本机全量 42.2s。QA、stills、snapshot、render 共用同一套本机 Chrome CDP 驱动，不再为自动化框架多装一层壳。
 
 ## 实时预览与圈注修改：看到问题，直接标给 Agent
 
-`tt preview --dir my-video` 启动本地只读预览，画面由引擎同一套 `compositor.tick(t)` 实时播放；它不是另一套渲染器，也不是可视化编辑器。改完 storyboard 重新 `tt build`，预览页按 `composition.json` 的 mtime 自动刷新，不需要重启。无需修改时点「完成预览」，记录当前 storyboard 的预览凭据并关闭服务。
+`tt preview --dir my-video` 启动或复用全局唯一的常驻预览服务，由 WorkBuddy 或其他宿主打开内置页面；不会额外启动外部 Chrome。切换工程时原服务直接切换 composition，不另开端口或审片器。改完 storyboard 重新 `tt build`，页面自动刷新。批注只落盘；导出通过对话发起，预览服务保持运行。
 
 看到问题后，在画面上直接画笔圈注，并在底部批注坞写一句描述：
 
 1. 点「画笔批注」暂停在当前帧，画笔画选 / 圈出问题区域；
 2. 写描述，点「完成批注」进入页面内待发送列表；可以继续跳到其他时间点标注，也可以删除某条；
 3. 点「发送批注」：整批 POST 到本地预览服务，写入 `<工程>/annotations/<batch>/`。每条包含描述、时间、命中的 clip，以及三张 PNG：原始帧、纯笔迹、合成后的批注图；
-4. 发送成功后预览自动关闭，控制权回到启动它的 Agent 会话。如果是 Agent 启动的预览，退出时会直接把批次交回；否则用 `tt annotations` 读最新未处理批次。Agent 打开 `annotatedFrame` 看圈注，结合 `desc` / `t` / `clip` 定位要改的场；
+4. 发送成功后页面顶部显示 2 秒半透明提示；后续在对话里要求处理时，Agent 先确认数量与逐条摘要，再读图修改，重编译后预览自动刷新。也可以用 `tt annotations` 读最新未处理批次。Agent 打开 `annotatedFrame` 看圈注，结合 `desc` / `t` / `clip` 定位要改的场；
 5. 改 `storyboard.json` → 重新 `build` → 再 `tt preview`。处理完用 `tt annotations --dir my-video --ack <batch-id>` 标记整批已处理。
 
 这样“看片—圈注—改稿”闭环里，Agent 不需要从聊天里猜用户指的是哪一帧、哪个元素；圈注和截图就是定位证据。`annotations/` 是用户输入，不写进 `out/`，重编译不会丢；整个链路仍然只改 storyboard，不引入第二个运行时或可视化编辑器。
 
-> 预览页不回放音频；要听旁白，导出 MP4 试听。
+> 首次预览即使用真实 TTS 轨道；点击播放后同时播放画面、旁白和 BGM。导出直接读取同一份 composition，不再重建音频。
 
 ## 怎么用
 
@@ -176,7 +177,7 @@ node scripts/doctor.mjs --install
 
 `doctor --install` 会检查 Node、Ticktoon 引擎产物、npm 依赖、Chrome、WebGL2，以及可选的 TTS/素材 provider，只在缺少 ws / msedge-tts 时自动执行 npm install，随后继续检查，无需手动重跑；已有依赖时不会执行 npm。skill 通过 CDP 直接驱动本机 Chrome（≥120），不会下载自带浏览器。无 GPU 服务器可设置 `DH_VIDEO_WEBGL=swiftshader`；使用 `chrome-headless-shell` 且未显式配置时会自动启用 SwiftShader，避免部分 Windows 环境的 WebCodecs 纹理回读失败。
 
-默认链路不需要 API key：edge-tts + 内置演示素材。可选的 Volc TTS 与 Pexels 通过 `node scripts/auth.mjs set <KEY> <value>` 配置；凭证只从环境变量或 `~/.dh-video/credentials.json` 读取，不写入 storyboard 或工程。
+配音由内部自动选择：火山凭证齐备时使用 Volc TTS，否则使用零密钥 Edge TTS；上层无需传 provider。Volc TTS 与 Pexels 通过 `node scripts/auth.mjs set <KEY> <value>` 配置；凭证只从环境变量或 `~/.dh-video/credentials.json` 读取，不写入 storyboard 或工程。
 
 ### 在 Agent 里用
 
@@ -196,11 +197,11 @@ node platform/cli.mjs preview --dir my-video --port 5123            # 只读预�
 node platform/cli.mjs annotations --dir my-video                    # 读取预览页发送的批注批次
 node platform/cli.mjs qa --dir my-video                             # must 门禁 + 12 格联系表
 node platform/cli.mjs det --twice --dir my-video                    # 编译确定性检查
-node platform/cli.mjs build --dir my-video --tts edge               # 带真实旁白重编译
+node platform/cli.mjs build --dir my-video                         # 编译并自动选择配音
 node scripts/render.mjs my-video/out/composition.json -o my-video/video.mp4
 ```
 
-`tt` 指 `node platform/cli.mjs`（或 `npm run tt --`）。`storyboard.json` 是唯一需要手写的文件。`out/` 下都是构建产物，不要手改；改完重新 `build`，预览会自动刷新。只在明确需要时导出 MP4；render 默认要求当前 storyboard 已完成预览，改稿后需重新预览，用户明确要求跳过时才可传 `--without-preview`。不带 `--tts` 的 build 没有旁白音轨。
+`tt` 指 `node platform/cli.mjs`（或 `npm run tt --`）。`storyboard.json` 是唯一需要手写的文件。`out/` 下都是构建产物，不要手改；改完重新 `build`，预览会自动刷新。只在明确需要时导出 MP4，不要求再次确认预览。预览和导出共享同一份 composition 与音轨；storyboard 未改时直接 render，禁止重复构建音频。render 默认 1× 输出，`--render-scale 2` 是可选超采样画质档。
 
 常用命令：
 
