@@ -174,7 +174,7 @@ cd ticktoon-skill
 node scripts/doctor.mjs --install
 ```
 
-`doctor --install` 会检查 Node、Ticktoon 引擎产物、npm 依赖、Chrome、WebGL2，以及可选的 TTS/素材 provider，只在缺少 ws / msedge-tts 时自动执行 npm install，随后继续检查，无需手动重跑；已有依赖时不会执行 npm。skill 通过 CDP 直接驱动本机 Chrome（≥120），不会下载自带浏览器。无 GPU 服务器可设置 `DH_VIDEO_WEBGL=swiftshader`；使用 `chrome-headless-shell` 且未显式配置时会自动启用 SwiftShader，避免部分 Windows 环境的 WebCodecs 纹理回读失败。
+`doctor --install` 会检查 Node、Ticktoon 引擎产物、npm 依赖、Chrome、WebGL2，以及可选的 TTS/素材 provider。引擎固定使用 npm 包 `ticktoon@1.0.2`，从 `node_modules/ticktoon/dist` 加载，不再需要相邻引擎仓库或复制 `ticktoon-dist`。只在缺少 ticktoon / ws / msedge-tts 时自动执行 npm install，随后继续检查，无需手动重跑；已有依赖时不会执行 npm。skill 通过 CDP 直接驱动本机 Chrome（≥120），不会下载自带浏览器。无 GPU 服务器可设置 `DH_VIDEO_WEBGL=swiftshader`；使用 `chrome-headless-shell` 且未显式配置时会自动启用 SwiftShader，避免部分 Windows 环境的 WebCodecs 纹理回读失败。
 
 配音由内部自动选择：火山凭证齐备时使用 Volc TTS，否则使用零密钥 Edge TTS；上层无需传 provider。Volc TTS 与 Pexels 通过 `node scripts/auth.mjs set <KEY> <value>` 配置；凭证只从环境变量或 `~/.dh-video/credentials.json` 读取，不写入 storyboard 或工程。
 

@@ -7,7 +7,7 @@ description: 用 Ticktoon 生成整幅场景化短视频。recipe 给一类成�
 
 唯一产物是 protocol v1.0 `composition.json`（`scenes[]` + `audio[]`）。
 
-下文 `SKILL_DIR` 指本文件所在目录。脚本用绝对路径调用，cwd 保持在用户工程目录。首次使用或环境异常运行 `node "$SKILL_DIR/scripts/doctor.mjs" --install`：它会检查全部环境，只在缺少 ws / msedge-tts 时自动执行 npm install，然后继续检查，不要拆成 doctor → 手动安装 → 重跑 doctor。Chrome 通过 CDP 直接驱动本机安装，不下载浏览器。
+下文 `SKILL_DIR` 指本文件所在目录。脚本用绝对路径调用，cwd 保持在用户工程目录。首次使用或环境异常运行 `node "$SKILL_DIR/scripts/doctor.mjs" --install`：它会检查全部环境，只在缺少 ticktoon / ws / msedge-tts 时自动执行 npm install（引擎固定使用 npm 包 `ticktoon@1.0.2`），然后继续检查，不要拆成 doctor → 手动安装 → 重跑 doctor。Chrome 通过 CDP 直接驱动本机安装，不下载浏览器。
 
 ## 结构
 

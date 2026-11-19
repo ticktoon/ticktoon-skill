@@ -27,22 +27,24 @@ const nodeMajor = +process.versions.node.split('.')[0];
 check('node', nodeMajor >= 18, process.version, '安装 Node >= 18（建议 22 LTS）');
 
 const entryHtml = path.join(ENGINE_DIR, 'export-page.html');
-let engineDetail = ENGINE_DIR;
-if (existsSync(entryHtml)) {
+const engineDetail = () => {
+  let detail = ENGINE_DIR;
   try {
-    const version = readFileSync(path.join(ENGINE_DIR, 'ENGINE_VERSION.txt'), 'utf-8').trim().split('\n')[0];
-    engineDetail += ` · ${version}`;
-  } catch {}
-}
-check('engine', existsSync(entryHtml), engineDetail, '先构建相邻 ticktoon 仓 dist/，或设置 TICKTOON_ENGINE_DIR');
+    const pkg = JSON.parse(readFileSync(path.join(ENGINE_DIR, '..', 'package.json'), 'utf-8'));
+    detail += ` · ticktoon@${pkg.version}`;
+  } catch { /* 缺包时由 engine 检查给出安装提示 */ }
+  return detail;
+};
 
 // npm 依赖先单独检查：缺 ws 时 CDP 驱动不可用，不要把依赖缺失伪装成 Chrome 故障。
 const runtimeDeps = [
   ['ws', 'Chrome CDP 驱动 / edge-tts 旁白'],
   ['msedge-tts', 'edge-tts 旁白'],
+  ['ticktoon', 'Ticktoon 引擎'],
 ];
 const require = createRequire(import.meta.url);
 const unresolvedDeps = runtimeDeps.map(([name]) => name).filter((name) => {
+  if (name === 'ticktoon') return !existsSync(entryHtml);
   try {
     require.resolve(name);
     return false;
@@ -84,14 +86,15 @@ for (const [name] of runtimeDeps) {
 }
 const depsOk = missingDeps.length === 0;
 const depsDetail = depsOk
-  ? `ws / msedge-tts ${installAttempted ? '已自动安装并验证' : '已安装'}`
+  ? `ws / msedge-tts / ticktoon@1.0.2 ${installAttempted ? '已自动安装并验证' : '已安装'}`
   : `缺少 ${missingDeps.join(' / ')}${installError ? `；${installError}` : ''}`;
 check(
   'deps',
   depsOk,
   depsDetail,
-  `cd "${ROOT}" && npm install（安装 ws / msedge-tts；Chrome 直接使用本机安装，不下载浏览器）`,
+  `cd "${ROOT}" && npm install（安装 ticktoon@1.0.2 / ws / msedge-tts；Chrome 直接使用本机安装，不下载浏览器）`,
 );
+check('engine', existsSync(entryHtml), engineDetail(), `cd "${ROOT}" && npm install（安装 ticktoon@1.0.2）`);
 
 const hasDriver = !missingDeps.includes('ws');
 let chromeOk = false, chromeDetail = '';

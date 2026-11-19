@@ -14,6 +14,7 @@
     "pack": "node scripts/tools/pack-skill.mjs"
   },
   "dependencies": {
+    "ticktoon": "1.0.2",
     "msedge-tts": "^2.1.1",
     "ws": "^8.22.0"
   }
