@@ -221,7 +221,7 @@ TT.chart.niceMax(173);             // 200
 TT.chart.bars(rect, rows, opts);   // 横向条形的 y/h/满值像素宽
 ```
 
-`TT.chart` 只算不画；画笔、颜色、时间轴仍归场景代码。
+`TT.chart` 只算不画；画笔、颜色、时间轴仍归场景代码。`columns / radar / pie` 的几何契约见 `references/chart.md`。
 
 ---
 

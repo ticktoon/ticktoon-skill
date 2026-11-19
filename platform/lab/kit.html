@@ -158,7 +158,13 @@
 
     <section class="mode-panel hidden" data-panel="chart">
       <div class="mode-title">图表几何</div>
-      <div class="mode-hint">只跑 <code>TT.chart.bars / niceMax / ticks</code>；条形与刻度用裸 canvas 画，标签用 <code>TT.text</code>。</div>
+      <label class="field">结构<select id="chartTypeSelect">
+        <option value="columns">columns · 分类柱状图</option>
+        <option value="radar">radar · 多维雷达图</option>
+        <option value="pie">pie · 饼图 / 环图</option>
+        <option value="bars">bars · 横向条形</option>
+      </select></label>
+      <div class="mode-hint">只跑 <code>TT.chart</code> 几何；颜色、标题、图例、文字与动画由场景代码决定。</div>
     </section>
 
     <section class="mode-panel hidden" data-panel="progress">
@@ -397,10 +403,15 @@ function boardCode() {
   return `TT.board.${kind}(ctx, api);`;
 }
 
-function chartCode() {
+function barsCode() {
   return [
     "ctx.fillStyle = '#F7F4EC';",
     'ctx.fillRect(0, 0, W, H);',
+    'const lighten = (hex, amount) => {',
+    '  const n = parseInt(hex.slice(1), 16); const channel = (s) => Math.round(((n >> s) & 255) + (255 - ((n >> s) & 255)) * amount);',
+    '  return `rgb(${channel(16)},${channel(8)},${channel(0)})`;',
+    '};',
+    "const colors = ['#38bdf8','#34d399','#fbbf24','#f472b6'];",
     'const rows = [',
     '  { label: "A", value: 42 },',
     '  { label: "B", value: 173 },',
@@ -422,9 +433,16 @@ function chartCode() {
     '}',
     'for (const bar of geo) {',
     '  const w = bar.full * (bar.row.value / max) * k;',
-    '  ctx.fillStyle = "#C66B57";',
-    '  ctx.fillRect(bar.barX, bar.y, Math.max(1, w), bar.h);',
-    '  TT.text(ctx, bar.row.label, bar.labelX, bar.y + bar.h * 0.5 + 10, 26, { fontKey: "sans-400", color: "#2B2A25" });',
+    '  const gradient = ctx.createLinearGradient(bar.barX, 0, bar.barX + Math.max(1, w), 0);',
+    '  gradient.addColorStop(0, colors[bar.index]); gradient.addColorStop(1, lighten(colors[bar.index], 0.8));',
+    '  ctx.fillStyle = gradient;',
+    '  const r = Math.min(10, bar.h / 2, w);',
+    '  ctx.beginPath(); ctx.moveTo(bar.barX, bar.y); ctx.lineTo(bar.barX + w - r, bar.y);',
+    '  ctx.quadraticCurveTo(bar.barX + w, bar.y, bar.barX + w, bar.y + r);',
+    '  ctx.lineTo(bar.barX + w, bar.y + bar.h - r);',
+    '  ctx.quadraticCurveTo(bar.barX + w, bar.y + bar.h, bar.barX + w - r, bar.y + bar.h);',
+    '  ctx.lineTo(bar.barX, bar.y + bar.h); ctx.closePath(); ctx.fill();',
+    '  TT.text(ctx, bar.row.label, bar.barX - 14, bar.y + bar.h * 0.5, 26, { fontKey: "sans-400", color: "#2B2A25", align: "right", baseline: "middle" });',
     '  TT.text(ctx, String(bar.row.value), bar.barX + w + 14, bar.y + bar.h * 0.5 + 10, 24, { fontKey: "sans-400", color: "#6B6458" });',
     '}',
   ].join('\n');
@@ -445,6 +463,129 @@ function progressCode() {
     '  ],',
     '});',
   ].join('\n');
+}
+
+function columnsCode() {
+  return [
+    "ctx.fillStyle = '#fcfcfb';",
+    'ctx.fillRect(0, 0, W, H);',
+    'const lighten = (hex, amount) => {',
+    '  const n = parseInt(hex.slice(1), 16); const channel = (s) => Math.round(((n >> s) & 255) + (255 - ((n >> s) & 255)) * amount);',
+    '  return `rgb(${channel(16)},${channel(8)},${channel(0)})`;',
+    '};',
+    "const colors = ['#38bdf8','#34d399','#fbbf24','#f472b6','#a78bfa'];",
+    "const rows = ['一月','二月','三月','四月','五月'].map((label, i) => ({ label, value: [62,78,95,84,51][i] }));",
+    'const rect = { x: W * 0.14, y: H * 0.18, w: W * 0.72, h: H * 0.56 };',
+    'const geo = TT.chart.columns(rect, rows);',
+    "ctx.strokeStyle = '#d8d7d2'; ctx.lineWidth = 1;",
+    'ctx.beginPath(); ctx.moveTo(rect.x, geo.baselineY); ctx.lineTo(rect.x + rect.w, geo.baselineY); ctx.stroke();',
+    'for (const bar of geo.bars) {',
+    "  TT.text(ctx, bar.row.label, bar.labelX, bar.labelY + 26, 24, { fontKey: 'sans-400', color: '#52514e', align: 'center' });",
+    '}',
+    'const order = [2,3,1,4,0];',
+    'for (const [rank, index] of order.entries()) {',
+    '  const bar = geo.bars[index];',
+    '  const delay = 0.15 + rank * 0.15;',
+    '  const p = TT.ease.outCubic(TT.clamp01((api.t - delay) / 0.8));',
+    '  const h = bar.h * p; const y = geo.baselineY - h;',
+    '  const gradient = ctx.createLinearGradient(0, bar.y, 0, bar.y + bar.h);',
+    '  gradient.addColorStop(0, colors[index]); gradient.addColorStop(1, lighten(colors[index], 0.8));',
+    '  ctx.fillStyle = gradient;',
+    '  const r = Math.min(10, bar.w / 2, h);',
+    '  ctx.beginPath(); ctx.moveTo(bar.x, y + h); ctx.lineTo(bar.x, y + r);',
+    '  ctx.quadraticCurveTo(bar.x, y, bar.x + r, y); ctx.lineTo(bar.x + bar.w - r, y);',
+    '  ctx.quadraticCurveTo(bar.x + bar.w, y, bar.x + bar.w, y + r); ctx.lineTo(bar.x + bar.w, y + h); ctx.closePath(); ctx.fill();',
+    '  const alpha = TT.clamp01((api.t - delay - 0.5) / 0.4);',
+    '  ctx.save(); ctx.globalAlpha = alpha;',
+    "  TT.text(ctx, String(bar.row.value), bar.valueX, geo.baselineY - h - 12, 28, { fontKey: 'sans-400', color: '#0b0b0b', align: 'center' });",
+    '  ctx.restore();',
+    '}',
+  ].join('\n');
+}
+
+function radarCode() {
+  return [
+    "ctx.fillStyle = '#fcfcfb';",
+    'ctx.fillRect(0, 0, W, H);',
+    'const rect = { x: W * 0.18, y: H * 0.10, w: W * 0.64, h: H * 0.76 };',
+    'const geo = TT.chart.radar(rect, {',
+    "  labels: ['性能','易用性','稳定性','扩展性','成本','生态'],",
+    '  rings: 4,',
+    '  series: [',
+    "    { name: '今年', color: '#2a78d6', values: [88,72,94,65,78,56] },",
+    '  ],',
+    '});',
+    "ctx.strokeStyle = 'rgba(11,11,11,0.16)'; ctx.lineWidth = 1;",
+    'for (const ring of geo.grid) {',
+    '  ctx.beginPath(); ring.points.forEach((p, i) => i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)); ctx.closePath(); ctx.stroke();',
+    '}',
+    'for (const spoke of geo.spokes) {',
+    '  ctx.beginPath(); ctx.moveTo(spoke.from.x, spoke.from.y); ctx.lineTo(spoke.to.x, spoke.to.y); ctx.stroke();',
+    '}',
+    'const k = TT.ease.outCubic(TT.clamp01(api.t / 1.4));',
+    'for (const series of geo.series) {',
+    '  ctx.beginPath();',
+    '  series.points.forEach((p, i) => {',
+    '    const x = geo.center.x + (p.x - geo.center.x) * k;',
+    '    const y = geo.center.y + (p.y - geo.center.y) * k;',
+    '    if (i) ctx.lineTo(x, y); else ctx.moveTo(x, y);',
+    '  });',
+    '  ctx.closePath();',
+    "  ctx.fillStyle = series.color + '24'; ctx.fill();",
+    "  ctx.strokeStyle = series.color; ctx.lineWidth = 2; ctx.stroke();",
+    '  for (const p of series.points) {',
+    '    const x = geo.center.x + (p.x - geo.center.x) * k;',
+    '    const y = geo.center.y + (p.y - geo.center.y) * k;',
+    "    ctx.beginPath(); ctx.arc(x, y, 5, 0, Math.PI * 2); ctx.fillStyle = series.color; ctx.fill();",
+    "    ctx.strokeStyle = '#fcfcfb'; ctx.lineWidth = 2; ctx.stroke();",
+    '  }',
+    '}',
+    "for (const label of geo.labels) TT.text(ctx, label.text, label.x, label.y, 24, { fontKey: 'sans-400', color: '#52514e', align: label.align, baseline: label.baseline });",
+  ].join('\n');
+}
+
+function pieCode() {
+  return [
+    "ctx.fillStyle = '#fcfcfb';",
+    'ctx.fillRect(0, 0, W, H);',
+    'const lighten = (hex, amount) => {',
+    '  const n = parseInt(hex.slice(1), 16); const channel = (s) => Math.round(((n >> s) & 255) + (255 - ((n >> s) & 255)) * amount);',
+    '  return `rgb(${channel(16)},${channel(8)},${channel(0)})`;',
+    '};',
+    "const rows = ['移动端','桌面端','其他'].map((label, i) => ({ label, value: [48,37,15][i] }));",
+    'const rect = { x: W * 0.22, y: H * 0.12, w: W * 0.56, h: H * 0.74 };',
+    'const k = TT.ease.outCubic(TT.clamp01(api.t / 2.3));',
+    'const geo = TT.chart.pie(rect, rows, { innerRadius: 0.30, gapPx: 6, progress: k });',
+    "const colors = ['#60a5fa','#34d399','#fbbf24'];",
+    'ctx.beginPath(); ctx.arc(geo.center.x, geo.center.y, (geo.outerRadius + geo.innerRadius) / 2, 0, Math.PI * 2);',
+    "ctx.strokeStyle = 'rgba(11,11,11,0.10)'; ctx.lineWidth = geo.outerRadius - geo.innerRadius; ctx.stroke();",
+    'for (const slice of geo.slices) {',
+    '  if (!slice.label) continue;',
+    '  const label = slice.label;',
+    '  ctx.beginPath(); ctx.moveTo(label.tipX, label.tipY); ctx.lineTo(label.breakX, label.breakY); ctx.lineTo(label.endX, label.endY);',
+    "  ctx.strokeStyle = 'rgba(11,11,11,0.42)'; ctx.lineWidth = 1.5; ctx.stroke();",
+    "  TT.text(ctx, label.text, label.textX, label.nameY, 24, { fontKey: 'sans-400', color: '#0b0b0b', align: label.align, baseline: 'middle' });",
+    "  TT.text(ctx, label.pct.toFixed(1) + '%', label.textX, label.pctY, 22, { fontKey: 'sans-400', color: '#52514e', align: label.align, baseline: 'middle' });",
+    '}',
+    'for (const slice of geo.slices) {',
+    '  const gradient = ctx.createRadialGradient(geo.center.x, geo.center.y, geo.innerRadius, geo.center.x, geo.center.y, geo.outerRadius);',
+    '  gradient.addColorStop(0, colors[slice.index]); gradient.addColorStop(1, lighten(colors[slice.index], 0.66));',
+    '  ctx.beginPath();',
+    '  ctx.arc(geo.center.x, geo.center.y, geo.outerRadius, slice.outerStart, slice.outerEnd);',
+    '  ctx.lineTo(geo.center.x + Math.cos(slice.innerEnd) * geo.innerRadius, geo.center.y + Math.sin(slice.innerEnd) * geo.innerRadius);',
+    '  ctx.arc(geo.center.x, geo.center.y, geo.innerRadius, slice.innerEnd, slice.innerStart, true);',
+    '  ctx.closePath(); ctx.fillStyle = gradient; ctx.fill();',
+    '}',
+  ].join('\n');
+}
+
+function chartCode() {
+  return {
+    columns: columnsCode,
+    radar: radarCode,
+    pie: pieCode,
+    bars: barsCode,
+  }[$('#chartTypeSelect').value || 'columns']();
 }
 
 function transitionSceneCode(which) {
@@ -543,7 +684,7 @@ function modeSummary() {
   }
   if (state.mode === 'mark') return `标注 / ${$('#markTypeSelect').value}`;
   if (state.mode === 'board') return `板面 / ${$('#boardTypeSelect').value}`;
-  if (state.mode === 'chart') return '图表 / bars';
+  if (state.mode === 'chart') return `图表 / ${$('#chartTypeSelect').value}`;
   if (state.mode === 'progress') return '章节进度 / chapters';
   if (state.mode === 'transition') return `转场 / ${$('#transitionPresetSelect').value}`;
   const font = $('#captionFontSelect').value;
@@ -737,6 +878,7 @@ $('#penWidthInput').oninput = scheduleRun;
 $('#markTypeSelect').onchange = scheduleRun;
 $('#markColorInput').oninput = scheduleRun;
 $('#markWidthInput').oninput = scheduleRun;
+$('#chartTypeSelect').onchange = scheduleRun;
 $('#boardTypeSelect').onchange = scheduleRun;
 $('#transitionPresetSelect').onchange = scheduleRun;
 

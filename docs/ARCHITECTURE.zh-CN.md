@@ -434,7 +434,7 @@ sceneDur ──累加──► scene.start
 - `references/iterate.md`：反馈、预览圈注与 TTS 语义
 - `docs/style-dictionary.md`：40 条风格描述词典（人读参考，不是 recipe 实现清单）
 - `references/pexels.md`：实拍素材检索、缓存与失败处理
-- `references/captions.md` / `mark.md` / `pen.md` / `board.md` / `newsbg.md` / `transition.md` / `progress.md`：公共 kit 契约
+- `references/captions.md` / `mark.md` / `pen.md` / `board.md` / `newsbg.md` / `transition.md` / `progress.md` / `chart.md`：公共 kit 契约
 
 **人类/开发（不进入运行时）**
 

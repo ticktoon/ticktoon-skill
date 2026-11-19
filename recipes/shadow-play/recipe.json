@@ -55,7 +55,7 @@
     "minNarrationDuration": 6.5
   },
   "audio": {
-    "mood": "tense",
+    "mood": "soft",
     "volume": 0.11,
     "fadeIn": 1.4,
     "fadeOut": 2.2,

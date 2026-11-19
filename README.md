@@ -16,6 +16,8 @@
 
 **Ticktoon Skill is the authoring layer for [Ticktoon](https://github.com/ticktoon/ticktoon).**
 
+**[Watch the showcase](https://ticktoon.github.io/ticktoon-skill/showcase/)** — complete videos and their storyboard sources.
+
 An LLM writes one `storyboard.json`. The platform compiles it into protocol v1.0 `composition.json`; the engine renders every frame synchronously with `tick(t)`; Chrome exports an ordinary MP4.
 
 The authoring model is deliberately narrow: one storyboard file, one compile chain, one synchronous render path. The storyboard is the only authored file; recipes provide the production rules, a params recipe carries its own fixed template, and the kit provides drawing vocabulary.

@@ -16,6 +16,8 @@
 
 **Ticktoon Skill 是 [Ticktoon](https://github.com/ticktoon/ticktoon) 的 Agent 创作层。**
 
+**[查看示例作品](https://ticktoon.github.io/ticktoon-skill/showcase/)** — 完整视频及对应的 storyboard 源文件。
+
 LLM 只写一份 `storyboard.json`。平台把它编译成 protocol v1.0 `composition.json`；引擎用 `tick(t)` 同步渲染每一帧；Chrome 直接导出普通 MP4。
 
 创作模型刻意保持单一：一份 storyboard、一条编译链、一条同步渲染路径。storyboard 是唯一手写文件；recipe 给生产规范，params 型 recipe 自带固定模板，kit 给绘制词法。

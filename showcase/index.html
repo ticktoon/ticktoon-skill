@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Ticktoon 示例作品：由 Agent 编写 storyboard，经同一编译链与同步渲染引擎生成。">
+<title>Ticktoon Showcase · 示例作品</title>
+<style>
+  :root { color-scheme: light; --paper:#f6f5f1; --ink:#171918; --muted:#6f7470; --line:#dcded8; --accent:#315ee8; }
+  * { box-sizing:border-box; margin:0; }
+  body { background:var(--paper); color:var(--ink); font:15px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif; }
+  a { color:inherit; }
+  button { font:inherit; }
+  .wrap { width:min(1180px,calc(100% - 40px)); margin:auto; }
+  header { display:flex; justify-content:space-between; align-items:center; gap:24px; padding:34px 0 22px; border-bottom:1px solid var(--line); }
+  .brand { font-weight:750; letter-spacing:.12em; }
+  .brand span { color:var(--accent); }
+  .github { color:var(--muted); font-size:13px; text-decoration:none; }
+  .github:hover { color:var(--accent); }
+  .hero { padding:58px 0 34px; }
+  .eyebrow { color:var(--accent); font-size:12px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; }
+  h1 { margin:12px 0 16px; font-size:clamp(34px,5vw,60px); line-height:1.12; letter-spacing:-.045em; }
+  .hero p { color:var(--muted); font-size:17px; }
+  .stats { display:flex; flex-wrap:wrap; gap:22px; margin-top:24px; color:var(--muted); font-size:13px; }
+  .stats strong { color:var(--ink); font-weight:650; }
+  .filters { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:24px; }
+  .filter { padding:7px 13px; border:1px solid var(--line); border-radius:99px; background:transparent; color:var(--muted); cursor:pointer; }
+  .filter:hover,.filter.active { border-color:var(--ink); color:var(--ink); }
+  .filter.active { background:var(--ink); color:var(--paper); }
+  .grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:24px; padding-bottom:54px; }
+  .card { min-width:0; }
+  .card.hidden { display:none; }
+  .poster { position:relative; display:block; width:100%; aspect-ratio:16/9; overflow:hidden; border:1px solid #252a27; border-radius:12px; background:#111512; cursor:pointer; }
+  .poster img { width:100%; height:100%; object-fit:cover; display:block; transition:transform .35s,opacity .25s; }
+  .poster[data-orientation="portrait"] img { object-fit:contain; }
+  .poster:hover img { transform:scale(1.018); opacity:.86; }
+  .play { position:absolute; inset:50% auto auto 50%; transform:translate(-50%,-50%); display:grid; place-items:center; width:58px; height:58px; border-radius:50%; background:rgba(250,250,247,.94); color:#171918; font-size:21px; padding-left:5px; box-shadow:0 8px 30px rgba(0,0,0,.22); }
+  .duration { position:absolute; right:10px; bottom:10px; padding:2px 7px; border-radius:4px; background:rgba(0,0,0,.72); color:#fff; font-size:11px; }
+  .card-head { display:flex; align-items:baseline; justify-content:space-between; gap:12px; margin-top:15px; }
+  h2 { font-size:19px; line-height:1.35; letter-spacing:-.01em; }
+  .recipe { flex:none; color:var(--accent); font:600 11px/1.2 ui-monospace,SFMono-Regular,Consolas,monospace; }
+  .desc { margin-top:6px; color:var(--muted); font-size:13px; min-height:42px; }
+  .links { display:flex; gap:16px; margin-top:10px; font-size:12px; }
+  .links a { color:var(--muted); text-decoration:none; }
+  .links a:hover { color:var(--accent); }
+  dialog { position:fixed; inset:50% auto auto 50%; transform:translate(-50%,-50%); margin:0; width:min(1080px,calc(100% - 32px)); max-width:none; max-height:90vh; overflow:hidden; padding:0; border:0; border-radius:12px; background:#0b0e0c; color:#fff; box-shadow:0 24px 90px rgba(0,0,0,.35); }
+  dialog[open] { display:flex; flex-direction:column; }
+  dialog::backdrop { background:rgba(10,13,11,.72); backdrop-filter:blur(5px); }
+  .dialog-bar { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:12px 16px; }
+  .dialog-title { font-size:14px; }
+  .dialog-actions { display:flex; align-items:center; gap:12px; }
+  .dialog-actions a { color:#c9d2cb; font-size:12px; text-decoration:none; }
+  .close { border:0; background:transparent; color:#fff; font-size:24px; line-height:1; cursor:pointer; }
+  #player { display:block; flex:1 1 auto; min-height:0; width:100%; max-height:75vh; background:#000; }
+  footer { padding:22px 0 34px; border-top:1px solid var(--line); color:var(--muted); font-size:12px; }
+  @media (max-width:760px) {
+    .wrap { width:min(100% - 28px,1180px); }
+    header { padding-top:22px; }
+    .hero { padding-top:38px; }
+    .grid { grid-template-columns:1fr; gap:28px; }
+    .hero p { font-size:15px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">TICKTOON <span>/ SHOWCASE</span></div>
+    <a class="github" href="https://github.com/ticktoon/ticktoon-skill" target="_blank" rel="noreferrer">GitHub ↗</a>
+  </header>
+
+  <section class="hero">
+    <div class="eyebrow">Storyboard in · MP4 out</div>
+    <h1>让 Agent 把故事画成视频。</h1>
+    <p>每个示例都来自一份 storyboard。没有第二套编辑器，没有逐帧手调；Agent 选择配方、组织内容，Ticktoon 用同一条同步渲染链完成画面与声音。</p>
+    <div class="stats">
+      <span><strong id="work-count">4</strong> 个完整示例</span>
+      <span><strong id="recipe-count">4</strong> 种创作配方</span>
+      <span>原生 MP4 + storyboard 源文件</span>
+    </div>
+  </section>
+
+  <nav class="filters" aria-label="按配方筛选">
+    <button class="filter active" data-filter="all">全部</button>
+    <button class="filter" data-filter="whiteboard-explainer">白板手写</button>
+    <button class="filter" data-filter="news-broadcast">突发新闻</button>
+    <button class="filter" data-filter="flash-cut">快闪卡点</button>
+    <button class="filter" data-filter="footage">实拍</button>
+  </nav>
+
+  <main id="grid" class="grid"></main>
+
+  <footer>Agent 编写 storyboard · Ticktoon 同步渲染 · 点击封面播放完整视频</footer>
+</div>
+
+<dialog id="dialog" aria-label="视频播放器">
+  <div class="dialog-bar">
+    <div id="dialog-title" class="dialog-title"></div>
+    <div class="dialog-actions">
+      <a id="download" href="#" download>下载 MP4 ↓</a>
+      <button id="close" class="close" aria-label="关闭播放器">×</button>
+    </div>
+  </div>
+  <video id="player" controls playsinline preload="metadata"></video>
+</dialog>
+
+<script>
+const works = [
+  {
+    title: '白板上的知识推导',
+    recipe: 'whiteboard-explainer',
+    duration: '00:42',
+    description: '马克笔迹、步骤图解与旁白同步，让抽象机制逐笔长出来。',
+    video: 'whiteboard/video.mp4',
+    poster: 'whiteboard/qa-sheet.png',
+    storyboard: 'whiteboard/storyboard.json',
+    orientation: 'landscape',
+  },
+  {
+    title: '突发新闻信息卡',
+    recipe: 'news-broadcast',
+    duration: '00:10',
+    description: '竖屏新闻版式、打字机正文与紧张节奏，换稿不换视觉。',
+    video: 'break_news/video.mp4',
+    poster: 'break_news/qa-sheet.png',
+    storyboard: 'break_news/storyboard.json',
+    orientation: 'portrait',
+  },
+  {
+    title: '快闪文字与图形节奏',
+    recipe: 'flash-cut',
+    duration: '00:20',
+    description: '硬切、满幅大字、图片遮罩和连续构图，用短句推进节奏。',
+    video: 'flash_cut/video.mp4',
+    poster: 'flash_cut/qa-sheet.png',
+    storyboard: 'flash_cut/storyboard.json',
+    orientation: 'landscape',
+  },
+  {
+    title: 'Pexels 实拍拼接',
+    recipe: 'footage',
+    duration: '00:08',
+    description: '真实素材、压屏短句、逐字字幕和全片章节进度。',
+    video: 'footage/video.mp4',
+    poster: 'footage/qa-sheet.png',
+    storyboard: 'footage/storyboard.json',
+    orientation: 'landscape',
+  },
+];
+
+const grid = document.getElementById('grid');
+const dialog = document.getElementById('dialog');
+const player = document.getElementById('player');
+const dialogTitle = document.getElementById('dialog-title');
+const download = document.getElementById('download');
+
+grid.innerHTML = works.map((work, index) => `
+  <article class="card" data-recipe="${work.recipe}">
+    <button class="poster" data-index="${index}" data-orientation="${work.orientation}" aria-label="播放：${work.title}">
+      <img src="${work.poster}" alt="${work.title}预览" loading="lazy">
+      <span class="play" aria-hidden="true">▶</span>
+      <span class="duration">${work.duration}</span>
+    </button>
+    <div class="card-head"><h2>${work.title}</h2><span class="recipe">${work.recipe}</span></div>
+    <p class="desc">${work.description}</p>
+    <div class="links">
+      <a href="${work.video}" target="_blank" rel="noreferrer">MP4 ↗</a>
+      <a href="${work.storyboard}" target="_blank" rel="noreferrer">storyboard.json ↗</a>
+    </div>
+  </article>
+`).join('');
+
+document.querySelectorAll('.filter').forEach((button) => {
+  button.addEventListener('click', () => {
+    document.querySelectorAll('.filter').forEach((item) => item.classList.toggle('active', item === button));
+    const filter = button.dataset.filter;
+    document.querySelectorAll('.card').forEach((card) => {
+      card.classList.toggle('hidden', filter !== 'all' && card.dataset.recipe !== filter);
+    });
+  });
+});
+
+grid.addEventListener('click', (event) => {
+  const button = event.target.closest('.poster');
+  if (!button) return;
+  const work = works[Number(button.dataset.index)];
+  dialogTitle.textContent = `${work.title} · ${work.recipe}`;
+  player.src = work.video;
+  player.poster = work.poster;
+  download.href = work.video;
+  dialog.showModal();
+  player.play().catch(() => {});
+});
+
+document.getElementById('close').addEventListener('click', () => dialog.close());
+dialog.addEventListener('click', (event) => {
+  if (event.target === dialog) dialog.close();
+});
+dialog.addEventListener('close', () => {
+  player.pause();
+  player.removeAttribute('src');
+  player.load();
+});
+</script>
+</body>
+</html>
