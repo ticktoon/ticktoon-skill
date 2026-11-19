@@ -74,7 +74,7 @@ function readManifest(file) {
 }
 
 export async function fetchProjectAssets({
-  projectDir, provider = 'pexels', orientation = 'landscape', fallback = 'bundled', log = console.log,
+  projectDir, provider = 'pexels', orientation = 'landscape', log = console.log,
 }) {
   const dir = path.resolve(projectDir);
   const storyboardPath = path.join(dir, 'storyboard.json');
@@ -93,32 +93,15 @@ export async function fetchProjectAssets({
   }
   if (provider === 'pexels' && !requests.every((item) => item.query)) throw new Error('存在空 Pexels 查询');
 
-  let segments;
-  let actualProvider = provider;
-  let fallbackReason = null;
-  try {
-    segments = await pickSegments({
-      tags: requests.map((item) => item.query),
-      queriesEn: requests.map((item) => item.query),
-      totalSeconds: requests.reduce((sum, item) => sum + item.duration, 0),
-      durations: requests.map((item) => item.duration),
-      provider,
-      orientation: storyboard.meta?.assets?.orientation || orientation,
-      strict: true,
-    });
-  } catch (error) {
-    if (provider !== 'pexels' || !fallback) throw error;
-    fallbackReason = error.message;
-    console.error(`  Pexels 获取失败：${fallbackReason}`);
-    console.error(`  明确降级：${requests.length} 个窗口全部回退到 assets/demo，成片不会留空画面`);
-    actualProvider = 'bundled';
-    segments = await pickSegments({
-      tags: requests.map((item) => item.query),
-      totalSeconds: requests.reduce((sum, item) => sum + item.duration, 0),
-      durations: requests.map((item) => item.duration),
-      provider: 'bundled',
-    });
-  }
+  const segments = await pickSegments({
+    tags: requests.map((item) => item.query),
+    queriesEn: requests.map((item) => item.query),
+    totalSeconds: requests.reduce((sum, item) => sum + item.duration, 0),
+    durations: requests.map((item) => item.duration),
+    provider,
+    orientation: storyboard.meta?.assets?.orientation || orientation,
+    strict: true,
+  });
   if (segments.length !== requests.length) {
     throw new Error(`素材命中 ${segments.length}/${requests.length}，拒绝生成缺画面的 composition`);
   }
@@ -131,23 +114,6 @@ export async function fetchProjectAssets({
     const request = requests[i];
     const segment = segments[i];
     const params = storyboard.scenes[request.sceneIndex].params;
-    if (segment.provider === 'bundled') {
-      params.src = segment.remotePath;
-      params.start = 0;
-      if (params.credit === 'auto') params.credit = '内置演示素材 / 非 Pexels 实时检索';
-      records.push({
-        ...request,
-        provider: 'bundled',
-        id: segment.id,
-        src: segment.remotePath,
-        duration: segment.originalDuration,
-        selectedDuration: segment.duration,
-        fallbackReason,
-      });
-      log(`  ${request.sceneId} → 内置降级 ${segment.id}`);
-      continue;
-    }
-
     const filename = `pexels-${segment.id}.mp4`;
     const target = path.join(mediaDir, filename);
     const previous = manifest.items.find((item) => String(item.id) === String(segment.id));
@@ -160,12 +126,7 @@ export async function fetchProjectAssets({
       try {
         await download(segment.remotePath, target);
       } catch (error) {
-        const reason = `Pexels#${segment.id}（${request.query}）${error.message}`;
-        if (!fallback) throw new Error(`${reason}；storyboard 尚未回写`);
-        console.error(`  ${reason}`);
-        console.error('  明确降级：下载未完成，重新以 assets/demo 填充全部窗口');
-        const result = await fetchProjectAssets({ projectDir: dir, provider: 'bundled', orientation, fallback: null, log });
-        return { ...result, requestedProvider: 'pexels', fallbackReason: reason };
+        throw new Error(`Pexels#${segment.id}（${request.query}）${error.message}；storyboard 尚未回写`);
       }
       downloads += 1;
       log(`  已下载 pexels#${segment.id} → ${filename}（${(statSync(target).size / 1048576).toFixed(1)}MB）`);
@@ -204,13 +165,12 @@ export async function fetchProjectAssets({
 
   manifest.updatedAt = new Date().toISOString();
   manifest.lastRun = {
-    provider: actualProvider,
+    provider: provider,
     requestedProvider: provider,
     orientation: storyboard.meta?.assets?.orientation || orientation,
-    fallbackReason,
     records,
   };
-  if (actualProvider === 'pexels') {
+  if (provider === 'pexels') {
     await writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
   }
   const temporary = `${storyboardPath}.tmp-${process.pid}`;
@@ -221,13 +181,12 @@ export async function fetchProjectAssets({
     ok: true,
     projectDir: dir,
     changed: true,
-    provider: actualProvider,
+    provider: provider,
     requestedProvider: provider,
-    fallbackReason,
     downloads,
     cacheHits,
     items: records,
     storyboardPath,
-    manifestPath: actualProvider === 'pexels' ? manifestPath : null,
+    manifestPath: provider === 'pexels' ? manifestPath : null,
   };
 }

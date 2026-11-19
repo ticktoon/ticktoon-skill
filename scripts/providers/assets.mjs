@@ -4,26 +4,18 @@
  *   pickSegments({ tags, totalSeconds, provider, queriesEn?, durations?, orientation?, strict? })
  *     → [{ remotePath, image, startTime, duration, originalDuration, ...attribution }]
  *
- * provider:
- *   - 'bundled'（默认兜底，零密钥）：包内 assets/demo/ 示例片段 + catalog.json，
- *     按 topic/keywords 匹配 tag；片段以 `skill:assets/demo/xx.mp4` 引用。
- *   - 'pexels'：Pexels 视频检索，需要 PEXELS_API_KEY。只检索，不在这里下载；
- *     scripts/providers/asset-fetch.mjs 负责落盘、缓存与 storyboard 回写。
+ * provider 只支持 'pexels'：检索需要 PEXELS_API_KEY，只检索，不在这里下载；
+ * scripts/providers/asset-fetch.mjs 负责落盘、缓存与 storyboard 回写。
+ * 无 key、无候选、下载失败都直接报错，不用内置素材替换查询结果。
  *
  * durations 可给每个查询独立的窗口秒数；缺省仍按总时长相等切分。strict=true 时，
- * 无候选或源片不够长都会报错，由调用方明确选择失败或 bundled 降级，不留空窗口。
+ * 无候选或源片不够长都会报错，由调用方决定如何向用户呈现失败。
  */
-import { existsSync, readFileSync } from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { getCredential } from '../config.mjs';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const SKILL_ROOT = path.resolve(__dirname, '..', '..');
-const CATALOG_FILE = path.join(SKILL_ROOT, 'assets', 'catalog.json');
 const PEXELS_API = 'https://api.pexels.com/videos/search';
 
-export const ASSETS_PROVIDERS = ['bundled', 'pexels'];
+export const ASSETS_PROVIDERS = ['pexels'];
 export const PEXELS_LICENSE = {
   name: 'Pexels License',
   url: 'https://www.pexels.com/license/',
@@ -31,21 +23,14 @@ export const PEXELS_LICENSE = {
 };
 
 export async function pickSegments({
-  tags, totalSeconds, provider = 'bundled', queriesEn,
-  durations, orientation = 'landscape', strict = false,
+  tags, totalSeconds, provider = 'pexels', queriesEn,
+  durations, orientation = 'landscape', strict = true,
 }) {
   if (!tags?.length) return [];
-  if (provider === 'bundled') return pickBundled(tags, totalSeconds, durations);
   if (provider === 'pexels') {
     return pickPexels(queriesEn?.length ? queriesEn : tags, totalSeconds, { durations, orientation, strict });
   }
   throw new Error(`未知素材 provider: ${provider}（可选 ${ASSETS_PROVIDERS.join('/')}）`);
-}
-
-/** bundled 词库（供 agent 选择 tag 时参考） */
-export function bundledTopics() {
-  if (!existsSync(CATALOG_FILE)) return [];
-  return JSON.parse(readFileSync(CATALOG_FILE, 'utf-8')).items ?? [];
 }
 
 function windowsFor(total, count, durations) {
@@ -65,43 +50,6 @@ function startTimes(windows) {
     cursor += duration;
     return +at.toFixed(3);
   });
-}
-
-// ---------------- bundled ----------------
-function pickBundled(tags, total, durations) {
-  const items = bundledTopics();
-  if (items.length === 0) throw new Error('assets/catalog.json 缺失或为空');
-  const used = new Set();
-  const segs = [];
-  const windows = windowsFor(total, tags.length, durations);
-  const starts = startTimes(windows);
-  tags.forEach((tag, i) => {
-    const win = windows[i];
-    // 命中：topic 相等 / keywords 包含 / 互为子串
-    const hit = (it) => it.topic === tag || (it.keywords ?? []).some((k) => k === tag || tag.includes(k) || k.includes(tag));
-    let pick = items.find((it) => !used.has(it.file) && hit(it));
-    if (!pick) {
-      pick = items.find((it) => !used.has(it.file));
-      if (pick) console.warn(`  Tag「${tag}」未命中内置目录，兜底用「${pick.topic}」`);
-    }
-    if (!pick) throw new Error(`Tag「${tag}」无可用内置片段（${items.length} 段已用完）`);
-    used.add(pick.file);
-    segs.push({
-      provider: 'bundled',
-      id: pick.file,
-      query: tag,
-      remotePath: 'skill:assets/' + pick.file,
-      image: '',
-      startTime: starts[i],
-      duration: +Math.min(pick.duration, win).toFixed(3),
-      originalDuration: pick.duration,
-      author: '内置演示素材',
-      sourceUrl: '',
-      license: '见 assets/catalog.json',
-    });
-    console.log(`  窗口[${starts[i].toFixed(1)}s +${win.toFixed(1)}s] Tag「${tag}」→ 内置 ${pick.file}（${pick.duration}s）`);
-  });
-  return segs;
 }
 
 // ---------------- pexels ----------------

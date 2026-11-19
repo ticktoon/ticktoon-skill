@@ -8,7 +8,7 @@
 - 两个可运行范例：
   - `recipes/whiteboard-explainer/ref-shots/el-nino.js`：机制剖面，演示 `TT.geom` 相机、`TT.board`、`TT.pen`、分段落笔。
   - `recipes/whiteboard-explainer/ref-shots/compound-interest.js`：图表构图，演示坐标轴、刻度、曲线、翻倍阶梯与标注。
-- 水墨与拼贴的创作纲要/物理规范：`recipes/ink-painting/recipe.md`、`recipes/illustrated-story/recipe.md`，各自带一组 `ref-shots/`；镜头参考文件头格式统一见 `SKILL.md`。
+- 拼贴的创作纲要/物理规范：`recipes/illustrated-story/recipe.md`，自带一组 `ref-shots/`；镜头参考文件头格式统一见 `SKILL.md`。
 
 ---
 
@@ -124,7 +124,7 @@ const bold = STROKE[1];
 - 字号只落一两档 → 画面层级弱；看 12 格联系表，真实文字高度可从 text 回执读。
 - 线宽全用一个值 → 画面能出，但主次结构没有可量化的层级；联系表会直接暴露这一点。
 
-注意：qa 与 probe 的安全框都取 `recipe.rules.safeMargin`；白板是 0.06，水墨是 0.09。不要假设所有 recipe 同边距。
+注意：qa 与 probe 的安全框都取 `recipe.rules.safeMargin`，不同 recipe 可以不同；不要假设全库使用同一边距。
 
 ---
 

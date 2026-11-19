@@ -7,10 +7,9 @@ Suggested names, matching the commented example in both READMEs:
 - `whiteboard-explainer.png`
 - `crayon-guide.png`
 - `news-broadcast.png`
-- `ink-painting.png`
 - `illustrated-story.png`
 - `flash-cut.png`
 - `shadow-play.png`
-- `footage-cut.png`
+- `footage.png`
 
 Recommended: 16:9 or 9:16 PNG/WebP at 1280px wide (GIF/WebP animation for motion demos). Keep files under ~2 MB each.

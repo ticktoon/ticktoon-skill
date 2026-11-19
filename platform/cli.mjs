@@ -97,7 +97,6 @@ async function cmdAssetsFetch() {
       projectDir,
       provider: flagValue('provider', 'pexels'),
       orientation: flagValue('orientation', 'landscape'),
-      fallback: hasFlag('strict') || hasFlag('no-fallback') ? null : flagValue('fallback', 'bundled'),
       log: json ? () => {} : (line) => console.log(line),
     });
     if (json) {
@@ -105,12 +104,11 @@ async function cmdAssetsFetch() {
     } else {
       console.log('');
       console.log(`  状态    ${result.changed ? '素材引用已写回 storyboard' : '无需变更（本地引用已就绪）'}`);
-      console.log(`  来源    ${result.requestedProvider || '本地缓存'}${result.provider === 'bundled' && result.requestedProvider === 'pexels' ? ' → bundled 降级' : ''}`);
+      console.log(`  来源    ${result.requestedProvider || '本地缓存'}`);
       console.log(`  下载    ${result.downloads} 段；缓存命中 ${result.cacheHits} 段`);
       for (const item of result.items || []) {
         console.log(`  ${String(item.id).padEnd(12)} ${item.provider || 'pexels'}  ${item.duration ?? '-'}s  ${item.author || item.src || ''}`);
       }
-      if (result.fallbackReason) console.log(`  降级原因 ${result.fallbackReason}`);
       if (result.manifestPath) console.log(`  署名清单 ${result.manifestPath}`);
       if (result.storyboardPath) console.log(`  下一步   node platform/cli.mjs build --dir ${JSON.stringify(projectDir)}（自动选择配音）`);
       console.log('');
@@ -831,7 +829,7 @@ function usage() {
   tt new <目录> --recipe <id>     建工程（从 skeleton 预填 storyboard）
   tt build [--dir <工程>] [--tts <provider>]   编译出 out/composition.json + report.json
   tt assets fetch --project <工程> [--provider pexels] [--orientation landscape|portrait]
-                [--strict]                  检索、下载、署名并回写 job:media；默认失败时明确降级 bundled
+                                          检索、下载、署名并回写 job:media；无 key 或获取失败直接报错，不用内置素材替代
   tt stills <t…> [--dir <工程>]   指定时刻静帧 + 布局凭据；仅定点排障，不代替全片 QA
   tt probe --t <秒> [--dir <工程>] 该时刻全部凭据（kind/单元/label/bbox/安全框/字幕带）
   tt qa [--count N] [--cols C]    轻量渲染校验（渲染异常/空墨迹）+ 12 格联系表，must=0

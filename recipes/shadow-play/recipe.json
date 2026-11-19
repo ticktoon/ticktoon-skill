@@ -18,7 +18,7 @@
     "需要角色名与讲话内容分成两段的戏台式对白条。"
   ],
   "notWhen": [
-    "需要真实镜头或写实人物表情；改用 footage-cut 或 illustrated-story。",
+    "需要真实镜头或写实人物表情；改用 footage 或 illustrated-story。",
     "需要图表、步骤或现代信息版式；改用 whiteboard-explainer 或其他信息型 recipe。",
     "只需要固定标题、名牌和人物姿态枚举；本 recipe 的构图由 scene.code 实时绘制。"
   ],

@@ -6,6 +6,7 @@
  * 文件，不需要额外的 manifest，也不依赖文件名里的序号。
  */
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
 import path from 'node:path';
 
 const HEADER_RE = /^﻿?\s*\/\*\s*@ticktoon-ref-shot\s*([\s\S]*?)\*\//;
@@ -238,6 +239,28 @@ export function refShotsStoryboard({ recipe, refShots, errors = [] }) {
   };
 }
 
+/** footage 的作者 skeleton 使用 Pexels 查询；回归只临时生成测试视频，不保留内置成片素材。 */
+function footageRegressionInput(root, skeleton) {
+  const dir = path.join(root, 'output', 'ci', 'footage');
+  mkdirSync(dir, { recursive: true });
+  const video = path.join(dir, 'fixture.mp4');
+  if (!existsSync(video)) {
+    execFileSync('ffmpeg', [
+      '-y', '-f', 'lavfi', '-i', 'testsrc2=size=1920x1080:rate=30',
+      '-t', '8', '-c:v', 'libx264', '-preset', 'veryfast', '-pix_fmt', 'yuv420p', '-an', video,
+    ], { stdio: 'ignore' });
+  }
+  const storyboard = JSON.parse(readFileSync(skeleton, 'utf8'));
+  for (const scene of storyboard.scenes) {
+    scene.params.src = video;
+    scene.params.credit = 'CI 测试素材';
+  }
+  // 引擎必须读取真实视频与 storyboard，因此这个回归夹具始终落盘。
+  const file = path.join(dir, 'skeleton.storyboard.json');
+  writeFileSync(file, `${JSON.stringify(storyboard, null, 2)}\n`);
+  return { kind: 'params', file, errors: [], refShots: [], storyboard };
+}
+
 /**
  * 返回一条 recipe 的回归输入。
  *
@@ -252,6 +275,7 @@ export function recipeRegressionInput({ root, recipe, write = true }) {
   }
 
   if (recipe.mode !== 'code') {
+    if (recipe.id === 'footage') return footageRegressionInput(root, skeleton);
     return { kind: 'params', file: skeleton, errors, refShots: [] };
   }
 

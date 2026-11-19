@@ -11,7 +11,7 @@
   ],
   "notWhen": [
     "只需要罗列结论或清单；改用固定版式的 params recipe（如 news-broadcast）。",
-    "需要多镜头讲故事或展示实拍；改用 illustrated-story 或 footage-cut。",
+    "需要多镜头讲故事或展示实拍；改用 illustrated-story 或 footage。",
     "想把讲课内容做成 recipe 的课题选项；本 recipe 禁止题材枚举，内容必须在 scene.code 里现写。"
   ],
   "rules": {

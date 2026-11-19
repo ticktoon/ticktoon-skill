@@ -33,7 +33,7 @@ recipe 有两种模式，由 `tt recipe show <id>` 的 `mode` 标明：
 
 | 用户第一句话 | 怎么走 |
 |---|---|
-| **带视觉词或题材**（白板 / 黑板 / 水墨 / 新闻 / 实拍 / 蜡笔 / 皮影 / 快闪…） | 与 `tt recipe list` 的 `keywords`、`when` 匹配最贴的 recipe，并用 `notWhen` 排除明显不合适的；选中后再读该 recipe 的 recipe.md / skeleton，code 型再读 ref-shots；recipe 只给规范，不给内容 |
+| **带视觉词或题材**（白板 / 黑板 / 新闻 / 实拍 / 蜡笔 / 皮影 / 快闪…） | 与 `tt recipe list` 的 `keywords`、`when` 匹配最贴的 recipe，并用 `notWhen` 排除明显不合适的；选中后再读该 recipe 的 recipe.md / skeleton，code 型再读 ref-shots；recipe 只给规范，不给内容 |
 | **没带视觉词** | 从 `tt recipe list` 里**主动推荐 2–3 个视觉让用户选**，不静默兜底 |
 | 想换题材 | 只改 storyboard 文本与 `scene.code`，平台与 kit 一行不动 |
 | 需要固定版式（新闻卡 / 实拍压字 / 图解 / 剪影…） | 选 `mode: "params"` 的 recipe；只填 `scene.params` 的文本、素材、姿态，不含题材枚举 |
@@ -133,7 +133,7 @@ kit 是可复用的绘制词法。用到哪类能力就读 `references/<kit>.md`
 ## 固定模板型 recipe 与素材
 
 - `mode: "params"` 的 recipe 只换 `scene.params` 里的少量动态字段，参数契约、排版与声音约束以 `recipe.json` / `recipe.md` 为准；旁白与字幕不是必有的，由该 recipe 的 `audio` / `captions` 决定。
-- 实拍素材的检索、缓存、降级与凭证链见 `references/pexels.md`。
+- 实拍素材的检索、缓存与凭证链见 `references/pexels.md`。`footage` 的 `src` 为 `pexels:` 查询时必须先运行 `tt assets fetch`，无 key 直接报错；本地视频不需要 key。
 
 ## 红线
 

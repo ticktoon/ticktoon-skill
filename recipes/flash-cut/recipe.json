@@ -21,7 +21,7 @@
   "notWhen": [
     "需要解释机制、铺陈因果或连续旁白的长片；改用 whiteboard-explainer 或 illustrated-story。",
     "场景需要固定信息卡版式；改用 news-broadcast。",
-    "需要真实素材叙事而不是大字/图形；改用 footage-cut。"
+    "需要真实素材叙事而不是大字/图形；改用 footage。"
   ],
   "rules": {
     "safeMargin": 0.025,

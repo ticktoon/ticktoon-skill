@@ -60,7 +60,7 @@ const indent = (text, pad) => text.split('\n').map((line) => (line ? pad + line 
 /**
  * @returns {{ id, duration, background, seed, code, cues, resources, needs, meta }}
  */
-export function emitScene({ scene, recipe, format, catalog, kitIndex, kitDir, caption = null, receipts, rules = null }) {
+export function emitScene({ scene, recipe, format, catalog, kitIndex, kitDir, caption = null, film = null, receipts, rules = null }) {
   const W = format.w;
   const H = format.h;
   const captionName = caption?.name || null;
@@ -151,6 +151,8 @@ export function emitScene({ scene, recipe, format, catalog, kitIndex, kitDir, ca
   push(`const FONTS = ${JSON.stringify(fontMap)};`);
   // RULES 只属于 code 场：params 模板通过 params 契约拿内容，不需要视觉规范对象。
   if (scene.code) push(`const RULES = ${JSON.stringify(rules ?? {})};`);
+  const filmData = film || { duration: Number(scene.start) + Number(scene.duration), chapters: [] };
+  push(`const FILM = ${JSON.stringify({ ...filmData, start: Number(scene.start) })};`);
 
   // ---- params：模板正文 + 唯一内部单元 ----
   let track = null;
@@ -178,7 +180,7 @@ export function emitScene({ scene, recipe, format, catalog, kitIndex, kitDir, ca
     const motion = template.motion || {};
     const enterDur = motion.enter ?? 0.5;
     const exitDur = Number((enterDur * (motion.exitRatio ?? 0.5)).toFixed(4));
-    push(`const G0 = { ctx: null, W: ${W}, H: ${H}, fonts: FONTS, motion: ${JSON.stringify(motion)}, sizes: {}, t: 0, sceneT: 0, at: 0, abs: ${Number(scene.start)}, dur: ${Number(scene.duration)}, a: 1, reveal: 1, cues: api.cues,`);
+    push(`const G0 = { ctx: null, W: ${W}, H: ${H}, fonts: FONTS, film: FILM, motion: ${JSON.stringify(motion)}, sizes: {}, t: 0, sceneT: 0, at: 0, abs: ${Number(scene.start)}, dur: ${Number(scene.duration)}, a: 1, reveal: 1, cues: api.cues,`);
     push(`  rect: { x: 0, y: 0, w: ${W}, h: ${H} }, rng: () => TT.rng(${hashSeed(scene.id, 'template')}) };`);
     push(`const P0 = ${JSON.stringify(paramsWithMedia)};`);
     push(`const __TT_ENTER_DUR = ${enterDur};`);

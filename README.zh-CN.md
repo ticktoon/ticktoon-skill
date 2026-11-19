@@ -79,21 +79,20 @@ recipe 覆盖讲解、叙事、快闪、突发新闻与实拍。每条要么用�
 |---|---|---|---|
 | `whiteboard-explainer` | 白板 / 黑板，笔迹逐笔生长 | `scene.code` | 机制、科普、步骤讲解 |
 | `blackboard-lesson` | 绿板粉笔，按课堂书写节拍推进 | `scene.code` | 推导、课程、教学节奏 |
-| `ink-painting` | 墨线、晕染与大片留白 | `scene.code` | 东方美学、诗词、文化 |
 | `illustrated-story` | 纸张拼贴、剪报字 | `scene.code` | 小故事、观察随笔 |
 | `flash-cut` | 硬切、大字、一句一场 | `scene.code` | 观点、结论、促销节拍 |
 | `flat-motion` | 高饱和扁平色块、圆角人物与图标、弹性变形 | `scene.code` | 产品、品牌、应用功能与轻科普 MG |
 | `crayon-guide` | 暖米纸、蜡笔斜纹、人物与手绘图解 | `scene.code` | 教程、文化观点、对比、儿童科普 |
 | `shadow-play` | 透光幕布、关节剪影、随剧情变化的器物与场景 | `scene.code` | 寓言、民间故事、历史小段 |
 | `news-broadcast` | 固定竖版新闻卡：蓝色径向底、世界地图、流动线 | `scene.params` | 突发快讯、标题 / 正文 / 来源 |
-| `footage-cut` | 满幅真实素材 + 硬短句 | `scene.params` | Pexels 或本地实拍混剪 |
+| `footage` | 满幅真实素材 + 硬短句 | `scene.params` | Pexels 或本地实拍混剪 |
 
 除此之外：
 
 - **带 kit 的场景代码**——`TT.text`、`TT.pen`、`TT.mark`、`TT.board`、`TT.geom`、`TT.chart`、`TT.newsBg` 等；编译器只注入场景实际用到的成员，转场边界另注入 `TT.transition` 生成双帧合成场。
 - **6 种字幕样式 + `none`**——plain、perchar、karaoke、collage、vertical、tornpaper，支持逐字时间与主体避让。
 - **旁白与声音**——内部自动选择：火山凭证齐备时用 Volc TTS，否则零密钥 Edge TTS；BGM/SFX 支持淡入淡出与人声闪避。
-- **实拍素材**——Pexels 检索、下载、署名、缓存与内置素材降级。
+- **实拍素材**——Pexels 检索、下载、署名与缓存；无 key 或失败直接报错，本地视频不需要 key。
 - **预览与审片**——只读预览、静帧、probe 凭据；预览页可逐帧画笔圈注，发送后立即把批次交给 Agent 解读修改；重编译后重新预览，开始下一轮。
 - **质量门禁**——`tt qa` 只做轻门禁：`RENDER_PAGE_ERROR` 与 `QA_INK_EMPTY` 两项 must 检查，并输出 12 格联系表；`tt det` 检查编译确定性。
 - **直接出 MP4**——通过 WebCodecs 与 Mediabunny 输出 H.264 + AAC，不调用外部 FFmpeg 可执行文件。

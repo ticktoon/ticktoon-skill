@@ -34,8 +34,8 @@ ticktoon CanvasCompositor.tick(t)
 | 项 | 实际数量 |
 |---|---|
 | recipe | **9**（ABI 1，每条声明 `mode: "code"` 或 `"params"`） |
-| params 模板 | **2**（news-broadcast / footage-cut） |
-| 公共 kit 命名空间 | **11** 个 `TT.*` 入口 + 字幕 kit |
+| params 模板 | **2**（news-broadcast / footage） |
+| 公共 kit 命名空间 | **12** 个 `TT.*` 入口 + 字幕 kit |
 | 字幕样式 | **7** 种，另有 `none` |
 | 允许画幅 | **1920×1080@30 / 1080×1920@30** |
 
@@ -68,20 +68,19 @@ ticktoon CanvasCompositor.tick(t)
 |---|---|---|
 | `whiteboard-explainer` | `scene.code` | 暖白纸 / 马克笔红 |
 | `blackboard-lesson` | `scene.code` | 绿黑板 / 粉笔白 |
-| `ink-painting` | `scene.code` | 近黑底 / 水墨浓淡 |
 | `illustrated-story` | `scene.code` | 米色纸 / 拼贴色 |
 | `flash-cut` | `scene.code` | 近黑底 / 橙与深蓝 |
 | `flat-motion` | `scene.code` | 群青 / 珊瑚 / 薄荷色块、圆角人物与图标、弹性变形 |
 | `crayon-guide` | `scene.code` | 暖米纸 / 蜡笔人物 / 手绘图解 |
 | `shadow-play` | `scene.code` | 透光幕布 / 琥珀灯影 / 侧面镂空人物与器物 |
 | `news-broadcast` | `scene.params` | 径向深蓝 / 地图与网格 |
-| `footage-cut` | `scene.params` | 深棕黑 / 暖白压屏字 |
+| `footage` | `scene.params` | 深棕黑 / 暖白压屏字 |
 
 内容形态取决于 `recipe.json` 的 `mode`（`code` 型写 `scene.code`，`params` 型写 `scene.params`）。新增 recipe 只需建目录并写 `recipe.json`（params 型再加 `template.js`），`tt recipe list / audit / ci --baseline` 都会自动纳入，不需要改任何索引文件。
 
 **公共 kit（`platform/kit/index.json`）**
 
-`ease`、`num`（含 `clamp01 / env / rng`）、`text`、`fonts`（`font`）、`chart`、`pen`、`mark`、`transition`、`board`、`geom`、`newsbg`（`newsBg`：新闻径向蓝底 + 地图 + 网格 + 种子流动线）。
+`ease`、`num`（含 `clamp01 / env / rng`）、`text`、`fonts`（`font`）、`chart`、`pen`、`mark`、`transition`、`board`、`geom`、`newsbg`（`newsBg`：新闻径向蓝底 + 地图 + 网格 + 种子流动线）、`progress`（全片章节进度）。
 
 字幕 kit 在 `platform/kit/captions/`：`core.js` 提供 `TT.captionKit`，`styles/*.js` 是七种可选样式。它随编译期选中的样式一起注入，不走 `index.json` 的命名空间机制。
 
@@ -89,7 +88,7 @@ ticktoon CanvasCompositor.tick(t)
 
 每条 params recipe 在目录下自带一个 `template.js`，顶层只导出 `function draw(g, p)`：
 
-- `footage-cut/template.js`
+- `footage/template.js`
 - `news-broadcast/template.js`
 
 模板不进入公共货架；只有对应 recipe 的 params 场能用。`template` 的八个字段是 `draw / params / resources / needs / defaultSfx / sfxTrack / motion / inkless`，其余键在 `tt build` 时报错。
@@ -310,7 +309,7 @@ sceneDur ──累加──► scene.start
 
 - Edge TTS：零密钥，支持 WordBoundary 词级时间。
 - 火山 TTS：需要 `VOLC_TTS_APP_ID` / `VOLC_TTS_ACCESS_TOKEN`；无词级时间，逐字字幕按字符等比降级。
-- Pexels：检索、下载、缓存、署名 manifest；失败默认回退 bundled 素材，`--strict` 可禁止降级。
+- Pexels：检索、下载、缓存、署名 manifest；无 key 或获取失败直接报错，不使用内置素材替代，本地视频不需要 key。
 
 凭证只从环境变量或 `~/.dh-video/credentials.json` 读取，任何文档、日志、storyboard 都不写明文凭证。
 
@@ -434,8 +433,8 @@ sceneDur ──累加──► scene.start
 - `references/qa.md`：交付前检查、12 格联系表读法
 - `references/iterate.md`：反馈、预览圈注与 TTS 语义
 - `docs/style-dictionary.md`：40 条风格描述词典（人读参考，不是 recipe 实现清单）
-- `references/pexels.md`：实拍素材检索、缓存与降级
-- `references/captions.md` / `mark.md` / `pen.md` / `board.md` / `newsbg.md` / `transition.md`：公共 kit 契约
+- `references/pexels.md`：实拍素材检索、缓存与失败处理
+- `references/captions.md` / `mark.md` / `pen.md` / `board.md` / `newsbg.md` / `transition.md` / `progress.md`：公共 kit 契约
 
 **人类/开发（不进入运行时）**
 

@@ -1,4 +1,4 @@
-/** footage-cut 模板 —— 实拍铺满画布，暗渐层与短句只在底部让出阅读区。 */
+/** footage 模板 —— 实拍铺满画布，暗渐层与短句只在底部让出阅读区。 */
   const { font, clamp01 } = TT;
 
 function draw(g, p) {
@@ -118,7 +118,7 @@ function draw(g, p) {
     ctx.fillStyle = muted;
     ctx.fillText(String(p.credit || 'Pexels'), margin, H * 0.745);
     ctx.textAlign = 'right';
-    ctx.fillText('素材来源与授权见 pexels-manifest.json', W - margin, H * 0.745);
+    ctx.fillText('真实影像，自有力量', W - margin, H * 0.745);
     ctx.fillStyle = accent;
     ctx.fillRect(margin, H * 0.77, W - margin * 2, 2);
 
@@ -126,4 +126,17 @@ function draw(g, p) {
     // 否则 qa 会把「视频铺满」误判成越界与压字幕带。
     g.ink = null;
     ctx.restore();
+
+    // 全片章节进度不参与单场景淡入淡出；kicker 同时作为该场章节名。
+    if (g.film?.chapters?.length) {
+      TT.progress.chapters(ctx, {
+        x: 0, y: H - 56, w: W, h: 56,
+        time: g.film.start + g.t,
+        duration: g.film.duration,
+        chapters: g.film.chapters,
+        fg: accent,
+        bg: '#444752b3',
+        textColor: ink,
+      });
+    }
 }

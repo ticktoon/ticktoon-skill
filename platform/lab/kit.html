@@ -114,6 +114,7 @@
       <button class="tab" data-mode="mark">标注</button>
       <button class="tab" data-mode="board">板面</button>
       <button class="tab" data-mode="chart">图表</button>
+      <button class="tab" data-mode="progress">章节进度</button>
       <button class="tab" data-mode="transition">转场</button>
     </div>
 
@@ -158,6 +159,11 @@
     <section class="mode-panel hidden" data-panel="chart">
       <div class="mode-title">图表几何</div>
       <div class="mode-hint">只跑 <code>TT.chart.bars / niceMax / ticks</code>；条形与刻度用裸 canvas 画，标签用 <code>TT.text</code>。</div>
+    </section>
+
+    <section class="mode-panel hidden" data-panel="progress">
+      <div class="mode-title">章节进度</div>
+      <div class="mode-hint">只跑 <code>TT.progress.chapters</code；四段按绝对起始秒划分，前景随当前时间连续填充。</div>
     </section>
 
     <section class="mode-panel hidden" data-panel="transition">
@@ -424,6 +430,23 @@ function chartCode() {
   ].join('\n');
 }
 
+function progressCode() {
+  return [
+    "ctx.fillStyle = '#0A0A0A';",
+    'ctx.fillRect(0, 0, W, H);',
+    'TT.progress.chapters(ctx, {',
+    '  x: 0, y: H - 56, w: W, h: 56,',
+    '  time: api.t, duration: api.d,',
+    '  chapters: [',
+    "    { text: '开场', start: 0 },",
+    "    { text: '痛点', start: 1 },",
+    "    { text: '解决方案', start: 2.2 },",
+    "    { text: '总结', start: 3.2 },",
+    '  ],',
+    '});',
+  ].join('\n');
+}
+
 function transitionSceneCode(which) {
   const second = which === 'B';
   const paper = second ? '#173A3D' : '#F3E7CE';
@@ -501,6 +524,7 @@ function buildPayload() {
     mark: markCode,
     board: boardCode,
     chart: chartCode,
+    progress: progressCode,
   }[state.mode]();
   return {
     code,
@@ -520,6 +544,7 @@ function modeSummary() {
   if (state.mode === 'mark') return `标注 / ${$('#markTypeSelect').value}`;
   if (state.mode === 'board') return `板面 / ${$('#boardTypeSelect').value}`;
   if (state.mode === 'chart') return '图表 / bars';
+  if (state.mode === 'progress') return '章节进度 / chapters';
   if (state.mode === 'transition') return `转场 / ${$('#transitionPresetSelect').value}`;
   const font = $('#captionFontSelect').value;
   return '字幕 / ' + ($('#captionStyleSelect').value || 'perchar') + (font ? ` / ${font}` : '');

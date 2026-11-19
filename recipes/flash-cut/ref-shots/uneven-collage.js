@@ -10,19 +10,19 @@
   ],
   "resources": [
     {
-      "type": "video",
+      "type": "image",
       "name": "city",
-      "src": "skill:assets/demo/city.mp4"
+      "src": "skill:assets/image/pexels-zland.jpg"
     },
     {
-      "type": "video",
+      "type": "image",
       "name": "nature",
-      "src": "skill:assets/demo/nature.mp4"
+      "src": "skill:assets/image/pexels-veronika-souvorova.jpg"
     },
     {
-      "type": "video",
+      "type": "image",
       "name": "tech",
-      "src": "skill:assets/demo/tech.mp4"
+      "src": "skill:assets/image/pexels-jakubzerdzicki.jpg"
     },
     {
       "type": "font",
@@ -79,7 +79,7 @@ const proportions = [
   [0.46, 0.522, 0.54, 0.478],
 ];
 const cells = [
-  { source: api.video('city'), label: 'CITY / 01', labelColor: S },
+  { source: api.img('city'), label: 'CITY / 01', labelColor: S },
   { color: S, text: 'RUN', textColor: B, textSize: 132, label: 'MOVE / 02', labelColor: B },
   { color: L, text: '01', textColor: S, textSize: 100 },
   { color: A, text: 'GO', textColor: S, textSize: 136, label: 'MOVE / 04', labelColor: S },

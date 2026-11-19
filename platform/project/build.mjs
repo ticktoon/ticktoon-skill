@@ -99,6 +99,13 @@ export async function buildProject({ root, dir, file = null, tts = null, write =
   });
 
   const { kitIndex, kitDir } = readKitIndex(root);
+  const film = {
+    duration: planned.duration,
+    chapters: planned.scenes.map((scene, index) => ({
+      text: String(scene.params?.kicker || scene.note || scene.id || `第 ${index + 1} 章`),
+      start: scene.start,
+    })),
+  };
   const emitted = planned.scenes.map((scene) => emitScene({
     scene,
     recipe,
@@ -107,6 +114,7 @@ export async function buildProject({ root, dir, file = null, tts = null, write =
     kitIndex,
     kitDir,
     caption,
+    film,
     receipts,
     rules: recipe?.rules || null,
   }));

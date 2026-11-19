@@ -1,18 +1,17 @@
 {
-  "id": "footage-cut",
+  "id": "footage",
   "abi": "1",
-  "name": "实拍快切",
+  "name": "实拍",
   "keywords": ["实拍", "素材", "航拍", "城市", "压屏字", "纪录片"],
   "mode": "params",
   "when": [
     "已经有实拍素材（Pexels 或本地），希望保留画面质感。",
-    "文案是短句或两行陈述，不需要字幕逐字跟读。",
+    "文案是短句或两行陈述，旁白使用逐字字幕。",
     "需要真实场景、人物、街道、自然，而不是插画或图表。"
   ],
   "notWhen": [
     "没有素材、也不准备检索；改用 scene.code 型 recipe。",
-    "需要解释机制、步骤或数据；改用 whiteboard-explainer / crayon-guide。",
-    "需要逐字字幕；改用 illustrated-story 或白板 recipe。"
+    "需要解释机制、步骤或数据；改用 whiteboard-explainer / crayon-guide。"
   ],
   "template": {
     "draw": "template.js",
@@ -46,7 +45,7 @@
         "type": "string",
         "default": "Pexels",
         "maxChars": 40,
-        "feel": "写 auto 时 assets fetch 回填作者；降级时明确标注内置素材"
+        "feel": "写 auto 时 assets fetch 回填 Pexels 作者"
       }
     },
     "needs": {
@@ -74,14 +73,23 @@
     "safeMargin": 0.055,
     "forbid": [
       "把实拍素材缩成卡片；模板必须满幅 cover",
-      "在实拍上再叠一层字幕；压屏字即正文，字幕必须为 none",
+      "压屏 title 与 narration 重复；title 只提炼画面短句，perchar 字幕承载旁白",
+      "给 perchar 字幕添加背景；字幕必须 band: false 并位于底部章节进度条上方",
       "自动折行；分行只能由 title 里的 \n 决定",
       "用素材名或 Pexels id 当题材枚举；keywords 只描述检索意图",
-      "断网或检索失败时静默留空画面；必须明确降级到内置素材"
+      "禁止无 PEXELS_API_KEY、断网或检索失败时改用内置素材；Pexels 查询必须直接报错并提示配置或修复，本地视频不受 key 限制"
     ]
   },
   "captions": {
-    "style": "none"
+    "style": "perchar",
+    "font": "sans-400",
+    "baseSize": 46,
+    "lineHeight": 1.24,
+    "top": 0.83,
+    "at": "bottom",
+    "band": false,
+    "maxWidth": 0.8,
+    "color": "#FFFFFF"
   },
   "audio": {
     "mood": "soft",

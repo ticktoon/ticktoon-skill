@@ -7,7 +7,7 @@
  *
  * 业务 payload 永远不携带密钥，只携带 provider 名称；
  * provider 运行时按上面的链路取密钥。缺密钥的 provider 视为不可用，
- * 由调用方决定降级（如 assets: pexels → bundled）。
+ * 凭证缺失由调用方直接报错；Pexels 查询不再使用内置素材降级。
  */
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import os from 'node:os';

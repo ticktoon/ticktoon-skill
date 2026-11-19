@@ -20,7 +20,7 @@
   "notWhen": [
     "需要严谨公式推导、坐标轴或高密度数据图；改用 whiteboard-explainer / blackboard-lesson。",
     "需要固定新闻版式；改用 news-broadcast。",
-    "需要实拍、写实人物或快节奏大字；改用 footage-cut / flash-cut。"
+    "需要实拍、写实人物或快节奏大字；改用 footage / flash-cut。"
   ],
   "rules": {
     "safeMargin": 0.055,

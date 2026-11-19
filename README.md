@@ -79,7 +79,6 @@ Recipes cover explainers, stories, fast cuts, breaking news, data races, and rea
 |---|---|---|---|
 | `whiteboard-explainer` | Whiteboard / blackboard, strokes growing in | `scene.code` | mechanisms, science, step-by-step explanation |
 | `blackboard-lesson` | Green board and chalk, written at lesson pace | `scene.code` | derivations, lectures, classroom rhythm |
-| `ink-painting` | Ink lines, washes, and large negative space | `scene.code` | Eastern aesthetics, poetry, culture |
 | `illustrated-story` | Paper collage, cut-out lettering | `scene.code` | short stories, observations, essays |
 | `flash-cut` | Hard cuts, oversized type, one sentence per scene | `scene.code` | punchy opinions, conclusions, promo beats |
 | `flat-motion` | Saturated flat shapes, rounded characters and icons, elastic morphs | `scene.code` | product, brand, app-feature and light-explainer MG |
@@ -87,14 +86,14 @@ Recipes cover explainers, stories, fast cuts, breaking news, data races, and rea
 | `shadow-play` | Backlit screen, articulated silhouettes, scene-specific props | `scene.code` | fables, folk tales, historical vignettes |
 | `news-broadcast` | Fixed vertical news card: blue radial background, world map, flowing lines | `scene.params` | breaking-news cards, title / body / source |
 | `bar-race` | Dark vertical race chart, slanted title, animated year and reflection | `scene.params` | 2–18 entities racing from start values to end values |
-| `footage-cut` | Full-frame real footage with short overlay lines | `scene.params` | Pexels or local footage montage |
+| `footage` | Full-frame real footage with short overlay lines | `scene.params` | Pexels or local footage montage |
 
 Also included:
 
 - **Scene code with an injected kit** — `TT.text`, `TT.pen`, `TT.mark`, `TT.board`, `TT.geom`, `TT.chart`, `TT.newsBg`, and more. The compiler injects only the members each scene uses; transition boundaries separately receive `TT.transition` in a generated dual-frame scene.
 - **6 caption styles + `none`** — plain, perchar, karaoke, collage, vertical, tornpaper, with per-character timing and subject avoidance.
 - **Narration and sound** — zero-key edge-tts by default, optional Volc TTS, BGM/SFX with ducking and fades.
-- **Stock footage** — Pexels search, download, attribution, caching, and bundled fallback.
+- **Stock footage** — Pexels search, download, attribution, and caching. Missing keys or failed downloads stop explicitly; local videos need no Pexels key.
 - **Preview and review** — read-only preview, stills, probe receipts, and per-frame pen annotations. Sending immediately hands the batch to the agent; after revision and rebuild, a fresh preview starts the next round.
 - **Quality gates** — `tt qa` with render-error and empty-ink must-checks plus a 12-cell contact sheet; `tt det` for compile determinism.
 - **Direct MP4** — H.264 + AAC through WebCodecs and Mediabunny; no external FFmpeg executable.

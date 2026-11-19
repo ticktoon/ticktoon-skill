@@ -10,5 +10,5 @@
 - 具体 recipe 目录里的 `recipe.md` / `ref-shots/`：该 recipe 的创作纲要、物理规范与可运行范例，选中该 recipe 后才读
 - `qa.md`：交付前检查、12 格联系表读法
 - `iterate.md`：反馈、预览圈注与 TTS 语义
-- `pexels.md`：实拍素材检索、缓存与降级
-- `captions.md` / `mark.md` / `pen.md` / `board.md` / `newsbg.md` / `transition.md`：公共 kit 参数与用法
+- `pexels.md`：实拍素材检索、缓存与失败处理
+- `captions.md` / `mark.md` / `pen.md` / `board.md` / `newsbg.md` / `transition.md` / `progress.md`：公共 kit 参数与用法

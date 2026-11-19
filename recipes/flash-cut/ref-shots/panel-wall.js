@@ -10,24 +10,24 @@
   ],
   "resources": [
     {
-      "type": "video",
+      "type": "image",
       "name": "city",
-      "src": "skill:assets/demo/city.mp4"
+      "src": "skill:assets/image/pexels-zland.jpg"
     },
     {
-      "type": "video",
+      "type": "image",
       "name": "nature",
-      "src": "skill:assets/demo/nature.mp4"
+      "src": "skill:assets/image/pexels-veronika-souvorova.jpg"
     },
     {
-      "type": "video",
+      "type": "image",
       "name": "tech",
-      "src": "skill:assets/demo/tech.mp4"
+      "src": "skill:assets/image/pexels-jakubzerdzicki.jpg"
     },
     {
-      "type": "video",
+      "type": "image",
       "name": "office",
-      "src": "skill:assets/demo/office.mp4"
+      "src": "skill:assets/image/pexels-eyupcancaglar.jpg"
     },
     {
       "type": "font",
@@ -78,10 +78,10 @@ TT.text(ctx, '04 / 09 — WALL', W * 0.04, H * 0.08, 20, {
 const box = { x: W * 0.06, y: H * 0.14, w: W * 0.88, h: H * 0.7 };
 const cw = (box.w - 20 * 3) / 4;
 const cells = [
-  { source: api.video('city'), label: 'CITY / 01', tint: A, tintAlpha: 0.16 },
-  { source: api.video('nature'), label: 'NATURE / 02' },
-  { source: api.video('tech'), label: 'TECH / 03', tint: L, tintAlpha: 0.22 },
-  { source: api.video('office'), label: 'OFFICE / 04' },
+  { source: api.img('city'), label: 'CITY / 01', tint: A, tintAlpha: 0.16 },
+  { source: api.img('nature'), label: 'NATURE / 02' },
+  { source: api.img('tech'), label: 'TECH / 03', tint: L, tintAlpha: 0.22 },
+  { source: api.img('office'), label: 'OFFICE / 04' },
 ];
 const underlays = [A, L, S, M];
 

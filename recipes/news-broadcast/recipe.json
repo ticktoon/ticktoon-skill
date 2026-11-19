@@ -18,7 +18,7 @@
     "信息是硬事实，不需要主持人、评论或现场画面。"
   ],
   "notWhen": [
-    "多条不相关要闻或需要时间线复盘；改用 footage-cut 或 flash-cut。",
+    "多条不相关要闻或需要时间线复盘；改用 footage 或 flash-cut。",
     "需要评论立场、解释背景或专家引语；改用 whiteboard-explainer（解释）或 blackboard-lesson（推导）。",
     "需要现场图/视频；本 recipe 是纯版面块，不承担媒体画面。",
     "需要旁白或 TTS；本 recipe 是静默新闻卡，改用其他有旁白的 recipe。"
