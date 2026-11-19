@@ -1,5 +1,5 @@
 /**
- * 预览页的 skill 层补丁：底部圈注坞 + 右上角「复制 board JSON」。
+ * 预览页的 skill 层补丁：底部圈注坞 + 右上角「下载 board JSON」。
  *
  * 引擎页面本身没有轨道区，只留 #bottom 扩展槽。用户可连续圈注多帧，圈注先进入
  * 页面内的待发送列表；点「发送圈注」后一次性 POST /api/annotations，
@@ -31,7 +31,7 @@ style.textContent = `
   #skill-annotation-description:disabled { opacity: .55; }
   #skill-annotation-send { margin-left: auto; }
   #skill-annotation-send.ready { border-color: #4f8cff; color: #fff; }
-  #skill-board-copy { margin-left: auto; padding: 4px 9px; border: 1px solid #465064; border-radius: 4px; background: #252c38; color: #e4e9f2; cursor: pointer; font: inherit; }
+  #skill-board-download { margin-left: auto; padding: 4px 9px; border: 1px solid #465064; border-radius: 4px; background: #252c38; color: #e4e9f2; cursor: pointer; font: inherit; }
   #skill-annotation-list { flex: 1 1 auto; display: flex; gap: 8px; min-height: 0; padding: 8px 12px; overflow: auto; border-top: 1px solid #2a303c; }
   #skill-annotation-list:empty { display: none; }
   .skill-annotation-card { flex: none; width: 180px; border: 1px solid #39404e; border-radius: 6px; background: #171d26; overflow: hidden; }
@@ -57,10 +57,10 @@ shell.appendChild(ink);
 const inkContext = ink.getContext('2d');
 if (!inkContext) throw new Error('Unable to create the annotation canvas');
 
-const copyBoardButton = document.createElement('button');
-copyBoardButton.id = 'skill-board-copy';
-copyBoardButton.textContent = '复制 board JSON';
-top.appendChild(copyBoardButton);
+const downloadBoardButton = document.createElement('button');
+downloadBoardButton.id = 'skill-board-download';
+downloadBoardButton.textContent = '下载 board JSON';
+top.appendChild(downloadBoardButton);
 
 const dock = document.createElement('div');
 dock.id = 'skill-annotation-dock';
@@ -574,59 +574,15 @@ function canvasToBlob(canvas) {
   });
 }
 
-async function writeClipboard(text) {
-  try {
-    const response = await fetch('/api/clipboard', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text }),
-    });
-    const reply = await response.json().catch(() => ({}));
-    if (response.ok && reply.ok) return 'server';
-  } catch { /* 继续尝试浏览器剪贴板 */ }
-
-  if (navigator.clipboard?.writeText) {
-    try {
-      await navigator.clipboard.writeText(text);
-      return 'browser';
-    } catch { /* 继续尝试 execCommand */ }
-  }
-  const area = document.createElement('textarea');
-  area.value = text;
-  area.style.position = 'fixed';
-  area.style.opacity = '0';
-  document.body.appendChild(area);
-  area.select();
-  const ok = document.execCommand('copy');
-  area.remove();
-  if (ok) return 'legacy';
-
-  const url = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = 'composition.json';
-  link.click();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-  return 'download';
-}
-
-copyBoardButton.addEventListener('click', async () => {
+downloadBoardButton.addEventListener('click', () => {
   errorLabel.textContent = '';
-  copyBoardButton.disabled = true;
-  try {
-    const response = await fetch('/api/track');
-    if (!response.ok) throw new Error(`board JSON 读取失败: HTTP ${response.status}`);
-    const board = await response.json();
-    const text = JSON.stringify(board, null, 2);
-    const method = await writeClipboard(text);
-    status.textContent = method === 'download'
-      ? `当前环境不允许直接写剪贴板，已下载 composition.json（${(text.length / 1024).toFixed(1)} KB）`
-      : `已复制完整 board JSON（${(text.length / 1024).toFixed(1)} KB）`;
-  } catch (error) {
-    errorLabel.textContent = error instanceof Error ? error.message : String(error);
-  } finally {
-    copyBoardButton.disabled = false;
-  }
+  const link = document.createElement('a');
+  link.href = '/api/board-download';
+  link.download = 'board.json';
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  status.textContent = '已开始下载 board.json（原始 UTF-8 JSON）';
 });
 
 window.addEventListener('ticktoon-preview-loaded', () => {

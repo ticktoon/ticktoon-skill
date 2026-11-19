@@ -16,7 +16,6 @@ import { createStaticServer } from './lib/serve.mjs';
 import { buildAssetBasenameMap, rewriteLocalRefs } from './lib/refs.mjs';
 import { registerPreview, unregisterPreview } from './lib/preview-lifecycle.mjs';
 import { stopAnnotationWait } from './lib/annotation-wait.mjs';
-import { setClipboardText } from './lib/clipboard.mjs';
 import { getEngineDir } from './lib/engine-runtime.mjs';
 import { assertComposition } from './lib/protocol.mjs';
 
@@ -201,14 +200,20 @@ const { server, port } = await createStaticServer({
     if (urlPath === '/api/track' && req.method === 'POST') {
       return json({ error: 'Ticktoon 预览只读；请改 storyboard 后重新 `tt build`' }, 405);
     }
-    if (urlPath === '/api/clipboard' && req.method === 'POST') {
-      readJsonBody(req, 10 * 1024 * 1024)
-        .then((payload) => {
-          if (typeof payload?.text !== 'string') throw new Error('剪贴板文本必须是字符串');
-          setClipboardText(payload.text);
-          json({ ok: true });
-        })
-        .catch((error) => json({ ok: false, error: error instanceof Error ? error.message : String(error) }, 500));
+    if (urlPath === '/api/board-download' && req.method === 'GET') {
+      try {
+        readComposition();
+        const bytes = readFileSync(compositionFile);
+        res.writeHead(200, {
+          'Content-Type': 'application/json; charset=utf-8',
+          'Content-Disposition': 'attachment; filename="board.json"',
+          'Content-Length': bytes.length,
+          'Cache-Control': 'no-store',
+        });
+        res.end(bytes);
+      } catch (error) {
+        return json({ error: error.message }, 422);
+      }
       return true;
     }
     if (urlPath === '/api/annotations' && req.method === 'POST') {

@@ -398,7 +398,7 @@ sceneDur ──累加──► scene.start
 └── video.mp4             # 仅明确要求导出时生成
 ```
 
-预览是只读常驻宿主：POST `/api/track` 返回 405；全局服务唯一，存在即复用并切换 composition，不存在才启动。页面按 `composition.json` mtime 自动刷新；圈注只落盘，预览服务保持运行。引擎页面本身已去掉轨道区，只留空的 `#bottom` 扩展槽；skill 层补丁往槽里挂圈注坞，并在右上角提供「复制 board JSON」。用户逐帧圈注，点「完成圈注」进入页面内待发送列表，点「发送圈注」时整批 POST `/api/annotations`（每条 JSON + 三张 PNG data URL），预览服务写到 `<工程>/annotations/<batch>/request.json` 与 `<batch>/NN.{annotated,frame,ink}.png`；后续由对话驱动 Agent 用 `tt annotations` 读取批次，常驻预览服务继续运行。`tt annotations` 读回最新批次，`--ack` 写 `<batch>/.ack` 标记整批已处理。页面不再派发圈注事件，Agent 的契约入口只有 CLI。
+预览是只读常驻宿主：POST `/api/track` 返回 405；全局服务唯一，存在即复用并切换 composition，不存在才启动。页面按 `composition.json` mtime 自动刷新；圈注只落盘，预览服务保持运行。引擎页面本身已去掉轨道区，只留空的 `#bottom` 扩展槽；skill 层补丁往槽里挂圈注坞，并在右上角提供「下载 board JSON」（GET `/api/board-download` 返回原始 UTF-8 附件）。用户逐帧圈注，点「完成圈注」进入页面内待发送列表，点「发送圈注」时整批 POST `/api/annotations`（每条 JSON + 三张 PNG data URL），预览服务写到 `<工程>/annotations/<batch>/request.json` 与 `<batch>/NN.{annotated,frame,ink}.png`；后续由对话驱动 Agent 用 `tt annotations` 读取批次，常驻预览服务继续运行。`tt annotations` 读回最新批次，`--ack` 写 `<batch>/.ack` 标记整批已处理。页面不再派发圈注事件，Agent 的契约入口只有 CLI。
 
 ---
 

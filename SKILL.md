@@ -88,7 +88,7 @@ node "$SKILL_DIR/platform/cli.mjs" annotations --wait --dir <dir>   # 6. 同时�
 
 创作、检查与预览走 `platform/cli.mjs`（下称 `tt`），`tt` 命令支持 `--json`。**默认创作终点是 Preview Studio，不是 MP4。** 最初的“制作 / 生成视频”请求不等于授权导出 MP4，也不等于允许跳过预览。QA `must=0` 且联系表没有明显问题后，直接打开 Preview Studio；不要为了再次确认构图、稳定帧或入场透明度追加 `stills`，不要继续做无实际缺陷支撑的反复检查。
 
-预览服务全局单例，自动复用、切换工程和刷新 composition。
+预览服务全局单例，自动复用、切换工程和刷新 composition。右上角「下载 board JSON」直接保存当前 composition 的原始 UTF-8 JSON 文件，用于分析或交付，不经过剪贴板。
 
 用户明确要求导出 MP4 时，**直接导出，不要求再次点击预览确认**：
 
