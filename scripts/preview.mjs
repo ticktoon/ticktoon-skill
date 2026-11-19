@@ -6,7 +6,7 @@
  * 常驻服务：圈注与导出都不停止；仅显式 POST /shutdown 或 Ctrl+C 关闭。
  *
  * `/api/track` 这个路由名是引擎 preview-page 的既有契约，不要跟着改名。
- * 圈注闭环: 页面「发送圈注」POST /api/annotations → <工程>/annotations/<batch>/request.json + 每条三张 PNG；
+ * 圈注闭环: 页面「发送圈注」POST /api/annotations → <工程>/annotations/<batch>/request.json + 每条三张 PNG + 全局批次索引；
  *           发送后显示 2 秒提示并落盘，后续由对话驱动修改；预览服务保持运行。
  */
 import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
@@ -16,6 +16,7 @@ import { createStaticServer } from './lib/serve.mjs';
 import { buildAssetBasenameMap, rewriteLocalRefs } from './lib/refs.mjs';
 import { registerPreview, unregisterPreview } from './lib/preview-lifecycle.mjs';
 import { stopAnnotationWait } from './lib/annotation-wait.mjs';
+import { publishAnnotationBatch } from './lib/annotation-inbox.mjs';
 import { getEngineDir } from './lib/engine-runtime.mjs';
 import { assertComposition } from './lib/protocol.mjs';
 
@@ -149,6 +150,12 @@ function saveBatch(payload) {
     items: records,
   };
   writeFileSync(path.join(batchDir, 'request.json'), JSON.stringify(record, null, 2));
+  publishAnnotationBatch({
+    projectDir: PROJECT_DIR,
+    compositionFile,
+    batch: { id, dir: batchDir, json: path.join(batchDir, 'request.json') },
+    createdAt: record.createdAt,
+  });
   const relativeDir = path.relative(PROJECT_DIR, ANNOTATIONS_DIR).split(path.sep).join('/') || 'annotations';
   return {
     id,

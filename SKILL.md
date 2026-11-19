@@ -83,7 +83,7 @@ node "$SKILL_DIR/platform/cli.mjs" new <dir> --recipe <id>   # 1. 建工程，sk
 node "$SKILL_DIR/platform/cli.mjs" build --dir <dir>          # 3. 编译并自动生成真实音轨；provider 由内部按环境选择
 node "$SKILL_DIR/platform/cli.mjs" qa --dir <dir>             # 4. 全片采样 + 12 格联系表；must=0 并实际读图
 node "$SKILL_DIR/platform/cli.mjs" preview --dir <dir> --port 5123  # 5. 首次以后台任务启动；复用时输出 ready 即返回
-node "$SKILL_DIR/platform/cli.mjs" annotations --wait --dir <dir>   # 6. 同时启动唯一的圈注等待任务，圈注到达后继续修改；导出时关闭
+node "$SKILL_DIR/platform/cli.mjs" annotations --wait              # 6. 同时启动唯一的全局圈注等待任务，圈注到达后继续修改；导出时关闭
 ```
 
 创作、检查与预览走 `platform/cli.mjs`（下称 `tt`），`tt` 命令支持 `--json`。**默认创作终点是 Preview Studio，不是 MP4。** 最初的“制作 / 生成视频”请求不等于授权导出 MP4，也不等于允许跳过预览。QA `must=0` 且联系表没有明显问题后，直接打开 Preview Studio；不要为了再次确认构图、稳定帧或入场透明度追加 `stills`，不要继续做无实际缺陷支撑的反复检查。
@@ -107,7 +107,7 @@ node "$SKILL_DIR/scripts/render.mjs" <dir>/out/composition.json -o <dir>/video.m
 
 - storyboard 是唯一手写文件；完整契约见 `references/storyboard.md`。`narration` 与 `duration` 互斥，未知场景键直接报错。
 - `mode: "code"` 的 recipe 只写 `scene.code`，不写 `scene.params`；`mode: "params"` 的 recipe 只写 `scene.params`，不写 `scene.code`。`maxChars` 超了拆场而不是缩字。
-- 反馈、stills/receipts、圈注读回与 TTS 语义见 `references/iterate.md`；改稿只改 storyboard，然后重编译。打开或复用预览时，同时启动全局唯一的 `annotations --wait`。圈注落盘后任务返回批次，同一 Agent 继续解读修改；重编译后预览自动刷新，并按需建立下一次等待。导出时结束等待任务，预览服务不受影响。用 `tt annotations` 读回，不要读页面事件。
+- 反馈、stills/receipts、圈注读回与 TTS 语义见 `references/iterate.md`；改稿只改 storyboard，然后重编译。打开或复用预览时，同时启动全局唯一的 `annotations --wait`；等待只读全局收件箱，不随工程切换重启。圈注落盘后任务返回批次及所属工程，同一 Agent 继续解读修改；重编译后预览自动刷新，并按需建立下一次等待。导出时结束等待任务，预览服务不受影响。用 `tt annotations` 读回，不要读页面事件。
 
 ## 导出前自检（仅用户明确要求导出时）
 

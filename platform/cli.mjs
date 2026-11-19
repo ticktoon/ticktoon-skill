@@ -22,6 +22,7 @@ import { runBaseline } from './inspect/baseline.mjs';
 import { fetchProjectAssets } from '../scripts/providers/asset-fetch.mjs';
 import { getActivePreview, getTaskPreview, stopTaskPreview } from '../scripts/lib/preview-lifecycle.mjs';
 import { acquireAnnotationWait, annotationWaitActive, releaseAnnotationWait } from '../scripts/lib/annotation-wait.mjs';
+import { acknowledgeAnnotationBatch, readAnnotationInbox } from '../scripts/lib/annotation-inbox.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -504,6 +505,7 @@ function readAnnotationBatches(projectDir) {
         const data = JSON.parse(readFileSync(requestFile, 'utf8'));
         const ackedAt = readAck(path.join(batchDir, '.ack'));
         batches.push({
+          projectDir: path.resolve(projectDir),
           id: data.id || entry.name,
           createdAt: data.createdAt || '',
           composition: data.composition ? path.resolve(projectDir, data.composition) : '',
@@ -522,6 +524,7 @@ function readAnnotationBatches(projectDir) {
         if (!data || !data.id) continue;
         const ackedAt = readAck(path.join(annDir, `${data.id}.ack`));
         batches.push({
+          projectDir: path.resolve(projectDir),
           id: data.id,
           createdAt: data.createdAt || '',
           composition: data.composition ? path.resolve(projectDir, data.composition) : '',
@@ -540,75 +543,11 @@ function readAnnotationBatches(projectDir) {
   return { annDir, batches };
 }
 
-/**
- * 预览圈注的读回端：页面「发送圈注」把整批写到 <工程>/annotations/<batch>/，
- * 这里默认给出最新未处理批次（每条含图片绝对路径），--ack 标记整批已处理。
- */
-async function cmdAnnotations(selection = null) {
-  const projectDir = projectRootOf(dir);
-  const { annDir, batches } = readAnnotationBatches(projectDir);
-  const all = hasFlag('all');
-  const ack = hasFlag('ack');
-  const ackId = flagValue('ack');
-  let selected = selection;
-  const waitToken = hasFlag('wait') ? acquireAnnotationWait(projectDir) : null;
-
-  try {
-  if (hasFlag('wait')) {
-    const startedAt = Date.now();
-    while (!selected) {
-      if (!annotationWaitActive(waitToken)) return;
-      const pending = readAnnotationBatches(projectDir).batches.filter((batch) => (
-        !batch.acked && Date.parse(batch.createdAt) >= startedAt - 5000
-      ));
-      if (pending.length) {
-        selected = pending;
-        if (!json) {
-          const items = pending.flatMap((batch) => batch.items);
-          const summary = items.map((item, index) => {
-            const detail = item.desc || `t=${item.t.toFixed(1)}s`;
-            return `第 ${index + 1} 条（${String(detail).slice(0, 60)}）`;
-          }).join('，');
-          console.log(`[annotations] 请先回复用户再调用工具：已收到你发的 ${items.length} 条圈注：${summary}，我会逐条检查并修复，完成后刷新预览。`);
-        }
-      } else {
-        await new Promise((resolve) => setTimeout(resolve, 500));
-      }
-    }
-  }
-
-  if (!existsSync(annDir)) {
-    if (json) console.log(JSON.stringify({ batches: [] }, null, 2));
-    else console.log(`没有圈注：${annDir} 不存在。先在 tt preview 里圈注并发送。`);
-    return;
-  }
-
-  if (ack) {
-    const target = ackId ? batches.find((batch) => batch.id === ackId) : batches.find((batch) => !batch.acked);
-    if (!target) {
-      console.error(`✗ 没有可标记的圈注批次${ackId ? `：${ackId}` : '（全部已处理）'}`);
-      process.exit(1);
-    }
-    const ackedAt = new Date().toISOString();
-    writeFileSync(target.ackFile, ackedAt);
-    if (json) console.log(JSON.stringify({ acked: target.id, ackedAt }, null, 2));
-    else console.log(`已标记已处理：${target.id}`);
-    return;
-  }
-
-  selected = selected || (all ? batches : batches.filter((batch) => !batch.acked).slice(0, 1));
-  if (!selected.length) {
-    if (json) console.log(JSON.stringify({ batches: [] }, null, 2));
-    else console.log('没有未处理的圈注。用 --all 查看历史批次。');
-    return;
-  }
-  if (json) {
-    console.log(JSON.stringify({ batches: selected }, null, 2));
-    return;
-  }
+function printAnnotationBatches(selected) {
   for (const batch of selected) {
     console.log('');
     console.log(`圈注批次 ${batch.id}${batch.acked ? '（已处理）' : ''}  ${batch.createdAt}  共 ${batch.items.length} 条`);
+    console.log(`  project      ${batch.projectDir}`);
     console.log(`  composition  ${batch.composition || '-'}`);
     for (const [index, item] of batch.items.entries()) {
       console.log(`  ${index + 1}. t=${item.t.toFixed(3)}s${item.clip?.id ? `  场景 ${item.clip.id}` : ''}`);
@@ -618,9 +557,88 @@ async function cmdAnnotations(selection = null) {
       if (item.images.ink) console.log(`     笔迹    ${item.images.ink}`);
     }
     console.log(`  request  ${batch.request}`);
-    console.log(`  处理完执行：tt annotations --ack ${batch.id}`);
+    console.log(`  处理完执行：tt annotations --dir "${batch.projectDir}" --ack ${batch.id}`);
   }
   console.log('');
+}
+
+/**
+ * 预览圈注的读回端。--wait 只读全局收件箱，不绑定工程；
+ * 手动读取与 --ack 才通过 --dir 指定工程。
+ */
+async function cmdAnnotations(selection = null) {
+  const wait = hasFlag('wait');
+  const waitToken = wait ? acquireAnnotationWait() : null;
+  let selected = selection;
+
+  try {
+    if (wait) {
+      const startedAt = Date.now();
+      while (!selected) {
+        if (!annotationWaitActive(waitToken)) return;
+        const pending = readAnnotationInbox().filter((batch) => (
+          Date.parse(batch.createdAt) >= startedAt - 5000
+        ));
+        const found = [];
+        for (const record of pending) {
+          const batch = readAnnotationBatches(record.projectDir).batches.find((item) => (
+            item.id === record.batchId && !item.acked
+          ));
+          if (batch) found.push({ ...batch, composition: record.compositionFile || batch.composition });
+        }
+        if (found.length) {
+          selected = found;
+          if (!json) {
+            const items = found.flatMap((batch) => batch.items);
+            const summary = items.map((item, index) => {
+              const detail = item.desc || `t=${item.t.toFixed(1)}s`;
+              return `第 ${index + 1} 条（${String(detail).slice(0, 60)}）`;
+            }).join('，');
+            console.log(`[annotations] 请先回复用户再调用工具：已收到你发的 ${items.length} 条圈注：${summary}，我会逐条检查并修复，完成后刷新预览。`);
+          }
+        } else {
+          await new Promise((resolve) => setTimeout(resolve, 500));
+        }
+      }
+      if (json) console.log(JSON.stringify({ batches: selected }, null, 2));
+      else printAnnotationBatches(selected);
+      return;
+    }
+
+    const projectDir = projectRootOf(dir);
+    const { annDir, batches } = readAnnotationBatches(projectDir);
+    const all = hasFlag('all');
+    const ack = hasFlag('ack');
+    const ackId = flagValue('ack');
+
+    if (!existsSync(annDir)) {
+      if (json) console.log(JSON.stringify({ batches: [] }, null, 2));
+      else console.log(`没有圈注：${annDir} 不存在。先在 tt preview 里圈注并发送。`);
+      return;
+    }
+
+    if (ack) {
+      const target = ackId ? batches.find((batch) => batch.id === ackId) : batches.find((batch) => !batch.acked);
+      if (!target) {
+        console.error(`✗ 没有可标记的圈注批次${ackId ? `：${ackId}` : '（全部已处理）'}`);
+        process.exit(1);
+      }
+      const ackedAt = new Date().toISOString();
+      writeFileSync(target.ackFile, ackedAt);
+      acknowledgeAnnotationBatch(projectDir, target.id);
+      if (json) console.log(JSON.stringify({ acked: target.id, ackedAt }, null, 2));
+      else console.log(`已标记已处理：${target.id}`);
+      return;
+    }
+
+    selected = selected || (all ? batches : batches.filter((batch) => !batch.acked).slice(0, 1));
+    if (!selected.length) {
+      if (json) console.log(JSON.stringify({ batches: [] }, null, 2));
+      else console.log('没有未处理的圈注。用 --all 查看历史批次。');
+      return;
+    }
+    if (json) console.log(JSON.stringify({ batches: selected }, null, 2));
+    else printAnnotationBatches(selected);
   } finally {
     if (waitToken) releaseAnnotationWait(waitToken);
   }
@@ -820,7 +838,7 @@ function usage() {
   tt det [--twice] [--verify H]   确定性指纹
   tt preview [--port N]           首次以后台任务启动；复用时输出 ready 即返回
   tt lab [--port N] [--recipe <id>]   code recipe 镜头参考实验室：真实编译 + 引擎预览，可改代码重跑
-  tt annotations [--wait] [--all] [--ack [id]]  读取圈注；--wait 作为后台任务等待下一批并带回结果
+  tt annotations [--wait] [--all] [--ack [id]]  读取圈注；--wait 作为后台任务全局等待下一批并带回结果及所属工程
   tt recipe list / show <id> / audit   recipe 货架（id/名称/关键词/when）/ 单条详情（mode+rules+template）/ 全量审计（骨架 + 示例）
   tt ci [--deep] [--count N]      全量回归：audit + 逐条 det 两次；--deep 复用 tt qa 管线
   tt ci --baseline [--write]       recipe 骨架 / 示例合成片的编译指纹与构建状态基线（新 recipe 自动纳入）；--write 刷新基线

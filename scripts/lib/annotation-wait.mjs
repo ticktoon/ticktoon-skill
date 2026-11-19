@@ -3,7 +3,8 @@ import { randomUUID } from 'node:crypto';
 import os from 'node:os';
 import path from 'node:path';
 
-const LOCK_FILE = path.join(os.homedir(), '.dh-video', 'annotations-wait.json');
+const LOCK_FILE = process.env.TICKTOON_ANNOTATION_LOCK_FILE
+  || path.join(os.homedir(), '.dh-video', 'annotations-wait.json');
 
 function current() {
   try {
@@ -13,14 +14,13 @@ function current() {
   }
 }
 
-export function acquireAnnotationWait(projectDir) {
+export function acquireAnnotationWait() {
   const token = randomUUID();
   mkdirSync(path.dirname(LOCK_FILE), { recursive: true });
   writeFileSync(LOCK_FILE, JSON.stringify({
-    version: 1,
+    version: 2,
     token,
     pid: process.pid,
-    projectDir: path.resolve(projectDir),
     startedAt: new Date().toISOString(),
   }, null, 2));
   return token;
