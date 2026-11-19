@@ -81,7 +81,7 @@
       "lineGap": 0.16,
       "linePrefix": "*",
       "loop": {
-        "sfx": "keyboard-loop",
+        "sfx": "common-keyboard-loop",
         "fadeOut": 0.06
       }
     },

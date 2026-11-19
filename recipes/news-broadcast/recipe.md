@@ -42,7 +42,7 @@
 - 品牌：底部居中、白色、80% 不透明度、逐字轻起；默认不画。
 - 模板的标题与正文都用 `WenYuanSerifSC-Bold`（`WYST_BOLD.woff2`）；台标用 `sans-900`。两族字体都在 `template.resources` 声明。BGM 走 `audio.mood = tense`，即「紧张脉冲弦乐.mp3」，音量 0.6。
 - `caption: none`（fixed）：画面正文就是唯一文字层，不再叠第二套字幕。
-- `template.sfxTrack`：`keyboard-loop` 从首字符铺到末字符，`fadeOut 0.06`，不逐字触发。
+- `template.sfxTrack`：`common-keyboard-loop` 从首字符铺到末字符，`fadeOut 0.06`，不逐字触发。
 - `safeMargin 0.055` 只用于版面检查。
 
 ## 骨架样例

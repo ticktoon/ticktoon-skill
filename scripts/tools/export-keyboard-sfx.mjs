@@ -1,6 +1,6 @@
 /**
  * 把 dh-front 的 1 秒实录键盘声（keyboard-click.ts 的 KEYBOARD_PCM_RAW）
- * 导出成 assets/sfx/keyboard-1s.wav（48kHz 单声道 PCM16），并在 manifest 注册 keyboard-loop。
+ * 导出成 assets/sfx/common-keyboard-loop.wav（48kHz 单声道 PCM16），并在 manifest 注册 common-keyboard-loop。
  *
  *   node scripts/tools/export-keyboard-sfx.mjs [源文件.ts]
  *
@@ -16,7 +16,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..')
 const DEFAULT_SRC = 'D:/AI/dh_video/dh-front/src/views/clip-page/av-clips/gsap-clip/animations/text/keyboard-click.ts';
 const SRC = process.argv[2] || DEFAULT_SRC;
 const RATE = 48000;
-const OUT_WAV = path.join(ROOT, 'assets', 'sfx', 'keyboard-1s.wav');
+const OUT_WAV = path.join(ROOT, 'assets', 'sfx', 'common-keyboard-loop.wav');
 const MANIFEST = path.join(ROOT, 'assets', 'sfx', 'manifest.json');
 
 const ts = readFileSync(SRC, 'utf-8');
@@ -62,8 +62,8 @@ header.writeUInt32LE(data.length, 40);
 writeFileSync(OUT_WAV, Buffer.concat([header, data]));
 
 const manifest = JSON.parse(readFileSync(MANIFEST, 'utf-8'));
-manifest['keyboard-loop'] = {
-  src: 'skill:assets/sfx/keyboard-1s.wav',
+manifest['common-keyboard-loop'] = {
+  src: 'skill:assets/sfx/common-keyboard-loop.wav',
   duration: 1.0,
   volume: 0.6,
   loop: true,
@@ -74,4 +74,4 @@ writeFileSync(MANIFEST, `${JSON.stringify(manifest, null, 2)}\n`);
 console.log(`写出 ${path.relative(ROOT, OUT_WAV)} (${(data.length / 1024).toFixed(1)} KB PCM16)`);
 console.log(`样本 ${pcm.length} | 峰值 ${peak.toFixed(4)} | RMS ${rms.toFixed(4)} | 首个有声样本 ${firstSound} (${(firstSound / RATE * 1000).toFixed(1)}ms)`);
 console.log(`接缝校验：头 5ms 峰值 ${headPeak.toExponential(2)}，尾 5ms 峰值 ${tailPeak.toExponential(2)}，接缝最大跳变 ${seamMaxJump.toExponential(2)}`);
-console.log('manifest 已注册 keyboard-loop（volume 0.6，对齐 dh-front FIX_VOL）');
+console.log('manifest 已注册 common-keyboard-loop（volume 0.6，对齐 dh-front FIX_VOL）');

@@ -95,9 +95,9 @@ function swipe(dur = 0.18) {
 
 mkdirSync(OUT, { recursive: true });
 const files = [
-  ['impact-soft.wav', impactSoft()],
-  ['tick-up.wav', tickUp()],
-  ['swipe.wav', swipe()],
+  ['common-impact-soft.wav', impactSoft()],
+  ['common-tick-up.wav', tickUp()],
+  ['common-swipe.wav', swipe()],
 ];
 for (const [name, samples] of files) {
   writeFileSync(path.join(OUT, name), wav(samples));

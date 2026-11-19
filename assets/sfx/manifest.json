@@ -1,34 +1,448 @@
 {
-  "note": "音效表。recipe 的 defaultSfx / sfxTrack 都从这里取；缺项时报 SFX_MISSING 并跳过，不让编译失败。",
-  "impact-soft": {
-    "src": "skill:assets/sfx/impact-soft.wav",
+  "note": "common-* 为通用界面/转场/提示音；cartoon / transition / impact / ui / voice / magic / music / nature / foley 为分类音效。recipe 通过 defaultSfx / sfxTrack 引用键。",
+  "cartoon-boing-comic": {
+    "src": "skill:assets/sfx/cartoon-boing-comic.mp3",
+    "duration": 2.116,
+    "volume": 0.42,
+    "desc": "滑稽弹簧音"
+  },
+  "cartoon-boing-launch": {
+    "src": "skill:assets/sfx/cartoon-boing-launch.mp3",
+    "duration": 2.116,
+    "volume": 0.42,
+    "desc": "咻，抛物弹簧音"
+  },
+  "cartoon-bubble": {
+    "src": "skill:assets/sfx/cartoon-bubble.mp3",
+    "duration": 2.038,
+    "volume": 0.42,
+    "desc": "啵，气泡音"
+  },
+  "cartoon-disappointed": {
+    "src": "skill:assets/sfx/cartoon-disappointed.mp3",
+    "duration": 3.056,
+    "volume": 0.42,
+    "desc": "噔，失望声"
+  },
+  "cartoon-dizzy-long": {
+    "src": "skill:assets/sfx/cartoon-dizzy-long.mp3",
+    "duration": 4.65,
+    "volume": 0.42,
+    "desc": "晕眩1"
+  },
+  "cartoon-dizzy-short": {
+    "src": "skill:assets/sfx/cartoon-dizzy-short.mp3",
+    "duration": 1.646,
+    "volume": 0.42,
+    "desc": "晕眩2"
+  },
+  "cartoon-faint-hit": {
+    "src": "skill:assets/sfx/cartoon-faint-hit.mp3",
+    "duration": 2.116,
+    "volume": 0.42,
+    "desc": "咚，晕倒效果音"
+  },
+  "cartoon-fart-comic": {
+    "src": "skill:assets/sfx/cartoon-fart-comic.mp3",
+    "duration": 3.265,
+    "volume": 0.42,
+    "desc": "咚咚，滑稽放屁效果音"
+  },
+  "cartoon-fart-short": {
+    "src": "skill:assets/sfx/cartoon-fart-short.mp3",
+    "duration": 2.116,
+    "volume": 0.42,
+    "desc": "噗，短放屁声"
+  },
+  "cartoon-funny-face": {
+    "src": "skill:assets/sfx/cartoon-funny-face.mp3",
+    "duration": 1.75,
+    "volume": 0.42,
+    "desc": "扮鬼脸"
+  },
+  "cartoon-knockout": {
+    "src": "skill:assets/sfx/cartoon-knockout.mp3",
+    "duration": 3.396,
+    "volume": 0.42,
+    "desc": "敲晕"
+  },
+  "cartoon-run-away-fast": {
+    "src": "skill:assets/sfx/cartoon-run-away-fast.mp3",
+    "duration": 2.116,
+    "volume": 0.42,
+    "desc": "嘟噜噜，飞快逃跑"
+  },
+  "cartoon-slip-away": {
+    "src": "skill:assets/sfx/cartoon-slip-away.mp3",
+    "duration": 3.056,
+    "volume": 0.42,
+    "desc": "溜走"
+  },
+  "cartoon-sneaky": {
+    "src": "skill:assets/sfx/cartoon-sneaky.mp3",
+    "duration": 4.728,
+    "volume": 0.42,
+    "desc": "鬼鬼祟祟"
+  },
+  "cartoon-thinking": {
+    "src": "skill:assets/sfx/cartoon-thinking.mp3",
+    "duration": 2.978,
+    "volume": 0.42,
+    "desc": "思考问题"
+  },
+  "cartoon-thinking-calculate": {
+    "src": "skill:assets/sfx/cartoon-thinking-calculate.mp3",
+    "duration": 5.198,
+    "volume": 0.42,
+    "desc": "思考、计算效果音"
+  },
+  "cartoon-tremble": {
+    "src": "skill:assets/sfx/cartoon-tremble.mp3",
+    "duration": 1.698,
+    "volume": 0.42,
+    "desc": "颤抖"
+  },
+  "common-camera-shutter": {
+    "src": "skill:assets/sfx/common-camera-shutter.wav",
+    "duration": 0.489,
+    "volume": 0.45,
+    "desc": "现代相机快门，拍照、截图、照片定格与相册切换"
+  },
+  "common-impact-bass": {
+    "src": "skill:assets/sfx/common-impact-bass.mp3",
+    "duration": 2.116,
+    "volume": 0.45,
+    "desc": "低频落地冲击，主标题、Logo 或关键结论落版；尾部自然衰减"
+  },
+  "common-impact-soft": {
+    "src": "skill:assets/sfx/common-impact-soft.wav",
     "duration": 0.36,
     "volume": 0.55,
     "desc": "低频落地，标题砸下"
   },
-  "tick-up": {
-    "src": "skill:assets/sfx/tick-up.wav",
-    "duration": 0.22,
-    "volume": 0.42,
-    "desc": "数字滚动收尾的一记轻点"
-  },
-  "swipe": {
-    "src": "skill:assets/sfx/swipe.wav",
-    "duration": 0.18,
-    "volume": 0.34,
-    "desc": "元素滑入"
-  },
-  "type": {
-    "src": "skill:assets/sfx/type.wav",
-    "duration": 0.052,
-    "volume": 0.3,
-    "desc": "52ms 木质机械键盘敲击，新闻逐字输入"
-  },
-  "keyboard-loop": {
-    "src": "skill:assets/sfx/keyboard-1s.wav",
+  "common-keyboard-loop": {
+    "src": "skill:assets/sfx/common-keyboard-loop.wav",
     "duration": 1,
     "volume": 0.6,
     "loop": true,
     "desc": "1s 实录键盘声，循环铺满打字时长（48kHz 单声道，末尾 5ms 淡出保证无缝）"
+  },
+  "common-mouse-click": {
+    "src": "skill:assets/sfx/common-mouse-click.wav",
+    "duration": 0.397,
+    "volume": 0.35,
+    "desc": "真实鼠标点击，按钮、开关、选择与光标操作"
+  },
+  "common-notification": {
+    "src": "skill:assets/sfx/common-notification.mp3",
+    "duration": 2.456,
+    "volume": 0.3,
+    "desc": "消息通知音，弹窗、消息到达、提醒或成功状态"
+  },
+  "common-pop": {
+    "src": "skill:assets/sfx/common-pop.mp3",
+    "duration": 0.72,
+    "volume": 0.35,
+    "desc": "短促弹性 pop，徽章、标签、数字或小元素弹入"
+  },
+  "common-swipe": {
+    "src": "skill:assets/sfx/common-swipe.wav",
+    "duration": 0.18,
+    "volume": 0.34,
+    "desc": "元素滑入"
+  },
+  "common-tick-up": {
+    "src": "skill:assets/sfx/common-tick-up.wav",
+    "duration": 0.22,
+    "volume": 0.42,
+    "desc": "数字滚动收尾的一记轻点"
+  },
+  "common-whoosh": {
+    "src": "skill:assets/sfx/common-whoosh.wav",
+    "duration": 0.154,
+    "volume": 0.38,
+    "desc": "极短呼啸，快速转场、卡片滑入或镜头切换"
+  },
+  "foley-rub": {
+    "src": "skill:assets/sfx/foley-rub.wav",
+    "duration": 1.701,
+    "volume": 0.35,
+    "desc": "摩擦声"
+  },
+  "impact-duang": {
+    "src": "skill:assets/sfx/impact-duang.mp3",
+    "duration": 3.762,
+    "volume": 0.48,
+    "desc": "duang"
+  },
+  "impact-fast-collision": {
+    "src": "skill:assets/sfx/impact-fast-collision.mp3",
+    "duration": 2.691,
+    "volume": 0.48,
+    "desc": "快速移动碰撞"
+  },
+  "impact-heavy": {
+    "src": "skill:assets/sfx/impact-heavy.mp3",
+    "duration": 2.116,
+    "volume": 0.48,
+    "desc": "噔，重击声"
+  },
+  "impact-light": {
+    "src": "skill:assets/sfx/impact-light.mp3",
+    "duration": 3.109,
+    "volume": 0.48,
+    "desc": "哐，撞击轻响"
+  },
+  "impact-punch": {
+    "src": "skill:assets/sfx/impact-punch.mp3",
+    "duration": 2.116,
+    "volume": 0.48,
+    "desc": "砰，拳击声"
+  },
+  "impact-thunder": {
+    "src": "skill:assets/sfx/impact-thunder.mp3",
+    "duration": 2.116,
+    "volume": 0.48,
+    "desc": "晴天霹雳"
+  },
+  "magic-bling": {
+    "src": "skill:assets/sfx/magic-bling.mp3",
+    "duration": 6.087,
+    "volume": 0.36,
+    "desc": "bling，闪烁音"
+  },
+  "magic-fairy-transform": {
+    "src": "skill:assets/sfx/magic-fairy-transform.mp3",
+    "duration": 2.22,
+    "volume": 0.36,
+    "desc": "仙女变身"
+  },
+  "magic-grand-entrance": {
+    "src": "skill:assets/sfx/magic-grand-entrance.mp3",
+    "duration": 2.691,
+    "volume": 0.36,
+    "desc": "闪亮登场音效"
+  },
+  "music-awkward": {
+    "src": "skill:assets/sfx/music-awkward.mp3",
+    "duration": 2.116,
+    "volume": 0.32,
+    "desc": "尴尬音"
+  },
+  "music-ending": {
+    "src": "skill:assets/sfx/music-ending.mp3",
+    "duration": 2.351,
+    "volume": 0.32,
+    "desc": "结束-敲锣"
+  },
+  "music-game-success": {
+    "src": "skill:assets/sfx/music-game-success.mp3",
+    "duration": 2.22,
+    "volume": 0.32,
+    "desc": "游戏成功配乐1"
+  },
+  "music-level-success": {
+    "src": "skill:assets/sfx/music-level-success.mp3",
+    "duration": 2.926,
+    "volume": 0.32,
+    "desc": "闯关成功"
+  },
+  "nature-water-drop": {
+    "src": "skill:assets/sfx/nature-water-drop.mp3",
+    "duration": 1.907,
+    "volume": 0.35,
+    "desc": "滴水声"
+  },
+  "nature-whirlwind": {
+    "src": "skill:assets/sfx/nature-whirlwind.mp3",
+    "duration": 3.056,
+    "volume": 0.35,
+    "desc": "旋风"
+  },
+  "transition-breath": {
+    "src": "skill:assets/sfx/transition-breath.mp3",
+    "duration": 3.161,
+    "volume": 0.4,
+    "desc": "“呼”转场音效"
+  },
+  "transition-dizzy": {
+    "src": "skill:assets/sfx/transition-dizzy.mp3",
+    "duration": 3.971,
+    "volume": 0.4,
+    "desc": "眩晕过渡"
+  },
+  "transition-general": {
+    "src": "skill:assets/sfx/transition-general.mp3",
+    "duration": 3.526,
+    "volume": 0.4,
+    "desc": "转场"
+  },
+  "transition-long": {
+    "src": "skill:assets/sfx/transition-long.mp3",
+    "duration": 6.426,
+    "volume": 0.4,
+    "desc": "过渡3"
+  },
+  "transition-slide": {
+    "src": "skill:assets/sfx/transition-slide.mp3",
+    "duration": 2.691,
+    "volume": 0.4,
+    "desc": "滑动"
+  },
+  "transition-soft": {
+    "src": "skill:assets/sfx/transition-soft.mp3",
+    "duration": 2.142,
+    "volume": 0.4,
+    "desc": "过渡1"
+  },
+  "transition-swish": {
+    "src": "skill:assets/sfx/transition-swish.mp3",
+    "duration": 2.116,
+    "volume": 0.4,
+    "desc": "Swish"
+  },
+  "transition-whoosh-long": {
+    "src": "skill:assets/sfx/transition-whoosh-long.mp3",
+    "duration": 3.265,
+    "volume": 0.4,
+    "desc": "嗖嗖"
+  },
+  "transition-whoosh-short": {
+    "src": "skill:assets/sfx/transition-whoosh-short.mp3",
+    "duration": 2.116,
+    "volume": 0.4,
+    "desc": "咻"
+  },
+  "ui-beep": {
+    "src": "skill:assets/sfx/ui-beep.mp3",
+    "duration": 2.116,
+    "volume": 0.34,
+    "desc": "滴，提示音"
+  },
+  "ui-censor-beep": {
+    "src": "skill:assets/sfx/ui-censor-beep.mp3",
+    "duration": 2.116,
+    "volume": 0.34,
+    "desc": "屏蔽脏话"
+  },
+  "ui-check-in-success": {
+    "src": "skill:assets/sfx/ui-check-in-success.mp3",
+    "duration": 2.116,
+    "volume": 0.34,
+    "desc": "打卡成功"
+  },
+  "ui-coin": {
+    "src": "skill:assets/sfx/ui-coin.mp3",
+    "duration": 2.22,
+    "volume": 0.34,
+    "desc": "超级玛丽捡金币"
+  },
+  "ui-correct-answer": {
+    "src": "skill:assets/sfx/ui-correct-answer.mp3",
+    "duration": 2.22,
+    "volume": 0.34,
+    "desc": "问题回答正确"
+  },
+  "ui-ding-repeat": {
+    "src": "skill:assets/sfx/ui-ding-repeat.mp3",
+    "duration": 2.116,
+    "volume": 0.34,
+    "desc": "叮叮叮"
+  },
+  "ui-error": {
+    "src": "skill:assets/sfx/ui-error.mp3",
+    "duration": 2.142,
+    "volume": 0.34,
+    "desc": "错误"
+  },
+  "ui-like-follow": {
+    "src": "skill:assets/sfx/ui-like-follow.mp3",
+    "duration": 2.116,
+    "volume": 0.34,
+    "desc": "叮，关注，点赞"
+  },
+  "ui-notice": {
+    "src": "skill:assets/sfx/ui-notice.mp3",
+    "duration": 1.567,
+    "volume": 0.34,
+    "desc": "提示音"
+  },
+  "ui-system-warning": {
+    "src": "skill:assets/sfx/ui-system-warning.mp3",
+    "duration": 2.116,
+    "volume": 0.34,
+    "desc": "系统警告"
+  },
+  "ui-typing": {
+    "src": "skill:assets/sfx/ui-typing.mp3",
+    "duration": 2.116,
+    "volume": 0.34,
+    "desc": "打字声"
+  },
+  "voice-breath": {
+    "src": "skill:assets/sfx/voice-breath.mp3",
+    "duration": 2.22,
+    "volume": 0.45,
+    "desc": "呼"
+  },
+  "voice-cheer": {
+    "src": "skill:assets/sfx/voice-cheer.mp3",
+    "duration": 2.351,
+    "volume": 0.45,
+    "desc": "喝彩声"
+  },
+  "voice-gasp": {
+    "src": "skill:assets/sfx/voice-gasp.mp3",
+    "duration": 2.116,
+    "volume": 0.45,
+    "desc": "呵，倒吸凉气声"
+  },
+  "voice-marmot-scream": {
+    "src": "skill:assets/sfx/voice-marmot-scream.mp3",
+    "duration": 2.429,
+    "volume": 0.45,
+    "desc": "啊！土拨鼠大叫"
+  },
+  "voice-question": {
+    "src": "skill:assets/sfx/voice-question.mp3",
+    "duration": 2.116,
+    "volume": 0.45,
+    "desc": "疑问-啊？"
+  },
+  "voice-sensual": {
+    "src": "skill:assets/sfx/voice-sensual.mp3",
+    "duration": 1.881,
+    "volume": 0.45,
+    "desc": "唔～销魂"
+  },
+  "voice-shout": {
+    "src": "skill:assets/sfx/voice-shout.mp3",
+    "duration": 2.351,
+    "volume": 0.45,
+    "desc": "嚯！"
+  },
+  "voice-snore": {
+    "src": "skill:assets/sfx/voice-snore.mp3",
+    "duration": 2.011,
+    "volume": 0.45,
+    "desc": "打呼噜"
+  },
+  "voice-what-male": {
+    "src": "skill:assets/sfx/voice-what-male.mp3",
+    "duration": 2.116,
+    "volume": 0.45,
+    "desc": "what？！惊讶男声"
+  },
+  "voice-whistle": {
+    "src": "skill:assets/sfx/voice-whistle.mp3",
+    "duration": 2.116,
+    "volume": 0.45,
+    "desc": "口哨音"
+  },
+  "voice-wow": {
+    "src": "skill:assets/sfx/voice-wow.mp3",
+    "duration": 2.194,
+    "volume": 0.45,
+    "desc": "哇呜"
   }
 }
