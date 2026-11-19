@@ -102,7 +102,7 @@ recipe 不承载字体表。字体库由 `assets/fonts/manifest.json` 定义：�
 
 ## 2. storyboard 契约
 
-顶层只允许 `recipe / format / meta / scenes / uses`。场景允许 `id / narration / duration / camera / code / params / resources / note / transition`。场景不再声明背景色：`scene.code` / params 模板负责铺满整帧。`transition` 是固定预设名，写在两个 code 场边界的前一场；emit 后展开为 `(A-D/2)+T+(B-D/2)` 双帧视觉节点，声音仍使用原始逻辑场。
+顶层只允许 `recipe / format / meta / scenes / uses`。场景允许 `id / narration / duration / camera / code / params / resources / note / transition / sfx`。场景不再声明背景色：`scene.code` / params 模板负责铺满整帧。`transition` 是固定预设名，写在两个 code 场边界的前一场；emit 后展开为 `(A-D/2)+T+(B-D/2)` 双帧视觉节点，声音仍使用原始逻辑场。
 
 关键规则：
 
@@ -303,7 +303,7 @@ sceneDur ──累加──► scene.start
 
 - 旁白：一场一个事件。
 - BGM：可按旁白区间切成相邻事件实现 ducking；无 duck 配置时用单事件 + 首尾淡入淡出。
-- SFX：只有 params 场的 `template.defaultSfx` / `template.sfxTrack` / 循环音效，全部在编译期展开为绝对时间事件；code 场不自带音效；运行时不产生声音。
+- SFX：params 场可使用 `template.defaultSfx` / `template.sfxTrack` / 循环音效；任意场景也可显式写 `scene.sfx` 时间事件，全部在编译期展开为绝对时间事件；运行时不产生声音。
 - 引擎不做 LUFS、母带归一、侧链压缩；响度属导出后工序。
 
 ### 6.4 语音与素材

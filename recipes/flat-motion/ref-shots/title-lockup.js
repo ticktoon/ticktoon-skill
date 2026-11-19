@@ -6,6 +6,9 @@
   "bg": "#2B2BFF",
   "thumbTime": 4.6,
   "tags": ["标题", "逐字", "匹配变形", "收束"],
+  "sfx": [
+    { "name": "common-whoosh", "at": 0.35, "volume": 0.16 }
+  ],
   "resources": [
     { "type": "font", "name": "DouYinMeiHaoTi" },
     { "type": "font", "name": "JiangChengYuanTi" }

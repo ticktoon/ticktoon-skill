@@ -68,27 +68,28 @@ export async function resolveStoryboard({ storyboard, recipe, catalog, tts }) {
     });
   }
 
-  // --- 音效：params 场的模板音效（defaultSfx / sfxTrack）；code 场不自带门禁音效 ---
+  // --- 音效：模板 defaultSfx / sfxTrack + 任意场景的显式 scene.sfx 时间事件 ---
   const sfx = new Map();
   const templateSfx = recipe?.mode === 'params' ? recipe.template : null;
-  if (templateSfx) {
-    const names = new Set([
-      templateSfx.defaultSfx,
-      templateSfx.sfxTrack?.sfx,
-      templateSfx.sfxTrack?.loop?.sfx,
-    ]);
-    for (const name of names) {
-      if (!name) continue;
-      const entry = catalog.sfx[name];
-      if (!entry) {
-        warnings.push({
-          level: 'should', code: 'SFX_MISSING', path: 'recipe.template',
-          msg: `音效 "${name}" 不在 assets/sfx/manifest.json 里，这一下会被静默跳过`,
-        });
-        continue;
-      }
-      sfx.set(name, entry);
+  const names = new Set([
+    templateSfx?.defaultSfx,
+    templateSfx?.sfxTrack?.sfx,
+    templateSfx?.sfxTrack?.loop?.sfx,
+  ]);
+  for (const scene of storyboard.scenes) {
+    for (const cue of scene.sfx || []) names.add(cue.sfx);
+  }
+  for (const name of names) {
+    if (!name) continue;
+    const entry = catalog.sfx[name];
+    if (!entry) {
+      warnings.push({
+        level: 'should', code: 'SFX_MISSING', path: 'recipe.template / scenes.sfx',
+        msg: `音效 "${name}" 不在 assets/sfx/manifest.json 里，这一下会被静默跳过`,
+      });
+      continue;
     }
+    sfx.set(name, entry);
   }
 
   // --- BGM：只按情绪选，不让 storyboard 点名文件 ---

@@ -6,6 +6,9 @@
   "bg": "#F7F5F0",
   "thumbTime": 7.2,
   "tags": ["双栏", "对比", "远程服务", "流程"],
+  "sfx": [
+    { "name": "common-swipe", "at": 0.55, "volume": 0.18 }
+  ],
   "resources": [
     { "type": "font", "name": "sans-700" },
     { "type": "font", "name": "sans-400" }

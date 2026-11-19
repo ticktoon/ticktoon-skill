@@ -302,6 +302,17 @@ export function emitScene({ scene, recipe, format, catalog, kitIndex, kitDir, ca
   // 场间转场不在单场内绘制；编译器随后生成独立的双帧转场场。
   push('};');
 
+  const authoredSfxEvents = (scene.sfx || []).map((event) => ({
+    ...event,
+    at: Number(event.at.toFixed(3)),
+  }));
+  const templateSfxEvents = (track?.events || []).map((event) => ({
+    ...event,
+    at: Number(event.at.toFixed(3)),
+  }));
+  const sfxEvents = [...authoredSfxEvents, ...templateSfxEvents];
+  const hasSfx = !!(template?.defaultSfx || sfxEvents.length || track?.loop);
+
   return {
     id: scene.id,
     duration: scene.duration,
@@ -321,10 +332,10 @@ export function emitScene({ scene, recipe, format, catalog, kitIndex, kitDir, ca
         params: paramsWithMedia,
       } : null,
       units: scene.unit ? [scene.unit] : [],
-      sfx: template ? {
-        sfx: template.defaultSfx || null,
-        sfxAt: Number((template.motion?.enter ?? 0.5).toFixed(3)),
-        sfxEvents: (track?.events || []).map((event) => ({ ...event, at: Number(event.at.toFixed(3)) })),
+      sfx: hasSfx ? {
+        sfx: template?.defaultSfx || null,
+        sfxAt: Number((template?.motion?.enter ?? 0.5).toFixed(3)),
+        sfxEvents,
         sfxLoop: track?.loop ? { ...track.loop, at: Number(track.loop.at.toFixed(3)) } : null,
       } : null,
     },

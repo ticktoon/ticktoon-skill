@@ -283,6 +283,9 @@ recipes/<id>/
   "title": "逐字弹入",
   "note": "大字占满画面，适合口号或结论",
   "duration": 1.8576,
+  "sfx": [
+    { "name": "common-pop", "at": 0.65, "volume": 0.2 }
+  ],
   "resources": [
     { "type": "font", "name": "sans-900" }
   ],
@@ -298,7 +301,7 @@ recipes/<id>/
 - `duration`：大于 0 的秒数
 - `resources`：数组；没有资源写 `[]`
 
-可选：`note`、`bg`、`thumbTime`、`tags`、`component`、`orientation`（`landscape / portrait`）。`bg` 只给 lab 预览用，不写进 storyboard。
+可选：`note`、`bg`、`thumbTime`、`tags`、`component`、`orientation`（`landscape / portrait`）、`sfx`。`bg` 只给 lab 预览用，不写进 storyboard；`sfx` 与 `scene.sfx` 同形，会进入镜头参考的编译和试听。
 
 资源规则与 code 场景一致：`font` 只写 manifest 键，`image / video` 必须写 `src`。
 

@@ -110,7 +110,7 @@ export function assemble({ scenes, audioScenes = scenes, resolved, format, bag }
   }
 
   // --- SFX：模板落地声 + 模板编译期展开的多次事件，运行时不再产生事件 ---
-  const pushSfxEvent = (entry, at, length, { fadeIn = 0.005, fadeOut = 0.06, where } = {}) => {
+  const pushSfxEvent = (entry, at, length, { fadeIn = 0.005, fadeOut = 0.06, volume, where } = {}) => {
     const safeLength = round3(Math.min(length, duration - at));
     if (!(safeLength > 0)) {
       bag.error('ASM_SFX_OVERFLOW', where,
@@ -122,7 +122,7 @@ export function assemble({ scenes, audioScenes = scenes, resolved, format, bag }
       at,
       duration: safeLength,
       role: 'sfx',
-      volume: entry.volume ?? ROLE_VOLUME.sfx,
+      volume: volume ?? entry.volume ?? ROLE_VOLUME.sfx,
       fadeIn,
       fadeOut: Math.min(fadeOut, safeLength / 2),
     });
@@ -140,7 +140,8 @@ export function assemble({ scenes, audioScenes = scenes, resolved, format, bag }
       if (!entry) continue;
       const at = round3(scene.start + cue.at);
       pushSfxEvent(entry, at, entry.duration || 0.3, {
-        where: `scenes.${scene.id}.template`,
+        volume: cue.volume,
+        where: `scenes.${scene.id}.sfx`,
       });
     }
 

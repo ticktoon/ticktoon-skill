@@ -66,7 +66,7 @@
     "minNarrationDuration": 4
   },
   "audio": {
-    "mood": "cut",
+    "mood": "soft",
     "volume": 0.1,
     "fadeIn": 0.6,
     "fadeOut": 1.4,

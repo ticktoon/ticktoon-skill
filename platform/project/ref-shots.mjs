@@ -10,7 +10,7 @@ import path from 'node:path';
 
 const HEADER_RE = /^﻿?\s*\/\*\s*@ticktoon-ref-shot\s*([\s\S]*?)\*\//;
 const META_KEYS = [
-  'title', 'note', 'duration', 'resources', 'bg', 'thumbTime', 'tags', 'component', 'orientation',
+  'title', 'note', 'duration', 'resources', 'bg', 'thumbTime', 'tags', 'component', 'orientation', 'sfx',
 ];
 const RESOURCE_KEYS = ['type', 'name', 'src', 'start'];
 const ORIENTATIONS = ['landscape', 'portrait'];
@@ -119,6 +119,9 @@ export function parseRefShot(source, file = '<ref-shot>') {
     && (!Array.isArray(meta.tags) || !meta.tags.every((tag) => typeof tag === 'string'))) {
     errors.push(fail('REF_SHOT_META_INVALID', 'tags 必须是字符串数组', file));
   }
+  if (meta.sfx !== undefined && !Array.isArray(meta.sfx)) {
+    errors.push(fail('REF_SHOT_META_INVALID', 'sfx 必须是 [{ name, at, volume? }] 数组', file));
+  }
   if (meta.component !== undefined && typeof meta.component !== 'string') {
     errors.push(fail('REF_SHOT_META_INVALID', 'component 必须是字符串', file));
   }
@@ -211,6 +214,7 @@ export function refShotStoryboard({ recipe, refShot, code, duration, orientation
       duration: Number.isFinite(Number(duration)) ? Number(duration) : meta.duration,
       code: typeof code === 'string' ? code : refShot?.code || '',
       resources: Array.isArray(meta.resources) ? meta.resources : [],
+      sfx: Array.isArray(meta.sfx) ? meta.sfx : [],
       note: meta.title,
     }],
   };
@@ -228,6 +232,7 @@ export function refShotsStoryboard({ recipe, refShots, errors = [] }) {
       duration: refShot.meta.duration,
       code: refShot.code,
       resources: refShot.meta.resources,
+      sfx: Array.isArray(refShot.meta.sfx) ? refShot.meta.sfx : [],
       note: refShot.meta.title,
     })),
   };

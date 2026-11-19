@@ -8,12 +8,16 @@ const C = {
   bg: '#0E1014', ink: '#F4F6FA', muted: '#A4ABB7', faint: '#697586',
   blue: '#1976ED', blueFade: 'rgba(25,117,237,0.28)', blueBar1: '#D2E3F4', blueBar2: '#1976ED',
 };
+const BARS_TOP_RATIO = 0.20;
 const PALETTE = [
-  '#67D5BE', '#F39ABB', '#82D9F2', '#B6A5F5', '#7BD6C2', '#B9E866',
-  '#FFD07A', '#B9A7F7', '#7EDBB3', '#F59AA5', '#F5B679', '#83D4C4',
-  '#F59A91', '#B2A0F2', '#FFD07A', '#B7A3F2', '#FFCF7D', '#82B9F2',
+  '#DC2626', '#F59E0B', '#10B981', '#F97316', '#8B5CF6', '#06B6D4', '#EC4899',
 ];
 const lerp = (a, b, k) => a + (b - a) * k;
+const lighten = (hex, amount) => {
+  const n = Number.parseInt(hex.slice(1), 16);
+  const channel = (shift) => Math.round(((n >> shift) & 255) + (255 - ((n >> shift) & 255)) * amount);
+  return `rgb(${channel(16)},${channel(8)},${channel(0)})`;
+};
 const hash = (n) => {
   let h = Math.imul((n | 0) ^ 0x9E3779B9, 0x85EBCA6B);
   h ^= h >>> 13;
@@ -84,7 +88,7 @@ function paintBanner(ctx, title, t, fonts, W, H) {
   const textH = f.size;
   const textW = textWidth(ctx, title);
   const cx = W / 2;
-  const cy = H * 0.135;
+  const cy = H * 0.12;
   const barPadX = 28;
   const barPadY = 18;
   const left = cx - textW / 2 - barPadX;
@@ -141,6 +145,7 @@ function paintBanner(ctx, title, t, fonts, W, H) {
     x += w;
   }
   ctx.restore();
+  return bottom;
 }
 
 function paintBars(ctx, p, g, fonts, W, H) {
@@ -167,10 +172,18 @@ function paintBars(ctx, p, g, fonts, W, H) {
   const fromRanks = rankAt(start);
   const toRanks = rankAt(end);
   const moveP = ease.outCubic(clamp01((t - start) / step));
-  const rowH = Math.min(100, H * 0.50 / items.length);
-  const top = H * 0.25;
-  const labelSize = Math.min(30, rowH * 0.32);
-  const valueSize = Math.min(24, rowH * 0.28);
+  // 参考旧模板：≤10 行固定 80px 条高 + 28px 间距；超过后整体等比压缩。
+  // 少量条目不拉伸填空；1080×1920 之外的画幅按高度缩放整组行几何。
+  const S = H / 1920;
+  const fitBand = 1052 * S;
+  const wanted = items.length * 80 * S + Math.max(0, items.length - 1) * 28 * S;
+  const shrink = Math.min(1, fitBand / Math.max(1, wanted));
+  const barHeight = 80 * S * shrink;
+  const barGap = 28 * S * shrink;
+  const rowStep = barHeight + barGap;
+  const top = H * BARS_TOP_RATIO;
+  const labelSize = Math.max(12, barHeight * 0.4);
+  const valueSize = Math.max(12, barHeight * 0.4);
 
   // 名称列和数值列按整组最长文本预留，避免换数时挤压条形或越出右边界。
   ctx.save();
@@ -188,15 +201,15 @@ function paintBars(ctx, p, g, fonts, W, H) {
   for (let i = 0; i < items.length; i += 1) {
     const item = items[i];
     const rank = lerp(fromRanks.get(i), toRanks.get(i), moveP);
-    const y = top + rank * rowH + rowH / 2;
+    const y = top + rank * rowStep + barHeight / 2;
     const color = PALETTE[i % PALETTE.length];
     const value = valueAt(item, t);
     const width = Math.max(2, Math.min(maxBar, value / maxValue * maxBar));
     const gradient = ctx.createLinearGradient(x, 0, x + width, 0);
-    gradient.addColorStop(0, `${color}66`);
-    gradient.addColorStop(1, color);
+    gradient.addColorStop(0, color);
+    gradient.addColorStop(1, lighten(color, 0.8));
     ctx.fillStyle = gradient;
-    roundRect(ctx, x, y - rowH * 0.27, width, rowH * 0.54, 4);
+    roundRect(ctx, x, y - barHeight / 2, width, barHeight, barHeight * 0.15);
     ctx.fill();
 
     ctx.font = fitFont(ctx, String(item.label), 'sans-400', labelSize, labelW, fonts, 12).css;
@@ -235,8 +248,8 @@ function paintBars(ctx, p, g, fonts, W, H) {
   ctx.font = fitFont(ctx, String(year), 'sans-900', 174, W * 0.52, fonts, 64).css;
   ctx.fillText(String(year), W - 60, H * 0.865);
   ctx.globalAlpha = 0.22;
-  ctx.translate(W - 60, H * 0.925);
-  ctx.scale(1, -1);
+  ctx.translate(W - 60, H * 0.935);
+  ctx.scale(1, -0.85);
   ctx.fillText(String(year), 0, 0);
   ctx.restore();
   if (p.brand) {
@@ -256,12 +269,13 @@ function draw(g, p) {
   ctx.save();
   paintBackground(ctx, W, H, t, g.a);
   ctx.globalAlpha = g.a;
-  paintBanner(ctx, String(p.title || '竞速排行榜'), t, fonts, W, H);
+  const bannerBottom = paintBanner(ctx, String(p.title || '竞速排行榜'), t, fonts, W, H);
   ctx.font = fitFont(ctx, String(p.source || ''), 'sans-400', 28, W * 0.84, fonts, 18).css;
   ctx.fillStyle = C.muted;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText(String(p.source || ''), W / 2, H * 0.205);
+  const sourceY = (bannerBottom + H * BARS_TOP_RATIO) / 2;
+  ctx.fillText(String(p.source || ''), W / 2, sourceY);
   paintBars(ctx, p, g, fonts, W, H);
   ctx.restore();
 }

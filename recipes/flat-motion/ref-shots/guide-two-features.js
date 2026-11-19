@@ -6,6 +6,9 @@
   "bg": "#F7F5F0",
   "thumbTime": 6.5,
   "tags": ["讲师", "医疗服务", "双特点", "虚线说明框"],
+  "sfx": [
+    { "name": "common-pop", "at": 0.65, "volume": 0.2 }
+  ],
   "resources": [
     { "type": "font", "name": "sans-700" },
     { "type": "font", "name": "sans-400" }

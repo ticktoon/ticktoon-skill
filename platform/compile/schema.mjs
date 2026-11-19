@@ -19,7 +19,7 @@ import { scanSceneCode } from './code-scan.mjs';
 import { normalizeTransitionPreset } from './transitions.mjs';
 
 // code 与 params 是两种内容形态，由 recipe.mode 决定，同一场不能同时出现。
-export const SCENE_KEYS = ['id', 'narration', 'duration', 'camera', 'code', 'params', 'resources', 'note', 'transition'];
+export const SCENE_KEYS = ['id', 'narration', 'duration', 'camera', 'code', 'params', 'resources', 'note', 'transition', 'sfx'];
 export const ROOT_KEYS = ['recipe', 'format', 'meta', 'scenes', 'uses'];
 export const SUPPORTED_FORMATS = [
   { w: 1920, h: 1080, fps: 30 },
@@ -210,6 +210,55 @@ function normalizeSceneCode(raw, bag, at) {
     return null;
   }
   return text;
+}
+
+/** 场景内音效事件：时间相对场景起点，名称必须来自公共 SFX manifest。 */
+function normalizeSceneSfx(raw, bag, at, catalog) {
+  if (raw === undefined) return [];
+  if (!Array.isArray(raw)) {
+    bag.error('SCENE_SFX_TYPE', at, 'sfx 必须是 [{ name, at, volume? }] 数组');
+    return [];
+  }
+  if (raw.length > 6) {
+    bag.error('SCENE_SFX_TOO_MANY', at, `每场最多 6 个音效事件，收到 ${raw.length} 个；只给关键动作配音`);
+  }
+  const out = [];
+  raw.forEach((cue, index) => {
+    const path = `${at}[${index}]`;
+    if (!isPlainObject(cue)) {
+      bag.error('SCENE_SFX_EVENT_TYPE', path, '音效事件必须是 { name, at, volume? } 对象');
+      return;
+    }
+    for (const key of Object.keys(cue)) {
+      if (!['name', 'at', 'volume'].includes(key)) {
+        bag.error('SCENE_SFX_EVENT_UNKNOWN_KEY', `${path}.${key}`, `音效事件不认识键 "${key}"`);
+      }
+    }
+    const name = typeof cue.name === 'string' ? cue.name.trim() : '';
+    if (!name) bag.error('SCENE_SFX_NAME', `${path}.name`, '音效 name 必须是非空 manifest 键');
+    else if (!catalog.sfx?.[name]?.src) {
+      bag.error('SCENE_SFX_UNKNOWN', `${path}.name`, `音效 "${name}" 不在 assets/sfx/manifest.json 里`);
+    }
+    const time = Number(cue.at);
+    if (!Number.isFinite(time) || time < 0) {
+      bag.error('SCENE_SFX_AT', `${path}.at`, '音效 at 必须是大于或等于 0 的场景内秒数');
+    }
+    let volume;
+    if (cue.volume !== undefined) {
+      volume = Number(cue.volume);
+      if (!Number.isFinite(volume) || volume < 0 || volume > 1) {
+        bag.error('SCENE_SFX_VOLUME', `${path}.volume`, '音效 volume 必须在 0–1 之间');
+      }
+    }
+    if (name && Number.isFinite(time) && time >= 0) {
+      out.push({
+        sfx: name,
+        at: Number(time.toFixed(3)),
+        ...(volume !== undefined && Number.isFinite(volume) ? { volume } : {}),
+      });
+    }
+  });
+  return out;
 }
 
 function checkParams(values, spec, recipeId, bag, at) {
@@ -557,6 +606,7 @@ export function normalizeStoryboard(input, catalog, captionOverride = null) {
     }
 
     const transition = normalizeTransitionPreset(raw.transition, bag, `${at}.transition`);
+    const sfx = normalizeSceneSfx(raw.sfx, bag, `${at}.sfx`, catalog);
 
     let camera = null;
     if (raw.camera !== undefined) {
@@ -586,6 +636,7 @@ export function normalizeStoryboard(input, catalog, captionOverride = null) {
       resources: sceneResources,
       note: raw.note || null,
       transition,
+      sfx,
     });
   });
 
