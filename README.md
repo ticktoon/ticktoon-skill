@@ -73,7 +73,7 @@ Compilation is deterministic: the same storyboard and inputs produce the same `c
 
 ## What it can do
 
-Recipes cover explainers, stories, fast cuts, breaking news, and real footage. A recipe either carries content in a whole-frame `scene.code` or is a fixed template driven by `scene.params`. `tt recipe list` is the authoritative, always-current shelf; the table below is the set bundled with this repo.
+Recipes cover explainers, stories, fast cuts, breaking news, data races, and real footage. A recipe either carries content in a whole-frame `scene.code` or is a fixed template driven by `scene.params`. `tt recipe list` is the authoritative, always-current shelf; the table below is the set bundled with this repo.
 
 | Recipe | Picture | Content path | Best for |
 |---|---|---|---|
@@ -86,6 +86,7 @@ Recipes cover explainers, stories, fast cuts, breaking news, and real footage. A
 | `crayon-guide` | Warm paper, crayon hatching, people and hand-drawn diagrams | `scene.code` | tutorials, cultural ideas, comparisons, kids' explainers |
 | `shadow-play` | Backlit screen, articulated silhouettes, scene-specific props | `scene.code` | fables, folk tales, historical vignettes |
 | `news-broadcast` | Fixed vertical news card: blue radial background, world map, flowing lines | `scene.params` | breaking-news cards, title / body / source |
+| `bar-race` | Dark vertical race chart, slanted title, animated year and reflection | `scene.params` | 2–18 entities racing from start values to end values |
 | `footage-cut` | Full-frame real footage with short overlay lines | `scene.params` | Pexels or local footage montage |
 
 Also included:

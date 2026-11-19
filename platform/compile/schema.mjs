@@ -282,6 +282,10 @@ function checkParams(values, spec, recipeId, bag, at) {
           bag.error('PARAM_TYPE', `${at}.${key}`, `"${key}" 必须是对象数组`);
           continue;
         }
+        if (rule.minItems && raw.length < rule.minItems) {
+          bag.error('PARAM_MINITEMS', `${at}.${key}`,
+            `${recipeId} 的 "${key}" 至少需要 ${rule.minItems} 项，收到 ${raw.length} 项`);
+        }
         if (rule.maxItems && raw.length > rule.maxItems) {
           bag.error('PARAM_MAXITEMS', `${at}.${key}`,
             `${recipeId} 的 "${key}" 上限 ${rule.maxItems} 项，收到 ${raw.length} 项`);
@@ -289,10 +293,19 @@ function checkParams(values, spec, recipeId, bag, at) {
         const fields = rule.fields || {};
         params[key] = raw.map((item, i) => {
           const out = {};
+          for (const itemKey of Object.keys(item)) {
+            if (!fields[itemKey]) {
+              bag.error('PARAM_UNKNOWN', `${at}.${key}[${i}].${itemKey}`,
+                `${recipeId} 的 "${key}" 不认识字段 "${itemKey}"，可用：${Object.keys(fields).join(' / ')}`);
+            }
+          }
           for (const [fk, fr] of Object.entries(fields)) {
             const value = item[fk];
             if (value === undefined || value === null || value === '') {
-              if (fr.default !== undefined) out[fk] = fr.default;
+              if (fr.required) {
+                bag.error('PARAM_REQUIRED', `${at}.${key}[${i}].${fk}`,
+                  `${recipeId} 的 "${key}[${i}]" 需要字段 "${fk}"`);
+              } else if (fr.default !== undefined) out[fk] = fr.default;
               continue;
             }
             if (Array.isArray(fr.enum) && !fr.enum.includes(value)) {
@@ -309,6 +322,14 @@ function checkParams(values, spec, recipeId, bag, at) {
               }
               out[fk] = n;
               continue;
+            }
+            if (fr.type === 'string' && typeof value !== 'string') {
+              bag.error('PARAM_TYPE', `${at}.${key}[${i}].${fk}`, `"${fk}" 必须是字符串`);
+              continue;
+            }
+            if (fr.type === 'string' && fr.maxChars && [...value].length > fr.maxChars) {
+              bag.error('PARAM_MAXCHARS', `${at}.${key}[${i}].${fk}`,
+                `"${fk}" 上限 ${fr.maxChars} 字，收到 ${[...value].length} 字`);
             }
             out[fk] = value;
           }

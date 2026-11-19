@@ -1,0 +1,130 @@
+{
+  "id": "bar-race",
+  "abi": "1",
+  "name": "竞速排行榜",
+  "keywords": [
+    "竞速",
+    "排行榜",
+    "排名",
+    "条形图",
+    "数据动画",
+    "GDP",
+    "bar chart race",
+    "竖版"
+  ],
+  "mode": "params",
+  "when": [
+    "用一段竖屏动画比较 2–18 个实体从起点到终点的数值增长和名次变化。",
+    "省区市、国家、品牌、产品或候选人等榜单需要固定竞速版式，换数据不换视觉。",
+    "画面主体是动态横条、年份、来源和底部标尺，不需要图片素材。"
+  ],
+  "notWhen": [
+    "需要逐年真实数据、多个时间点或非线性时间序列；本 recipe 只做 start 到 end 的一次插值。",
+    "需要折线图、饼图、地图或静态数据报表；改用对应图表形式。",
+    "需要完整旁白字幕；本 recipe 字幕固定 none，图面只保留榜单信息。",
+    "需要国旗、头像、Logo 或实体图片；本 recipe 不引入实体图片。"
+  ],
+  "template": {
+    "draw": "template.js",
+    "params": {
+      "title": {
+        "type": "string",
+        "required": true,
+        "maxChars": 28,
+        "feel": "主标题；顶部斜切蓝色渐变横幅，左侧独立斜条，自动缩字号但保持单行"
+      },
+      "source": {
+        "type": "string",
+        "required": true,
+        "maxChars": 42,
+        "feel": "数据来源与年份；横幅下方灰色小字，需明确写出真实来源，示例数据须标明示例"
+      },
+      "startYear": {
+        "type": "number",
+        "required": true,
+        "feel": "起始年份；与条形数值同步推进，右下大字显示"
+      },
+      "endYear": {
+        "type": "number",
+        "required": true,
+        "feel": "结束年份；应大于 startYear，结尾停留于最终年份"
+      },
+      "items": {
+        "type": "objects",
+        "required": true,
+        "minItems": 2,
+        "maxItems": 18,
+        "fields": {
+          "label": {
+            "type": "string",
+            "required": true,
+            "maxChars": 8,
+            "feel": "实体名称，建议 2–6 字；颜色固定跟随实体，不随名次改变"
+          },
+          "start": {
+            "type": "number",
+            "required": true,
+            "feel": "起始非负数值，单位统一为亿元"
+          },
+          "end": {
+            "type": "number",
+            "required": true,
+            "feel": "结束非负数值，单位统一为亿元；建议不小于 start"
+          }
+        },
+        "feel": "竞速榜单；2–18 项，数值单位统一为亿元，模板负责配色、排序、增长与换位"
+      },
+      "brand": {
+        "type": "string",
+        "default": "",
+        "maxChars": 16,
+        "feel": "可选账号或品牌，默认不显示；右下角年份下方"
+      }
+    },
+    "needs": {
+      "image": false,
+      "video": false,
+      "three": false
+    },
+    "resources": [
+      {
+        "type": "font",
+        "name": "sans-900"
+      },
+      {
+        "type": "font",
+        "name": "sans-400"
+      }
+    ],
+    "motion": {
+      "enter": 0.42,
+      "exitRatio": 0.44
+    },
+    "inkless": true
+  },
+  "rules": {
+    "safeMargin": 0.04,
+    "forbid": [
+      "给 params 传未声明字段；固定模板只接受 title / source / startYear / endYear / items / brand",
+      "给 items 增加 color / icon / image / values 等字段；本 recipe 只接受 label / start / end",
+      "把示例数值写成真实统计结论；真实项目必须核对数据并在 source 写明来源，演示数据必须标明示例",
+      "让 startYear 大于或等于 endYear，或给数值混用万元、亿元、美元等不同单位",
+      "给本 recipe 添加国家旗帜、头像或其他实体图片",
+      "在同一场景写 scene.code；本 recipe 只收 scene.params",
+      "在同一幕再叠字幕；本 recipe 字幕必须为 none"
+    ]
+  },
+  "captions": {
+    "style": "none"
+  },
+  "audio": {
+    "mood": "tense",
+    "volume": 0.6,
+    "fadeIn": 1.2,
+    "fadeOut": 2,
+    "duck": {
+      "level": 0.055,
+      "edge": 0.15
+    }
+  }
+}

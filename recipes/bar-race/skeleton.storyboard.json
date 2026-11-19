@@ -1,0 +1,38 @@
+{
+  "recipe": "bar-race",
+  "format": {
+    "w": 1080,
+    "h": 1920,
+    "fps": 30
+  },
+  "meta": {
+    "title": "重点省区市 GDP 竞速排行榜·示例数据"
+  },
+  "scenes": [
+    {
+      "id": "s01",
+      "duration": 12,
+      "params": {
+        "title": "2000-2025年重点省区市GDP变化",
+        "source": "数据来源：虚构演示数据 2026",
+        "startYear": 2000,
+        "endYear": 2025,
+        "items": [
+          { "label": "广东", "start": 820, "end": 11335.2 },
+          { "label": "江苏", "start": 760, "end": 10520.6 },
+          { "label": "山东", "start": 920, "end": 9320.8 },
+          { "label": "浙江", "start": 480, "end": 8010.4 },
+          { "label": "河南", "start": 680, "end": 6120.5 },
+          { "label": "四川", "start": 380, "end": 5900.8 },
+          { "label": "湖北", "start": 440, "end": 5420.3 },
+          { "label": "福建", "start": 310, "end": 5210.6 },
+          { "label": "湖南", "start": 510, "end": 4980.2 },
+          { "label": "上海", "start": 900, "end": 4720.5 },
+          { "label": "安徽", "start": 280, "end": 4510.3 },
+          { "label": "河北", "start": 640, "end": 4380.7 }
+        ],
+        "brand": "@每日读研"
+      }
+    }
+  ]
+}
