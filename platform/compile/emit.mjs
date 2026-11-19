@@ -81,11 +81,8 @@ export function emitScene({ scene, recipe, format, catalog, kitIndex, kitDir, ca
   if (template?.drawSource) {
     for (const name of ttNamesOf(template.drawSource)) usedNames.add(name);
   }
-  // env / rng 被 params 模板的 G 对象与入场淡入直接引用。
-  if (template) {
-    usedNames.add('env');
-    usedNames.add('rng');
-  }
+  // rng 被 params 模板的确定性随机入口使用。
+  if (template) usedNames.add('rng');
   if (captionCode) for (const name of ttNamesOf(captionCode)) usedNames.add(name);
   const kits = resolveKits({ kitIndex, kitDir, usedNames });
 
@@ -177,14 +174,9 @@ export function emitScene({ scene, recipe, format, catalog, kitIndex, kitDir, ca
       paramsWithMedia = { ...paramsWithMedia, src: name };
     }
 
-    const motion = template.motion || {};
-    const enterDur = motion.enter ?? 0.5;
-    const exitDur = Number((enterDur * (motion.exitRatio ?? 0.5)).toFixed(4));
-    push(`const G0 = { ctx: null, W: ${W}, H: ${H}, fonts: FONTS, film: FILM, motion: ${JSON.stringify(motion)}, sizes: {}, t: 0, sceneT: 0, at: 0, abs: ${Number(scene.start)}, dur: ${Number(scene.duration)}, a: 1, reveal: 1, cues: api.cues,`);
+    push(`const G0 = { ctx: null, W: ${W}, H: ${H}, fonts: FONTS, film: FILM, sizes: {}, t: 0, sceneT: 0, at: 0, abs: ${Number(scene.start)}, dur: ${Number(scene.duration)}, cues: api.cues,`);
     push(`  rect: { x: 0, y: 0, w: ${W}, h: ${H} }, rng: () => TT.rng(${hashSeed(scene.id, 'template')}) };`);
     push(`const P0 = ${JSON.stringify(paramsWithMedia)};`);
-    push(`const __TT_ENTER_DUR = ${enterDur};`);
-    push(`const __TT_EXIT_DUR = ${exitDur};`);
   }
 
   // ---- draw ----
@@ -227,8 +219,6 @@ export function emitScene({ scene, recipe, format, catalog, kitIndex, kitDir, ca
     push('  {');
     push('    const g = G0;');
     push('    g.ctx = ctx; g.t = T; g.sceneT = T; g.api = api;');
-    push('    g.a = TT.env.fade(T, ' + Number(scene.duration) + ', __TT_ENTER_DUR, __TT_EXIT_DUR);');
-    push('    g.reveal = TT.env.reveal(T, __TT_ENTER_DUR);');
     push('    ctx.save();');
     push('    draw(g, P0);');
     push('    ctx.restore();');
@@ -336,7 +326,7 @@ export function emitScene({ scene, recipe, format, catalog, kitIndex, kitDir, ca
       units: scene.unit ? [scene.unit] : [],
       sfx: hasSfx ? {
         sfx: template?.defaultSfx || null,
-        sfxAt: Number((template?.motion?.enter ?? 0.5).toFixed(3)),
+        sfxAt: 0,
         sfxEvents,
         sfxLoop: track?.loop ? { ...track.loop, at: Number(track.loop.at.toFixed(3)) } : null,
       } : null,

@@ -11,7 +11,6 @@ function draw(g, p) {
     const muted = '#c5cbd4';
 
     ctx.save();
-    ctx.globalAlpha = g.a;
     ctx.fillStyle = '#090d12';
     ctx.fillRect(0, 0, W, H);
     if (frame) {
@@ -46,7 +45,6 @@ function draw(g, p) {
     const gutterX = W * 0.06;
     const lineW = Math.max(6, Math.round(W * 0.0042));
     const lineRight = gutterX + lineW;
-    const enter = clamp01(g.reveal * 1.25);
     const body = font(fonts, Math.round(W * 0.014), 'sans-400');
     ctx.font = body.css;
     ctx.textBaseline = 'alphabetic';
@@ -96,8 +94,6 @@ function draw(g, p) {
     });
 
     ctx.save();
-    ctx.globalAlpha = g.a * enter;
-    ctx.translate(0, (1 - enter) * 24);
     // 显式回到 left：上方 REAL FOOTAGE 把 textAlign 改成了 right，泄漏会让整组文案右对齐压上竖线。
     ctx.textAlign = 'left';
     ctx.textBaseline = 'alphabetic';
@@ -127,7 +123,7 @@ function draw(g, p) {
     g.ink = null;
     ctx.restore();
 
-    // 全片章节进度不参与单场景淡入淡出；kicker 同时作为该场章节名。
+    // 全片章节进度固定显示；kicker 同时作为该场章节名。
     if (g.film?.chapters?.length) {
       TT.progress.chapters(ctx, {
         x: 0, y: H - 56, w: W, h: 56,

@@ -226,8 +226,7 @@ node "$SKILL_DIR/platform/cli.mjs" stills 1.4 2.2 \
 node scripts/demos/build-caption-kit.mjs
 
 # 浏览器 compositor 导出 MP4（按需执行）。
-node scripts/render.mjs output/caption-kit/project/out/composition.json \
-  -o output/caption-kit/video.mp4
+node platform/cli.mjs export --dir output/caption-kit/project -o output/caption-kit/video.mp4
 
 # 各段中间帧，用于逐样式检查版式与安全区。
 node scripts/snapshot.mjs output/caption-kit/project/out/composition.json \

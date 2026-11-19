@@ -102,7 +102,6 @@ const musician = (x, y, s, flip, color, phase) => {
 };
 
 ctx.save();
-ctx.globalAlpha = TT.env.fade(T, api.d, 0.45, 0.35);
 TT.board.stage(ctx, { W, H }, { seed: 37 });
 
 const aura = ctx.createRadialGradient(960, 440, 80, 960, 440, 760);

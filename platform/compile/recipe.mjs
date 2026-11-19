@@ -5,7 +5,7 @@
  *   code   recipe 只给 recipe.md / ref-shots / rules / captions / audio / pacing，
  *          storyboard 写 scene.code；字体由 scene.resources 的 font 条目声明。
  *   params recipe 自带 template（draw / params / resources / needs / defaultSfx /
- *          sfxTrack / motion / inkless），storyboard 写 scene.params；字体写死在
+ *          sfxTrack / inkless），storyboard 写 scene.params；字体写死在
  *          模板代码里，并在 template.resources 声明。
  *
  * recipe 不承载字体表。资源里的 font 只写 manifest 键，src 由编译期补齐。
@@ -21,7 +21,7 @@ const RULE_KEYS = new Set(['safeMargin', 'scale', 'stroke', 'pen', 'board', 'for
 const RECIPE_KEYS = new Set(['id', 'abi', 'name', 'keywords', 'when', 'notWhen', 'mode', 'template', 'rules', 'captions', 'audio', 'pacing']);
 const PACING_KEYS = new Set(['leadIn', 'hold', 'minNarrationDuration']);
 const RECIPE_MODES = new Set(['code', 'params']);
-const TEMPLATE_KEYS = new Set(['draw', 'params', 'resources', 'needs', 'defaultSfx', 'sfxTrack', 'motion', 'inkless']);
+const TEMPLATE_KEYS = new Set(['draw', 'params', 'resources', 'needs', 'defaultSfx', 'sfxTrack', 'inkless']);
 const NEEDS_KEYS = new Set(['image', 'video', 'three']);
 const CAPTION_STYLE_KEYS = new Set([
   'style', 'font', 'baseSize', 'lineHeight', 'top', 'at', 'band', 'size', 'color',
@@ -354,24 +354,6 @@ function validateTemplate(template, recipe, recipeDir, manifest, fail) {
 
   if (template.sfxTrack !== undefined) validateSfxTrack(template.sfxTrack, fail);
 
-  if (template.motion !== undefined) {
-    if (!isPlainObject(template.motion)) {
-      fail('TEMPLATE_MOTION_TYPE', 'template.motion', 'motion 必须是 { enter, exitRatio } 对象');
-    } else {
-      for (const key of Object.keys(template.motion)) {
-        if (key !== 'enter' && key !== 'exitRatio') {
-          fail('TEMPLATE_MOTION_KEY_UNKNOWN', `template.motion.${key}`, 'motion 只允许 enter / exitRatio');
-        }
-      }
-      if (template.motion.enter !== undefined && !(isFiniteNumber(template.motion.enter) && template.motion.enter >= 0)) {
-        fail('TEMPLATE_MOTION_ENTER', 'template.motion.enter', 'enter 必须是 ≥0 的秒数');
-      }
-      if (template.motion.exitRatio !== undefined
-        && !(isFiniteNumber(template.motion.exitRatio) && template.motion.exitRatio >= 0 && template.motion.exitRatio <= 1)) {
-        fail('TEMPLATE_MOTION_EXIT', 'template.motion.exitRatio', 'exitRatio 必须在 0–1');
-      }
-    }
-  }
 
   if (template.inkless !== undefined && typeof template.inkless !== 'boolean') {
     fail('TEMPLATE_INKLESS_TYPE', 'template.inkless', 'inkless 必须是 true/false');

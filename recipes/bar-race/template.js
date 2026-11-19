@@ -267,8 +267,7 @@ function draw(g, p) {
   const { ctx, W, H, fonts } = g;
   const t = g.t;
   ctx.save();
-  paintBackground(ctx, W, H, t, g.a);
-  ctx.globalAlpha = g.a;
+  paintBackground(ctx, W, H, t, 1);
   const bannerBottom = paintBanner(ctx, String(p.title || '竞速排行榜'), t, fonts, W, H);
   ctx.font = fitFont(ctx, String(p.source || ''), 'sans-400', 28, W * 0.84, fonts, 18).css;
   ctx.fillStyle = C.muted;

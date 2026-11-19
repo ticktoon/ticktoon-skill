@@ -6,6 +6,7 @@
   "description": "Ticktoon Agent 创作入口：storyboard → composition 编译、只读预览与普通 MP4 直出",
   "scripts": {
     "tt": "node platform/cli.mjs",
+    "export": "node platform/cli.mjs export",
     "render": "node scripts/render.mjs",
     "preview": "node scripts/preview.mjs",
     "doctor": "node scripts/doctor.mjs",

@@ -93,14 +93,14 @@ node "$SKILL_DIR/platform/cli.mjs" annotations --wait              # 6. 同时�
 用户明确要求导出 MP4 时，**直接导出，不要求再次点击预览确认**：
 
 ```bash
-node "$SKILL_DIR/scripts/render.mjs" <dir>/out/composition.json -o <dir>/video.mp4
+node "$SKILL_DIR/platform/cli.mjs" export --dir <dir>
 ```
 
 预览与导出共享同一份 composition 和音轨。**导出只渲染当前数据，禁止再跑 build / TTS / det。**只有 storyboard 更新时才重新构建并生成新版本；未改文案的 TTS 命中缓存。`render` 默认使用 1× 输出避免 1080p 内部 2× 超采样；用户明确要求更高超采样画质时才加 `--render-scale 2`。
 
 **本机普通 Chrome 可用时，不要设置 `TICKTOON_CHROME_PATH` / `CHROME_PATH` 指向 Playwright 的 `chrome-headless-shell`；省略这两个变量，让启动器使用普通 Chrome 和本机 GPU。** headless shell 会默认走 SwiftShader，导出明显更慢；只有普通 Chrome 不可用或用户明确指定时才使用它。
 
-**全片视觉检查默认只跑 `tt qa` 并读取 `review/qa-sheet.png`；人工快速验收用 `tt preview`，不要自造时间点运行 `tt stills` 来代替 QA。** `stills` 会同时输出**指定时刻的完整 PNG 静帧和布局凭据（receipts）**，只用于用户指定时刻或定点排障，不是标准创作步骤。**禁止 FFmpeg 抽帧、截图、转码验证，禁止先导出 MP4 再检查画面；`render.mjs` 只负责导出，不提供抽帧参数。**
+**全片视觉检查默认只跑 `tt qa` 并读取 `review/qa-sheet.png`；人工快速验收用 `tt preview`，不要自造时间点运行 `tt stills` 来代替 QA。** `stills` 会同时输出**指定时刻的完整 PNG 静帧和布局凭据（receipts）**，只用于用户指定时刻或定点排障，不是标准创作步骤。**禁止 FFmpeg 抽帧、截图、转码验证，禁止先导出 MP4 再检查画面；`tt export` 只负责导出，不提供抽帧参数。**
 
 
 ## 核心契约
@@ -120,15 +120,19 @@ node "$SKILL_DIR/platform/cli.mjs" det --twice --dir <dir>    # 编译指纹，�
 
 ## recipe 契约
 
-recipe 是一类成片的创作单位：它决定场景写法（`mode`），并固定 `rules`、`captions`、`audio`、`pacing`；`mode: "params"` 的 recipe 还带 `template`（`draw / params / resources / needs / defaultSfx / sfxTrack / motion / inkless`）。字体不归 recipe 管：字体库在 `assets/fonts/manifest.json`，每个键带 `desc`；code 场把选中的键写进 `scene.resources`（`{"type":"font","name":"sans-400"}`），params 模板写死字体键并在 `template.resources` 声明。颜色由 kit 自带默认值或场景自己写 hex，背景由场景代码 / 模板自己铺满。字号、行高、版式、动效由场景代码或模板本地决定。不同片型对应不同 recipe，由 `tt recipe list` 选择；所有取值静态可追踪。
+recipe 是一类成片的创作单位：它决定场景写法（`mode`），并固定 `rules`、`captions`、`audio`、`pacing`；`mode: "params"` 的 recipe 还带 `template`（`draw / params / resources / needs / defaultSfx / sfxTrack / inkless`）。字体不归 recipe 管：字体库在 `assets/fonts/manifest.json`，每个键带 `desc`；code 场把选中的键写进 `scene.resources`（`{"type":"font","name":"sans-400"}`），params 模板写死字体键并在 `template.resources` 声明。颜色由 kit 自带默认值或场景自己写 hex，背景由场景代码 / 模板自己铺满。字号、行高、版式、动效由场景代码或模板本地决定。不同片型对应不同 recipe，由 `tt recipe list` 选择；所有取值静态可追踪。
 
 ## 公共 kit
 
-kit 是可复用的绘制词法。用到哪类能力就读 `references/<kit>.md` 一篇（索引见 `references/README.md`）；命名空间、成员与依赖以 `platform/kit/index.json` 为准，本文件不维护 kit 清单。
+kit 是场景内可复用的绘制词法。命名空间、成员与依赖以 `platform/kit/index.json` 为准，本文件不维护清单；用到哪类能力，只读对应的 `references/<kit>.md` 一篇（索引见 `references/README.md`）。
 
-- 场景笔迹一律走 `TT.pen`，箭头 / 圈 / 框 / 对勾 / 叉 / 数字圈 / 分割线 / 涂底色一律走 `TT.mark`，禁止手写笔迹、复制绘制实现或手写贝塞尔控制点。
-- 舞台底走 `TT.board`，同一片子保持同一种舞台；两个 code 场之间需要转场时，只在边界前一场写 `transition: "<预设>"`，编译器生成双帧转场场；不声明按硬切处理。预设与固定时间轴见 `references/transition.md`。
-- 字幕样式与位置由 recipe 的 `captions` 决定，可用 `uses.captions` 覆盖样式或位置（bottom / top / center / auto）。
+- **笔迹与标注**：场景笔迹走 `TT.pen`；箭头、圈、框、对勾、叉、数字圈、分割线和涂底色走 `TT.mark`。禁止手写笔迹、复制实现或手写贝塞尔控制点。
+- **舞台背景**：使用 `TT.board`，同一片子保持同一种舞台；它只负责场景内部的底面与框景，不负责场间衔接。
+- **字幕排版**：样式与位置由 recipe 的 `captions` 决定，可用 `uses.captions` 覆盖样式或位置（bottom / top / center / auto）。
+
+## 场间转场
+
+转场不是舞台绘制，也不是在单场景末尾自行叠加的效果。Agent 判断两个 code 场确需衔接时，只在边界前一场声明 `transition: "<预设>"`；编译器生成独立双帧转场场并调用 `TT.transition` 合成。未声明即硬切。选择规则、预设与固定时间轴见 `references/transition.md`，配方自己的节奏限制见对应 `recipe.md`。
 
 ## 固定模板型 recipe 与素材
 

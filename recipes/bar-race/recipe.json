@@ -96,10 +96,6 @@
         "name": "sans-400"
       }
     ],
-    "motion": {
-      "enter": 0.42,
-      "exitRatio": 0.44
-    },
     "inkless": true
   },
   "rules": {

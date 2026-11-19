@@ -64,7 +64,7 @@ ticktoon tick(t)                 同一条同步渲染路径
 
 | 单位 | 位置 | 它负责 | 它不负责 |
 |---|---|---|---|
-| **recipe** | `recipes/` | 一类成片的规范：`mode`、`rules`、`captions`、`audio`；params 型还负责 `template`（`draw / params / resources / needs / defaultSfx / sfxTrack / motion / inkless`） | 内容、叙事、绘制 |
+| **recipe** | `recipes/` | 一类成片的规范：`mode`、`rules`、`captions`、`audio`；params 型还负责 `template`（`draw / params / resources / needs / defaultSfx / sfxTrack / inkless`） | 内容、叙事、绘制 |
 | **kit** | `platform/kit/` | 可复用的绘制词法：文字、笔、标注、舞台、相机、转场、字幕、新闻背景 | 构图、题材 |
 
 recipe 只有两种模式，同一条 recipe 内不混用：`mode: "code"` 由场景写 `scene.code` 调用公共 kit；`mode: "params"` 由场景写 `scene.params`，画面交给 recipe 自带的 `template.js` 画定。字体不写进 recipe：字体库由 `assets/fonts/manifest.json` 定义，code 场在 `scene.resources` 里声明 `{"type":"font","name":"<manifest 键>"}`（`src` 由编译期补齐），params 模板把字体键写死在模板代码并在 `template.resources` 声明。颜色由 kit 自带默认值或 `scene.code` 直接写 hex，背景由 `scene.code` / 模板自己铺满。所有取值静态可追踪。
@@ -196,10 +196,10 @@ node platform/cli.mjs preview --dir my-video --port 5123            # 只读预�
 node platform/cli.mjs annotations --dir my-video                    # 读取预览页发送的圈注批次
 node platform/cli.mjs qa --dir my-video                             # must 门禁 + 12 格联系表
 node platform/cli.mjs det --twice --dir my-video                    # 编译确定性检查
-node scripts/render.mjs my-video/out/composition.json -o my-video/video.mp4
+node platform/cli.mjs export --dir my-video                       # 直接导出当前 composition，不重新构建
 ```
 
-`tt` 指 `node platform/cli.mjs`（或 `npm run tt --`）。`storyboard.json` 是唯一需要手写的文件。`out/` 下都是构建产物，不要手改；改完重新 `build`，预览会自动刷新。只在明确需要时导出 MP4，不要求再次确认预览。预览和导出共享同一份 composition 与音轨；storyboard 未改时直接 render，禁止重复构建音频。render 默认 1× 输出，`--render-scale 2` 是可选超采样画质档。
+`tt` 指 `node platform/cli.mjs`（或 `npm run tt --`）。`storyboard.json` 是唯一需要手写的文件。`out/` 下都是构建产物，不要手改；改完重新 `build`，预览会自动刷新。只在明确需要时导出 MP4，不要求再次确认预览。预览和导出共享同一份 composition 与音轨；storyboard 未改时直接 `tt export`，禁止重复构建音频。导出默认 1× 输出，`--render-scale 2` 是可选超采样画质档。
 
 常用命令：
 

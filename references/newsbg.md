@@ -10,7 +10,7 @@ TT.newsBg.paint(ctx, {
   H,
   image,      // api.img('news-world-map') 或 null
   time: 0,    // 流动线时间；必须逐帧推进才会流动，传常量则静止
-  alpha: 1,   // 整层透明度，与模板的 g.a 相乘
+  alpha: 1,   // 整层透明度，由调用方显式指定
   mapAlpha: 0.3,
   grid: 120,
   seed: 7,

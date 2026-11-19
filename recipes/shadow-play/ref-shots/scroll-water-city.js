@@ -60,7 +60,6 @@ const house = (x, y, w, h, color, tiers = 1) => {
 };
 
 ctx.save();
-ctx.globalAlpha = TT.env.fade(T, api.d, 0.4, 0.35);
 TT.board.stage(ctx, { W, H }, { seed: 68 });
 
 const open = prog(0.1, 1.25);

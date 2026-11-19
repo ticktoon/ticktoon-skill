@@ -1,0 +1,93 @@
+{
+  "recipe": "footage",
+  "format": {
+    "w": 1920,
+    "h": 1080,
+    "fps": 30
+  },
+  "meta": {
+    "title": "实拍·城市的一天"
+  },
+  "scenes": [
+    {
+      "id": "s01",
+      "narration": "清晨六点，整座城市还在睡，第一班车已经悄悄上路。",
+      "params": {
+        "src": "job:media/pexels-16657010.mp4",
+        "start": 0,
+        "title": "天没亮\n车先醒了",
+        "kicker": "清晨 · 06:00",
+        "keywords": [
+          "街道",
+          "清晨",
+          "班车"
+        ],
+        "credit": "PEXELS / Erik Mclean"
+      }
+    },
+    {
+      "id": "s02",
+      "narration": "八点整，人潮涌进地铁站，一天就这样正式开始了。",
+      "params": {
+        "src": "job:media/pexels-3893422.mp4",
+        "start": 0,
+        "title": "人潮\n涌进地下",
+        "kicker": "早高峰 · 08:00",
+        "keywords": [
+          "地铁",
+          "人群",
+          "通勤"
+        ],
+        "credit": "PEXELS / Fernanda Nascimento"
+      }
+    },
+    {
+      "id": "s03",
+      "narration": "白天，写字楼里键盘声不停，整座城市都在全速运转。",
+      "params": {
+        "src": "job:media/pexels-35886559.mp4",
+        "start": 0,
+        "title": "白天的城市\n全速运转",
+        "kicker": "午后 · 14:00",
+        "keywords": [
+          "办公",
+          "写字楼",
+          "工作"
+        ],
+        "credit": "PEXELS / Ege TUTUNCU"
+      }
+    },
+    {
+      "id": "s04",
+      "narration": "黄昏，夕阳把整条天际线，染成了温暖的橙色。",
+      "params": {
+        "src": "job:media/pexels-3002334.mp4",
+        "start": 0,
+        "title": "夕阳\n给楼镀金",
+        "kicker": "黄昏 · 18:45",
+        "keywords": [
+          "黄昏",
+          "天际线",
+          "日落"
+        ],
+        "credit": "PEXELS / Athena Sandrini"
+      }
+    },
+    {
+      "id": "s05",
+      "narration": "夜晚，霓虹一盏盏亮起，这座城市依然年轻，依然热闹。",
+      "params": {
+        "src": "job:media/pexels-2432402.mp4",
+        "start": 0,
+        "title": "霓虹亮起\n夜属于它",
+        "kicker": "夜幕 · 21:30",
+        "keywords": [
+          "夜景",
+          "霓虹",
+          "车流"
+        ],
+        "credit": "PEXELS / K"
+      }
+    }
+  ]
+}

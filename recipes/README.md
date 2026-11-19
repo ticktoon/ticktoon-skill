@@ -177,7 +177,6 @@ recipes/<id>/
 | `needs` | `{ image, video, three }`；需要外部媒体的 recipe 在这里声明 |
 | `defaultSfx` | 默认音效名（来自 `assets/sfx/manifest.json`） |
 | `sfxTrack` | 打字机等按字符推进的音效轨；目前 `type` 只支持 `"typing"` |
-| `motion` | `{ enter, exitRatio }`；入场秒数与退场比例 |
 | `inkless` | boolean；模板没有墨迹时跳过 `QA_INK_EMPTY` |
 
 #### template.params 字段契约
@@ -356,7 +355,7 @@ function draw(g, p) {
 | ① schema | 校验 `recipe` 存在、`mode` 匹配、`scene.code / params` 互斥；按 `template.params` 补齐参数；校验资源与字体键；应用字幕默认值 |
 | ② resolve | `audio.mood` → BGM 文件；`template.defaultSfx / sfxTrack` → SFX；旁白交给 TTS 或按 4.6 字/秒估算 |
 | ③ plan | 排时间轴、镜头时长、字幕分句；不读 recipe 文档 |
-| ④ emit | code 场注入 kit、`RULES`、`FONTS` 与 `scene.resources`；params 场注入 `draw(g, p)`、`G0 / P0`、`template.resources`、打字音效与 `motion` |
+| ④ emit | code 场注入 kit、`RULES`、`FONTS` 与 `scene.resources`；params 场注入 `draw(g, p)`、`G0 / P0`、`template.resources` 与打字音效 |
 | ⑤ check | params 模板字体是否声明、媒体 `params.src` 是否为空 |
 | ⑥ assemble | 合成 scenes 与 audio；code 场边界在 emit 后先展开为 A' + T + B' 双帧视觉节点，音频仍按原始逻辑场生成 |
 

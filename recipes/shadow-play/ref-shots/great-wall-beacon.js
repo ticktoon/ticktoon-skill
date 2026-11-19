@@ -82,7 +82,6 @@ const guard = (x, y, s, flip, offset) => {
 };
 
 ctx.save();
-ctx.globalAlpha = TT.env.fade(T, api.d, 0.45, 0.35);
 TT.board.stage(ctx, { W, H }, { seed: 51 });
 
 // 烽火后的暖天光只照亮局部，远山仍保持皮影层片感。

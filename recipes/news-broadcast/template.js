@@ -132,15 +132,14 @@ function draw(g, p) {
     const map = g.api.img('news-world-map');
 
     // 背景：固定公共 kit。地图未就绪时只少一层，不影响文字。
-    // 首帧直接满亮，避免开场露出画布黑底；场景末端仍随 g.a 淡出。
-    const bgAlpha = t < ENTER_DUR ? 1 : g.a;
+    // 背景始终满亮；标题缩放、逐字与品牌动画由模板自己的时间驱动。
     ctx.save();
     TT.newsBg.paint(ctx, {
       W,
       H,
       image: map,
       time: g.sceneT,
-      alpha: bgAlpha,
+      alpha: 1,
       mapAlpha: 0.3,
       grid: 120,
       seed: 7,
@@ -148,7 +147,6 @@ function draw(g, p) {
     ctx.restore();
 
     ctx.save();
-    ctx.globalAlpha = g.a;
     ctx.textBaseline = 'alphabetic';
 
     // 标题：白色文源宋体，scaleUp；行首 * 的行改重点黄。box 只决定可用空间，不自动换行。
@@ -272,8 +270,7 @@ function draw(g, p) {
       }
       if (cursorX !== null) {
         ctx.save();
-        ctx.globalAlpha = g.a;
-        ctx.fillStyle = active?.color || WHITE;
+            ctx.fillStyle = active?.color || WHITE;
         setShadow(ctx, S, false);
         ctx.fillRect(cursorX + 2 * S, cursorY - body.ascent, 20 * S, body.ascent + body.descent);
         ctx.restore();
@@ -300,7 +297,7 @@ function draw(g, p) {
       chars.forEach((ch, index) => {
         const at = 0.35 + index * 0.035;
         const progress = ease.outCubic(clamp01((t - at) / 0.32));
-        ctx.globalAlpha = g.a * 0.8 * progress;
+        ctx.globalAlpha = 0.8 * progress;
         ctx.fillText(ch, x, baseline + (1 - progress) * 8 * S);
         x += widths[index];
       });

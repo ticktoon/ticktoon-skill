@@ -5,7 +5,7 @@
  * 所有命令都支持 `--json`：人类看表格，agent 看 JSON。两者必须是同一份数据的两种渲染，
  * 不允许各自算一遍——那是最容易埋下"人和 agent 看到的不是一回事"的地方。
  */
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -823,6 +823,32 @@ function cmdRecipeShow() {
   console.log('');
 }
 
+/** 直接导出当前 composition；不重建 storyboard、TTS 或确定性指纹。 */
+function cmdExport() {
+  const projectDir = projectRootOf(dir);
+  const compositionFile = path.join(projectDir, 'out', 'composition.json');
+  if (!existsSync(compositionFile)) {
+    console.error(`✗ 找不到 ${compositionFile}；先确认当前工程已完成 build`);
+    process.exit(1);
+  }
+  const outFile = path.resolve(flagValue('output', flagValue('o', path.join(projectDir, 'video.mp4'))));
+  const args = [path.join(ROOT, 'scripts', 'render.mjs'), compositionFile, '-o', outFile];
+  for (const name of ['render-scale', 'quantizer', 'bitrate', 'codec']) {
+    const value = flagValue(name);
+    if (value !== null) args.push(`--${name}`, value);
+  }
+  const result = spawnSync(process.execPath, args, {
+    stdio: 'inherit',
+    windowsHide: true,
+  });
+  if (result.error || result.status !== 0) {
+    if (result.error) console.error(`✗ 导出启动失败：${result.error.message}`);
+    process.exit(result.status ?? 1);
+  }
+  const payload = { ok: true, compositionFile, outFile };
+  console.log(json ? JSON.stringify(payload, null, 2) : `\n导出完成：${outFile}`);
+}
+
 function usage() {
   console.log(`tt —— Ticktoon 创作入口
 
@@ -834,13 +860,14 @@ function usage() {
   tt probe --t <秒> [--dir <工程>] 该时刻全部凭据（kind/单元/label/bbox/安全框/字幕带）
   tt qa [--count N] [--cols C]    轻量渲染校验（渲染异常/空墨迹）+ 12 格联系表，must=0
   tt det [--twice] [--verify H]   确定性指纹
+  tt export [--dir <工程>] [-o <文件.mp4>]  直接导出当前 composition；不重新 build / TTS / det
   tt preview [--port N]           首次以后台任务启动；复用时输出 ready 即返回
   tt lab [--port N] [--recipe <id>]   code recipe 镜头参考实验室：真实编译 + 引擎预览，可改代码重跑
   tt annotations [--wait] [--all] [--ack [id]]  读取圈注；--wait 作为后台任务全局等待下一批并带回结果及所属工程
   tt recipe list / show <id> / audit   recipe 货架（id/名称/关键词/when）/ 单条详情（mode+rules+template）/ 全量审计（骨架 + 示例）
   tt ci [--deep] [--count N]      全量回归：audit + 逐条 det 两次；--deep 复用 tt qa 管线
   tt ci --baseline [--write]       recipe 骨架 / 示例合成片的编译指纹与构建状态基线（新 recipe 自动纳入）；--write 刷新基线
-  tt pack [目标目录]              打干净分发包（Skill + 引擎 dist）
+  tt pack [目标目录]              打干净分发包（Skill + npm 依赖锁文件）
 
   通用参数：--json 输出机器可读结果；--dir 指定工程目录（默认当前目录）
 `);
@@ -857,6 +884,7 @@ switch (command) {
   case 'probe': await cmdProbe(); break;
   case 'qa': await cmdQa(); break;
   case 'det': await cmdDet(); break;
+  case 'export': cmdExport(); break;
   case 'preview': await cmdPreview(); break;
   case 'lab': await cmdLab(); break;
   case 'annotations': await cmdAnnotations(); break;

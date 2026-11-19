@@ -64,7 +64,7 @@ Two units carry everything:
 
 | Unit | Where | It owns | It does not own |
 |---|---|---|---|
-| **recipe** | `recipes/` | the rules for one kind of film: `mode`, `rules`, `captions`, `audio`; a params recipe also owns `template` (`draw / params / resources / needs / defaultSfx / sfxTrack / motion / inkless`) | content, narrative, drawing |
+| **recipe** | `recipes/` | the rules for one kind of film: `mode`, `rules`, `captions`, `audio`; a params recipe also owns `template` (`draw / params / resources / needs / defaultSfx / sfxTrack / inkless`) | content, narrative, drawing |
 | **kit** | `platform/kit/` | reusable drawing vocabulary: text, pen, mark, board, camera, transition, captions, news background | composition, subject matter |
 
 A recipe is either `mode: "code"` (scenes write `scene.code` against the public kit) or `mode: "params"` (scenes write `scene.params`, and the recipe's own `template.js` draws a fixed full-frame layout). The two modes never mix inside one recipe. Fonts are not owned by recipes: the font library lives in `assets/fonts/manifest.json`, where every key carries a `desc`. Code scenes declare selected keys in `scene.resources` (`{"type":"font","name":"sans-400"}`); params templates hardcode keys and declare them in `template.resources`. The compiler fills `src` from the manifest. Colors come from kit defaults or hex written directly in code scenes; backgrounds are painted by code scenes or templates. It carries no sizes, line heights, layouts, or motion; those belong to code scenes or template-local metadata. All values are static and traceable.
@@ -197,7 +197,7 @@ node platform/cli.mjs preview --dir my-video --port 5123            # read-only 
 node platform/cli.mjs annotations --dir my-video                    # read the batch sent from the preview
 node platform/cli.mjs qa --dir my-video                             # must-gate + 12-cell contact sheet
 node platform/cli.mjs det --twice --dir my-video                    # compile-determinism check
-node scripts/render.mjs my-video/out/composition.json -o my-video/video.mp4
+node platform/cli.mjs export --dir my-video                       # export current composition directly, no rebuild
 ```
 
 `tt` refers to `node platform/cli.mjs` (or `npm run tt --`). `storyboard.json` is the only file you write. Everything under `out/` is a build product; do not hand-edit it. Run `build` again after changes and the preview refreshes automatically. Export MP4 only when it is explicitly wanted, with no second preview-confirmation gate. If the storyboard is unchanged and narration already exists, render directly; rebuilds reuse cached TTS for identical text and voices. Rendering defaults to 1× output, with `--render-scale 2` available for supersampling.

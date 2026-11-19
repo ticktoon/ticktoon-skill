@@ -37,7 +37,6 @@ const joint = (x, y, r = 9) => {
 };
 
 ctx.save();
-ctx.globalAlpha = TT.env.fade(T, api.d, 0.4, 0.35);
 TT.board.stage(ctx, { W, H }, { seed: 23 });
 
 // 本场比常态更暗，只让油灯和龟甲两处透光；径向暗角不替代幕布。
@@ -176,7 +175,7 @@ ctx.save();
 for (let i = 0; i < 18; i += 1) {
   const x = 260 + ((i * 137) % 1040);
   const y = 160 + ((i * 83) % 470) + Math.sin(T * 0.45 + i) * 12;
-  ctx.globalAlpha = TT.env.fade(T, api.d, 0.4, 0.35) * (0.16 + (i % 3) * 0.05);
+  ctx.globalAlpha = 0.16 + (i % 3) * 0.05;
   ctx.beginPath(); ctx.arc(x, y, 2 + (i % 2), 0, TAU); ctx.fillStyle = LIGHT; ctx.fill();
 }
 ctx.restore();

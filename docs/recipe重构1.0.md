@@ -38,7 +38,6 @@
     "needs": { "font": [], "image": false, "video": false, "three": false },
     "defaultSfx": null,
     "sfxTrack": null,
-    "motion": { "enter": 0.5, "exitRatio": 0.5 },
     "inkless": false
   },
   "fonts": {},
@@ -48,7 +47,7 @@
 }
 ```
 
-`mode: "code"` 的 recipe 不写 `template`。`template` 只允许八个字段：
+`mode: "code"` 的 recipe 不写 `template`。`template` 只允许七个字段：
 
 | 字段 | 作用 |
 |---|---|
@@ -58,7 +57,6 @@
 | `needs` | `font` 角色、`image / video / three` 能力声明 |
 | `defaultSfx` | 每次入场音效 |
 | `sfxTrack` | 打字音轨：`sfx / cps / start / lineGap / every / linePrefix / loop` |
-| `motion` | `enter` / `exitRatio`，驱动 `g.a` / `g.reveal` |
 | `inkless` | 整幅底图类模板按契约无墨迹，QA 跳过 `QA_INK_EMPTY` |
 
 ### 1.2 storyboard
@@ -81,7 +79,7 @@ function draw(g, p) {
 ```
 
 - 只有这一种形状；IIFE、`export` / `import` 一律拒绝。
-- `G0`：`g.W / g.H / g.api / g.t / g.sceneT / g.a / g.reveal / g.fonts / g.rng()`，`rect` 固定整帧。
+- `G0`：`g.W / g.H / g.api / g.t / g.sceneT / g.fonts / g.rng()`，`rect` 固定整帧。
 - 模板资源来自 `template.resources` + `template.needs.font`；不接收 `RULES`。
 - 一个 params 场只有一个内部单元 `scene.unit = { id: "template", at: 0, dur }`。
 - 凭据身份：`unit: "template"`，`source: <recipe.id>`；code 场为 `unit: "code"`，`source: "scene.code"`；字幕为 `unit: "caption"`，`source: "captions.<style>"`。

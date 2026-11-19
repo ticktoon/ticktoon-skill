@@ -128,7 +128,6 @@ const figure = (x, y, s, flip, color, gesture, enter) => {
 };
 
 ctx.save();
-ctx.globalAlpha = TT.env.fade(T, api.d, 0.45, 0.35);
 TT.board.stage(ctx, { W, H }, { seed: 11 });
 
 // 中央灯笼照亮街巷，光晕属于本场的灯，不是第二层幕布。

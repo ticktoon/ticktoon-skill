@@ -46,7 +46,7 @@ ticktoon CanvasCompositor.tick(t)
 | 层 | 当前位置 | 职责 | Agent 是否直接读 |
 |---|---|---|---|
 | 操作契约 | `SKILL.md` | 路由、创作闭环、红线、交付自检 | 每次读 |
-| recipe 规范 | `recipes/*/recipe.json`、`recipe.md`、`skeleton.storyboard.json`，以及 code 型的 `ref-shots/`、params 型的 `template.js` | `keywords / when / notWhen` 是 `tt recipe list` 的选择元数据；`mode / rules / captions / audio / pacing` 是成片规范，params 型另有 `template`（`draw / params / resources / needs / defaultSfx / sfxTrack / motion / inkless`） | 选择时只读 `tt recipe list`；选中后只读该 recipe 的 1 份文档 |
+| recipe 规范 | `recipes/*/recipe.json`、`recipe.md`、`skeleton.storyboard.json`，以及 code 型的 `ref-shots/`、params 型的 `template.js` | `keywords / when / notWhen` 是 `tt recipe list` 的选择元数据；`mode / rules / captions / audio / pacing` 是成片规范，params 型另有 `template`（`draw / params / resources / needs / defaultSfx / sfxTrack / inkless`） | 选择时只读 `tt recipe list`；选中后只读该 recipe 的 1 份文档 |
 | 运行时参考 | `references/` | `scene.code`、`scene.params` 与公共 kit 的 API 手册 | 需要时读对应 1 篇 |
 | 内容 | `<工程>/storyboard.json` | 本片叙事、场景、字幕、素材、code、params | **写** |
 | 公共 kit | `platform/kit/` | 舞台、笔、文字、标注、相机、转场、字幕等纯函数 | 通过注入使用 |
@@ -91,7 +91,7 @@ ticktoon CanvasCompositor.tick(t)
 - `footage/template.js`
 - `news-broadcast/template.js`
 
-模板不进入公共货架；只有对应 recipe 的 params 场能用。`template` 的八个字段是 `draw / params / resources / needs / defaultSfx / sfxTrack / motion / inkless`，其余键在 `tt build` 时报错。
+模板不进入公共货架；只有对应 recipe 的 params 场能用。`template` 的七个字段是 `draw / params / resources / needs / defaultSfx / sfxTrack / inkless`，其余键在 `tt build` 时报错。
 
 **字体契约（ABI 1）**
 
@@ -220,7 +220,7 @@ return (ctx, api) => {
 - 作者不能通过 `return (ctx, api) => {}` 自定义 setup；
 - `api.three()` 无法从 storyboard 的 `scene.code` 直接使用；params 模板可用，且必须声明 `template.needs.three: true`；
 - params 模板的代码形状固定为顶层 `function draw(g, p) { ... }`：IIFE、`export` / `import` 一律拒绝；
-- `G0` 是整帧单元：`rect: {x:0,y:0,w:W,h:H}`，`g.api` / `g.t` / `g.sceneT` / `g.a` / `g.reveal` 每帧由 emit 写入。
+- `G0` 是整帧单元：`rect: {x:0,y:0,w:W,h:H}`，`g.api` / `g.t` / `g.sceneT` 每帧由 emit 写入。编译器不再附加模板级透明度包络；场景衔接只使用显式转场，模板内部动画由模板自己的时间函数决定。
 
 ### 4.3 `scene.code` 静态扫描
 
@@ -368,7 +368,7 @@ sceneDur ──累加──► scene.start
 
 ## 8. CLI 与工程目录
 
-创作、检查与预览统一走 `platform/cli.mjs`（下称 `tt`）。MP4 导出是单独的 `scripts/render.mjs`，因为需要本地 Chrome + CDP 把分片字节回传给 Node；当前没有 `tt render` 子命令。
+创作、检查、预览与导出的用户入口统一走 `platform/cli.mjs`（下称 `tt`）。`tt export --dir <工程>` 直接导出当前 composition，默认写 `<工程>/video.mp4`；底层 `scripts/render.mjs` 通过本地 Chrome + CDP 把分片字节回传给 Node，不作为 Agent 的首选调用入口。
 
 | 命令 | 作用 |
 |---|---|

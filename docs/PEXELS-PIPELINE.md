@@ -28,7 +28,7 @@ node platform/cli.mjs assets fetch --project <工程目录> --provider pexels --
 
 # 编译与导出
 node platform/cli.mjs build --dir <工程目录>
-node scripts/render.mjs <工程目录>/out/composition.json -o <输出.mp4>
+node platform/cli.mjs export --dir <工程目录>
 ```
 
 凭证链沿用 `scripts/config.mjs`：环境变量 `PEXELS_API_KEY` 优先，其次 `~/.dh-video/credentials.json`。密钥不会写入 storyboard、composition 或 manifest。
