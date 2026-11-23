@@ -19,6 +19,13 @@ import { scanSceneCode } from './code-scan.mjs';
 import { normalizeTransitionPreset } from './transitions.mjs';
 
 // code 与 params 是两种内容形态，由 recipe.mode 决定，同一场不能同时出现。
+/**
+ * 单场 code 字符上限。这是治理护栏，不是技术上限（lab 允许 1MB，引擎 new Function 无硬限）：
+ * 逼复杂绘制拆场、挡住 Agent 一次吐出不可审查的巨型代码块。
+ * 实测正常复杂场景约 10k 字符，留 5 倍余量；大块数据走 data 资源，不占这个预算。
+ */
+export const MAX_CODE_CHARS = 50_000;
+
 export const SCENE_KEYS = ['id', 'narration', 'duration', 'camera', 'code', 'params', 'resources', 'note', 'transition', 'sfx'];
 export const ROOT_KEYS = ['recipe', 'format', 'meta', 'scenes', 'uses'];
 export const SUPPORTED_FORMATS = [
@@ -100,8 +107,8 @@ export function loadCatalog(root) {
 
 /**
  * scene.resources：与引擎 ClipResource 同形。
- * image / video 由 api.img / api.video 查询；font 只写 manifest 键，src 由编译期补齐，
- * 引擎按 name 注册 FontFace，族名就是 manifest 键。
+ * image / video 由 api.img / api.video 查询；data 由 api.data 查询（原样文本，引擎不解析）；
+ * font 只写 manifest 键，src 由编译期补齐，引擎按 name 注册 FontFace，族名就是 manifest 键。
  */
 function normalizeSceneResources(raw, bag, at, catalog) {
   if (raw === undefined) return [];
@@ -123,9 +130,9 @@ function normalizeSceneResources(raw, bag, at, catalog) {
           `资源不认识键 "${key}"，可用：type / name / src / start`);
       }
     }
-    if (!['image', 'video', 'font'].includes(res.type)) {
+    if (!['image', 'video', 'font', 'data'].includes(res.type)) {
       bag.error('SCENE_RESOURCE_TYPE', `${where}.type`,
-        `资源 type 只能是 image / video / font，收到 ${JSON.stringify(res.type)}`);
+        `资源 type 只能是 image / video / font / data，收到 ${JSON.stringify(res.type)}`);
       return;
     }
     if (typeof res.name !== 'string' || !res.name.trim()) {
@@ -204,9 +211,9 @@ function normalizeSceneCode(raw, bag, at) {
     bag.error('SCENE_CODE_EMPTY', `${at}.code`, 'code 不能是空串或全空白');
     return null;
   }
-  if (text.length > 20000) {
+  if (text.length > MAX_CODE_CHARS) {
     bag.error('SCENE_CODE_TOO_LONG', `${at}.code`,
-      `code 上限 20000 字符，收到 ${text.length}；把公共部分抽成 lib 或在 storyboard 里拆成多场`);
+      `code 上限 ${MAX_CODE_CHARS} 字符，收到 ${text.length}；大块数据（JSON/文本/表格等）请外置成文件，在 scene.resources 声明 { type: 'data', name, src } 并用 api.data(name) 读取，或在 storyboard 里拆成多场`);
     return null;
   }
   return text;

@@ -1,7 +1,8 @@
 /**
  * composition 本地引用重写（render / preview / snapshot 共用）。
  *   job:xx.mp3      → composition 所在任务目录
- *   skill:assets/xx → Skill 包内 assets/
+ *   skill:assets/xx  → Skill 包内 assets/
+ *   skill:recipes/xx → Skill 包内 recipes/（ref-shot 的 data 等私有素材）
  *   内置 BGM basename / 远程同名 key → 本地 BGM
  */
 import { existsSync, readdirSync } from 'node:fs';
@@ -20,6 +21,7 @@ export function rewriteLocalRefs(node, base, assetBasenameMap) {
   if (typeof node === 'string') {
     if (node.startsWith('job:')) return `${base}/__job__/${node.slice(4)}`;
     if (node.startsWith('skill:assets/')) return `${base}/__skill-assets__/${node.slice('skill:assets/'.length)}`;
+    if (node.startsWith('skill:recipes/')) return `${base}/__skill-recipes__/${node.slice('skill:recipes/'.length)}`;
     const rawBase = node.split(/[\\/]/).pop()?.split('?')[0] ?? '';
     let basename = rawBase;
     try { basename = decodeURIComponent(rawBase); } catch { /* 普通文案中的裸 % 按原名处理 */ }

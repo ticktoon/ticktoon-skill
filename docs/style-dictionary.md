@@ -2,7 +2,7 @@
 
 **这份文档不是 recipe 的实现清单，是"想做出这种味道"的描述清单。**
 
-当前视觉由 recipe + 场景代码共同承载：`recipe.json` 自带 `rules`（safeMargin / scale / stroke / pen / board / forbid）；字体从 `assets/fonts/manifest.json` 选 manifest 键，code 场声明在 `scene.resources`、params 模板声明在 `template.resources`；颜色由 kit 默认值或 code 直接写 hex，背景由 `scene.code` / params 模板自己铺满，字号、版式、动效归场景代码或模板本地。词典条目是一段描述（人读，照着它写出 `scene.code`），不是可切换的主题包。
+当前视觉由 recipe + 场景代码共同承载：`recipe.json` 自带 `rules`，公共字段为 `safeMargin / scale / stroke / pen / board / forbid`，也可按配方需要增加局部规则键并原样透传到 code 场的 `RULES`；字体从 `assets/fonts/manifest.json` 选 manifest 键，code 场声明在 `scene.resources`、params 模板声明在 `template.resources`；颜色由 kit 默认值或 code 直接写 hex，背景由 `scene.code` / params 模板自己铺满，字号、版式、动效归场景代码或模板本地。词典条目是一段描述（人读，照着它写出 `scene.code`），不是可切换的主题包。
 
 两条使用规则：
 

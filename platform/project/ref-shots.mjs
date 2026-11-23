@@ -41,8 +41,9 @@ function validateResources(raw, errors, file) {
         errors.push(fail('REF_SHOT_RESOURCES_INVALID', `${at} 不认识键 "${key}"`, file));
       }
     }
-    if (!['image', 'video', 'font'].includes(res.type)) {
-      errors.push(fail('REF_SHOT_RESOURCES_INVALID', `${at}.type 只能是 image / video / font`, file));
+    // data 与 image/video 一样需要 src；font 只写 manifest 键，src 由编译期补齐。
+    if (!['image', 'video', 'font', 'data'].includes(res.type)) {
+      errors.push(fail('REF_SHOT_RESOURCES_INVALID', `${at}.type 只能是 image / video / font / data`, file));
     }
     if (typeof res.name !== 'string' || !res.name.trim()) {
       errors.push(fail('REF_SHOT_RESOURCES_INVALID', `${at}.name 必须是非空字符串`, file));
@@ -242,8 +243,11 @@ export function refShotsStoryboard({ recipe, refShots, errors = [] }) {
 /** footage 的作者 skeleton 使用 Pexels 查询；回归只临时生成测试视频，不保留内置成片素材。 */
 function footageRegressionInput(root, skeleton) {
   const dir = path.join(root, 'output', 'ci', 'footage');
-  mkdirSync(dir, { recursive: true });
-  const video = path.join(dir, 'fixture.mp4');
+  // 与真实素材同一条约定：媒体放在 composition 同级 out/media，src 写 job:media/…，
+  // 预览、渲染和静帧才能把同一个字符串解析到同一份文件。
+  const mediaDir = path.join(dir, 'out', 'media');
+  mkdirSync(mediaDir, { recursive: true });
+  const video = path.join(mediaDir, 'fixture.mp4');
   if (!existsSync(video)) {
     execFileSync('ffmpeg', [
       '-y', '-f', 'lavfi', '-i', 'testsrc2=size=1920x1080:rate=30',
@@ -252,7 +256,7 @@ function footageRegressionInput(root, skeleton) {
   }
   const storyboard = JSON.parse(readFileSync(skeleton, 'utf8'));
   for (const scene of storyboard.scenes) {
-    scene.params.src = video;
+    scene.params.src = 'job:media/fixture.mp4';
     scene.params.credit = 'CI 测试素材';
   }
   // 引擎必须读取真实视频与 storyboard，因此这个回归夹具始终落盘。

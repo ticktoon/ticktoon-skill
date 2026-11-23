@@ -9,6 +9,7 @@
  *          模板代码里，并在 template.resources 声明。
  *
  * recipe 不承载字体表。资源里的 font 只写 manifest 键，src 由编译期补齐。
+ * rules 只校验公共字段；配方特有的扩展规则原样透传给 code 场的 RULES。
  * 颜色由 kit 自带默认值或 scene.code 直接写，背景由 scene.code / 模板自己铺满；
  * recipe 不承载用色决策。
  */
@@ -17,7 +18,6 @@ import path from 'node:path';
 import { isPlainObject } from './diag.mjs';
 
 const DIMENSION_MODES = new Set(['fixed', 'enum', 'auto', 'random']);
-const RULE_KEYS = new Set(['safeMargin', 'scale', 'stroke', 'pen', 'board', 'forbid']);
 const RECIPE_KEYS = new Set(['id', 'abi', 'name', 'keywords', 'when', 'notWhen', 'mode', 'template', 'rules', 'captions', 'audio', 'pacing']);
 const PACING_KEYS = new Set(['leadIn', 'hold', 'minNarrationDuration']);
 const RECIPE_MODES = new Set(['code', 'params']);
@@ -97,12 +97,13 @@ function validateRules(rules, fail) {
     fail('RECIPE_RULES_MISSING', 'rules', 'recipe 必须有 rules 对象');
     return;
   }
-  for (const key of Object.keys(rules)) {
-    if (RULE_KEYS.has(key)) continue;
-    const hint = key === 'caption' || key === 'bgm'
-      ? '（字幕默认值放顶级 captions，声音默认值放顶级 audio）'
-      : '';
-    fail('RECIPE_RULE_KEY_UNKNOWN', `rules.${key}`, `rules 只允许 safeMargin / scale / stroke / pen / board / forbid${hint}`);
+  // 除下列公共规则外，recipe 可以自由扩展局部规则；编译器原样注入 RULES，
+  // 不理解也不校验其语义。只拦截两个常见的顶层字段误放。
+  for (const key of ['caption', 'bgm']) {
+    if (rules[key] !== undefined) {
+      fail('RECIPE_RULE_KEY_MISPLACED', `rules.${key}`,
+        '字幕默认值放顶级 captions，声音默认值放顶级 audio');
+    }
   }
 
   if (!isFiniteNumber(rules.safeMargin) || rules.safeMargin < 0 || rules.safeMargin > 0.5) {
@@ -143,6 +144,7 @@ function validateRules(rules, fail) {
     if (rules[key] === undefined) continue;
     validateDimension(rules[key], `rules.${key}`, fail);
   }
+
 }
 
 function validateDimension(spec, at, fail) {

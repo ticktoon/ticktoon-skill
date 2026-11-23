@@ -33,8 +33,8 @@ ticktoon CanvasCompositor.tick(t)
 
 | 项 | 实际数量 |
 |---|---|
-| recipe | **9**（ABI 1，每条声明 `mode: "code"` 或 `"params"`） |
-| params 模板 | **2**（news-broadcast / footage） |
+| recipe | **10**（ABI 1，每条声明 `mode: "code"` 或 `"params"`） |
+| params 模板 | **3**（bar-race / footage / news-broadcast） |
 | 公共 kit 命名空间 | **12** 个 `TT.*` 入口 + 字幕 kit |
 | 字幕样式 | **7** 种，另有 `none` |
 | 允许画幅 | **1920×1080@30 / 1080×1920@30** |
@@ -71,8 +71,9 @@ ticktoon CanvasCompositor.tick(t)
 | `illustrated-story` | `scene.code` | 米色纸 / 拼贴色 |
 | `flash-cut` | `scene.code` | 近黑底 / 橙与深蓝 |
 | `flat-motion` | `scene.code` | 群青 / 珊瑚 / 薄荷色块、圆角人物与图标、弹性变形 |
+| `medical-3d` | `scene.code` | BodyParts3D 真实解剖模型、器官定位与聚焦镜头 |
 | `crayon-guide` | `scene.code` | 暖米纸 / 蜡笔人物 / 手绘图解 |
-| `shadow-play` | `scene.code` | 透光幕布 / 琥珀灯影 / 侧面镂空人物与器物 |
+| `shadow-play` | `scene.code` | 全幅柔光幕布 / data 定妆皮偶 / cue 动作与签条 |
 | `news-broadcast` | `scene.params` | 径向深蓝 / 地图与网格 |
 | `footage` | `scene.params` | 深棕黑 / 暖白压屏字 |
 
@@ -80,7 +81,9 @@ ticktoon CanvasCompositor.tick(t)
 
 **公共 kit（`platform/kit/index.json`）**
 
-`ease`、`num`（含 `clamp01 / env / rng`）、`text`、`fonts`（`font`）、`chart`、`pen`、`mark`、`transition`、`board`、`geom`、`newsbg`（`newsBg`：新闻径向蓝底 + 地图 + 网格 + 种子流动线）、`progress`（全片章节进度）。
+`ease`、`num`（含 `clamp01 / env / rng`）、`text`、`fonts`（`font`）、`chart`、`pen`、`mark`、`transition`、`board`、`geom`、`newsbg`（`newsBg`：新闻径向蓝底 + 地图 + 网格 + 种子流动线）、`progress`（全片章节进度）、`anatomy`（BodyParts3D 人体外壳与器官）、`shadow`（data 皮偶、动作、道具、蛇、签条与光场）。
+
+kit 可以带 `payload`：数据文件先于词法注入同一作用域，`anatomy.js` 里的 `__TT_ANATOMY` 由此而来。数据大、逻辑小的 kit 用它把 base64 挡在可读代码之外；payload 跟 `provides` 一起触发，不额外声明。
 
 字幕 kit 在 `platform/kit/captions/`：`core.js` 提供 `TT.captionKit`，`styles/*.js` 是七种可选样式。它随编译期选中的样式一起注入，不走 `index.json` 的命名空间机制。
 
@@ -95,7 +98,11 @@ ticktoon CanvasCompositor.tick(t)
 
 **字体契约（ABI 1）**
 
-recipe 不承载字体表。字体库由 `assets/fonts/manifest.json` 定义：键即引擎 FontFace 族名，条目带 `src / family / weight / desc`，`desc` 是作者选型依据。code 场在 `scene.resources` 里声明 `{"type":"font","name":"<manifest 键>"}`，`src` 由 schema 阶段按 manifest 补齐；params 模板把字体键写死在模板代码，并在 `template.resources` 声明同样的 font 条目。`FONTS` 是本场 font 资源键的恒等映射，`TT.font` / `TT.text.fontKey` 全部只认 manifest 键。颜色不属于 recipe：kit 自带默认调色板，调用方需要品牌色时直接传 hex；背景也不属于 recipe，由 `scene.code` / params 模板自己铺满整帧。字号、行高、版式、动效、图表参数同样不归字体表；它们归 recipe `rules` 的白名单字段或模板本地配置。
+recipe 不承载字体表。字体库由 `assets/fonts/manifest.json` 定义：键即引擎 FontFace 族名，条目带 `src / family / weight / desc`，`desc` 是作者选型依据。code 场在 `scene.resources` 里声明 `{"type":"font","name":"<manifest 键>"}`，`src` 由 schema 阶段按 manifest 补齐；params 模板把字体键写死在模板代码，并在 `template.resources` 声明同样的 font 条目。`FONTS` 是本场 font 资源键的恒等映射，`TT.font` / `TT.text.fontKey` 全部只认 manifest 键。颜色不属于 recipe：kit 自带默认调色板，调用方需要品牌色时直接传 hex；背景也不属于 recipe，由 `scene.code` / params 模板自己铺满整帧。字号、行高、版式、动效、图表参数同样不归字体表；它们归 recipe `rules` 或模板本地配置。
+
+**规则契约（ABI 1）**
+
+`rules` 的公共字段是 `safeMargin / scale / stroke / pen / board / forbid`，只校验这些已知字段的结构；其中 `safeMargin` 由公共字幕与画面检查读取。配方可以自由增加 `lights / resources / camera` 等局部规则键，编译器不理解其语义、不做白名单校验，并在 code 场原样注入 `RULES` 供场景代码使用。新增局部规则不需要修改全局编译器。
 
 ---
 
@@ -109,7 +116,7 @@ recipe 不承载字体表。字体库由 `assets/fonts/manifest.json` 定义：�
 - `narration` 与 `duration` 结构互斥：旁白场由 TTS 或估时求时长，静默场必须写 `duration`。
 - 没有 `start`、没有 `tracks`、没有顶层 `duration`；场景起点按数组顺序累加，总时长是场景时长之和。
 - `recipe.mode` 决定场景内容：`code` 只收 `scene.code`，`params` 只收 `scene.params`；两种互斥，另写会报 `SCENE_PARAMS_IN_CODE_MODE` / `SCENE_CODE_IN_PARAMS_MODE`。空场报 `SCENE_CONTENT_MISSING`。
-- `scene.code` 可以是字符串或字符串数组（数组按换行拼接），上限 20000 字符。
+- `scene.code` 可以是字符串或字符串数组（数组按换行拼接），上限 50000 字符。
 - `scene.params` 的键与类型由该 recipe 的 `template.params` 决定；未知键、缺必填、类型不符、超出 `maxChars` / `maxItems` 都在编译期报 `PARAM_*`。
 - `scene.resources` 只属于 code 场；params 场的媒体资源走 `template.resources` + `template.needs`，`params.src` 在编译期改写为 `${kind}-${scene.id}` 资源名。
 - 场景未知键直接报错。
@@ -193,7 +200,7 @@ receipts 不是 build 时产生的像素证据；它由 `stills / probe / qa` �
 
 emit 规则：
 
-- kit 按 `platform/kit/index.json` 的 `provides` 和 `requires` 递归解析，只注入当前场景引用到的命名空间；params 场额外固定注入 `env` / `rng`。
+- kit 按 `platform/kit/index.json` 的 `provides` 和 `requires` 递归解析，只注入当前场景引用到的命名空间；params 场额外固定注入 `env` / `rng`。带 `payload` 的 kit 先注入数据文件再注入词法。
 - params 场把 `recipe.template.draw` 的源码按顶层函数内联，并把 `template.resources` 带进本场 `resources`。
 - code 场的 font 资源来自 `scene.resources`，作者显式声明需要哪些字体键；params 场的 font 资源来自 `template.resources`。字幕字体由字幕层单独追加。
 - `RULES` 只在含 `scene.code` 的场景注入；params 模板不接收 `RULES`。
@@ -208,6 +215,7 @@ return (ctx, api) => {
   // 1. 重置 ink/text 回执
   // 2. scene.camera 线性缩放
   // 3. code 场：scene.code（包一层 fillText 记账）
+  //    3D 场：上面的函数体先执行一次 setup，draw 调用它的返回值
   //    params 场：draw(g, p)，g 是整帧 G0
   // 4. captions
   // 5. receipts（仅采样模式）
@@ -215,10 +223,15 @@ return (ctx, api) => {
 };
 ```
 
-因此当前 storyboard 里的 `scene.code` 是**内联在逐帧 draw 中执行**，不是引擎原始的“函数体直出”通道：
+`scene.code` 有两种生成形状：
 
-- 作者不能通过 `return (ctx, api) => {}` 自定义 setup；
-- `api.three()` 无法从 storyboard 的 `scene.code` 直接使用；params 模板可用，且必须声明 `template.needs.three: true`；
+- **普通场**：代码内联进逐帧 draw，每帧执行一次。
+- **3D 场**：代码里出现 `api.three(` 时改按引擎的两段式生成——`scene.code` 作为 setup 只跑一次，它的返回值被当作逐帧 draw；`needs` 自动补 `three`。setup 段只提供 `W` / `H` / `api` / `ctx`，逐帧段仍保留相机缩放、`fillText` 记账、字幕与回执。
+
+因此：
+
+- `api.three()` 只能写在 3D 场的 setup 段，场景必须以 `return (ctx, api) => {...}` 结束；
+- params 模板仍走 `template.needs.three: true`，不受影响；
 - params 模板的代码形状固定为顶层 `function draw(g, p) { ... }`：IIFE、`export` / `import` 一律拒绝；
 - `G0` 是整帧单元：`rect: {x:0,y:0,w:W,h:H}`，`g.api` / `g.t` / `g.sceneT` 每帧由 emit 写入。编译器不再附加模板级透明度包络；场景衔接只使用显式转场，模板内部动画由模板自己的时间函数决定。
 
@@ -408,7 +421,7 @@ sceneDur ──累加──► scene.start
 | 画幅 | Skill 仅开放 1920×1080@30 和 1080×1920@30 |
 | 轨道 / 多图层合成 | 不支持；只有顺序场景 |
 | 跨场景合成 | 支持 10 个固定双帧转场，含方向擦入 / 推移与 GL 风格图案转场；编译器生成独立 code scene，同时绘制前后完整画面；仅限 code 场边界 |
-| 3D | 引擎支持；`scene.code` 未开放，params 模板需声明 `template.needs.three: true` |
+| 3D | 引擎支持；`scene.code` 检测到 `api.three(` 时按两段式生成并自动补 `needs: ['three']`；params 模板需声明 `template.needs.three: true` |
 | 场景代码安全 | 无沙箱；可信作者输入，词法扫描只拦常见问题 |
 | 母带响度 | 不做 LUFS；导出后交给外部工具 |
 | 自动作曲 | 不做；BGM 从 manifest 选 |

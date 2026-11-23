@@ -5,6 +5,7 @@
  *   /__job__/*             → 任务目录
  *   /__skill-assets__/*    → Skill 包内 assets/（SVG 必须给对 MIME：Chrome 不嗅探它，
  *                            给成 octet-stream 时 <img> 直接拒载，表现为静默黑帧）
+ *   /__skill-recipes__/*   → Skill 包内 recipes/（ref-shot 私有的 data 等素材）
  * onRequest(req, res, urlPath) 返回 true 表示 API 已接管。
  */
 import http from 'node:http';
@@ -20,6 +21,7 @@ const MIME = {
 };
 
 export function createStaticServer({ ENGINE_DIR, ASSETS_DIR, JOB_DIR, port = 0, onRequest }) {
+  const RECIPES_DIR = path.join(path.dirname(ASSETS_DIR), 'recipes');
   return new Promise((resolve, reject) => {
     const server = http.createServer((req, res) => {
       const urlPath = decodeURIComponent(new URL(req.url, 'http://x').pathname);
@@ -29,6 +31,9 @@ export function createStaticServer({ ENGINE_DIR, ASSETS_DIR, JOB_DIR, port = 0, 
       if (urlPath.startsWith('/__skill-assets__/')) {
         root = ASSETS_DIR;
         relative = urlPath.slice('/__skill-assets__/'.length);
+      } else if (urlPath.startsWith('/__skill-recipes__/')) {
+        root = RECIPES_DIR;
+        relative = urlPath.slice('/__skill-recipes__/'.length);
       } else if (urlPath.startsWith('/__job__/')) {
         root = typeof JOB_DIR === 'function' ? JOB_DIR() : JOB_DIR;
         relative = urlPath.slice('/__job__/'.length);

@@ -20,7 +20,7 @@
 |---|---|
 | 类型 | 字符串，或字符串数组（数组按 `\n` 拼）；见 `SCENE_CODE_TYPE` |
 | 空值 | 空串 / 全空白报 `SCENE_CODE_EMPTY` |
-| 长度 | 上限 **20000 字符**；超了报 `SCENE_CODE_TOO_LONG` |
+| 长度 | 上限 **50000 字符**；超了报 `SCENE_CODE_TOO_LONG` |
 | 执行 | `scene.code` 由 `emit.mjs` **内联进编译器生成的逐帧 draw**；引擎再用 `new Function('ctx', 'api', code)` 编译整段场景函数。作者代码没有 import / 模块系统 |
 | 返回值 | storyboard 的 `scene.code` 不提供自定义 setup 或返回函数通道；不要写 `return (ctx, api) => {}`。引擎本身支持两段式与 `api.three()`，但当前 storyboard 编译路径未开放 Three |
 | 与 `scene.params` 的关系 | code recipe 只收 `scene.code`；同场写 `scene.params` 会报 `SCENE_PARAMS_IN_CODE_MODE` |
@@ -333,7 +333,7 @@ ctx.scale(framing.scale, framing.scale);
 | 编译报 code 用了禁用 API | `tt build` | `CODE_FORBIDDEN_API`（error） | 按第 3 节替换；行号在 msg 里 |
 | 编译 warning 出现无界循环 | `tt build` | `CODE_LOOP_RISK`（should） | 改成有确定上界的 for |
 | 画面少了一层图 / 视频 | `tt build` | `CODE_RESOURCE_MISSING`（error） | 在 `scene.resources` 补 `{type,name,src}` |
-| code 类型/空值/长度不对 | `tt build` | `SCENE_CODE_TYPE` / `SCENE_CODE_EMPTY` / `SCENE_CODE_TOO_LONG`（error） | 字符串或字符串数组；≤20000 字符 |
+| code 类型/空值/长度不对 | `tt build` | `SCENE_CODE_TYPE` / `SCENE_CODE_EMPTY` / `SCENE_CODE_TOO_LONG`（error） | 字符串或字符串数组；≤50000 字符 |
 | 场景键拼错 | `tt build` | `SCENE_UNKNOWN_KEY`（error） | 删掉未知键；可用键看报错列表 |
 | narration 和 duration 同时写 | `tt build` | `SCENE_DURATION_CONFLICT`（error） | 二选一：旁白场删 duration |
 | storyboard JSON 语法错 | `tt build` | `PROJECT_BAD_JSON`（error） | 修 JSON；先跑 `tt build` 看行号 |

@@ -9,25 +9,28 @@
     "戏台",
     "幕布",
     "透光",
-    "民间故事"
+    "民间故事",
+    "历史传说"
   ],
   "mode": "code",
   "when": [
-    "民间故事、寓言、传说或历史小段，需要暖黄幕布、侧面镂空人物与关节操纵杆。",
-    "不同场次需要重新组织人物、建筑、器物与光影，而不是只替换固定模板中的人物位置。",
-    "需要角色名与讲话内容分成两段的戏台式对白条。"
+    "民间故事、寓言、历史传说，需要侧面镂空人物、操偶杆与透光幕布。",
+    "同一场内多句旁白需要连续驱动人物动作、道具、红签黑签和灯光。",
+    "需要角色名与讲话内容分成两段的戏台式对白条。",
+    "需要系统旁白交代背景，并在片头、结尾使用标题与印章式收束。"
   ],
   "notWhen": [
-    "需要真实镜头或写实人物表情；改用 footage 或 illustrated-story。",
-    "需要图表、步骤或现代信息版式；改用 whiteboard-explainer 或其他信息型 recipe。",
-    "只需要固定标题、名牌和人物姿态枚举；本 recipe 的构图由 scene.code 实时绘制。"
+    "需要真实镜头、写实人物表情或现代三维场景；改用 footage 或其他 recipe。",
+    "主要目标是复杂建筑风景、信息图表或现代信息版式；皮影只适合做表现层时不要硬套。",
+    "只需要固定人物站位替换文案；本 recipe 的核心是定妆数据和 cue 驱动的表演。"
   ],
   "rules": {
     "safeMargin": 0.055,
     "scale": {
       "title": 1,
       "speaker": 0.62,
-      "dialogue": 0.58
+      "dialogue": 0.58,
+      "narration": 0.58
     },
     "stroke": [
       2.5,
@@ -37,13 +40,34 @@
       "mode": "fixed",
       "value": "stage"
     },
+    "composition": {
+      "default": "empty-screen",
+      "heroHeight": "460–600px",
+      "floor": "0.8H",
+      "scene": "空间连续",
+      "cue": "人物动作、道具、签条与灯光节拍"
+    },
+    "lights": {
+      "stage": "TT.board.stage（白幕/油灯幕全幅柔光与细纤维）",
+      "colors": ["warm", "red", "cold"],
+      "dim": "内容与道具之后、所有文字之前",
+      "transition": "仅真正换场时暗场，4 秒内最多一次"
+    },
+    "resources": {
+      "allow": ["font", "data"],
+      "figures": "FIGURES.md 人读索引 + cast.json 定妆 + archetypes/props 皮片",
+      "dataUse": "api.data(name) 读取，src 跨幕复用；坐标不进 code，不进 kit"
+    },
     "forbid": [
       "在同一场景写 scene.params；本 recipe 只收 scene.code",
-      "把剧情、建筑或器物整理成题材枚举；每场按 narration 重新组织画面",
-      "再铺第二层幕布底色；纸纹和基础灯晕只来自 TT.board.stage，四角木框只来自 TT.board.stageFrame",
-      "使用公共 captions 或叠加第二种字幕；对白条只由 scene.code 绘制",
-      "画正面大眼卡通人物；人物以侧面轮廓、关节铆钉、镂空纹样和操纵杆辨认",
-      "每帧随机抖动人物或灯影；运动只能由 api.t 与固定序号确定"
+      "把配方当成房屋山水陈列；默认空幕，道具必须参与当前剧情",
+      "把角色/道具造型坐标硬写进 code 或不走 figures/ + data 资源",
+      "每幕重复设计同一人物；必须先写 cast 并复用同一 src",
+      "动作写死为与 api.cues 无关的秒数，或一句旁白未结束就无故换场",
+      "人物退成风景小配件、密集灰点、假镂空、正面卡通圆脸或固定操偶杆",
+      "使用公共 captions 或叠加第二种字幕；对白/旁白条只由固定 API 绘制",
+      "把无角色的系统旁白写成角色对白条，或给旁白硬塞角色名",
+      "使用 Math.random、墙钟时间、逐帧 fetch/parse 或每帧重建静态 Path2D"
     ]
   },
   "captions": {

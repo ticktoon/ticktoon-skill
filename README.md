@@ -71,6 +71,23 @@ Two units carry everything:
 
 A recipe is either `mode: "code"` (scenes write `scene.code` against the public kit) or `mode: "params"` (scenes write `scene.params`, and the recipe's own `template.js` draws a fixed full-frame layout). The two modes never mix inside one recipe. Fonts are not owned by recipes: the font library lives in `assets/fonts/manifest.json`, where every key carries a `desc`. Code scenes declare selected keys in `scene.resources` (`{"type":"font","name":"sans-400"}`); params templates hardcode keys and declare them in `template.resources`. The compiler fills `src` from the manifest. Colors come from kit defaults or hex written directly in code scenes; backgrounds are painted by code scenes or templates. It carries no sizes, line heights, layouts, or motion; those belong to code scenes or template-local metadata. All values are static and traceable.
 
+### Resources (scene.resources)
+
+Scenes declare external assets through `scene.resources`, with four `type` values:
+
+| type | Loading | Read via | src source | Notes |
+|---|---|---|---|---|
+| `image` | `new Image()` | `api.img(name)` | direct src | Images and SVG (SVG is rasterized for drawing) |
+| `video` | browser video | `api.video(name)` | direct src | Optional `start` seconds offset |
+| `font` | `FontFace` | `fontKey` in `TT.text` | **manifest key**, src filled at compile time | Built-in assets in `assets/fonts/manifest.json` |
+| `data` | `fetch → text()` | `api.data(name)` | direct src | General file container: JSON / text / CSV / … |
+
+Key boundaries:
+
+- **Manifest serves built-in assets only** (font / bgm / sfx). They are referenced by stable semantic keys so swapping a file never changes the storyboard. `image` / `video` / `data` are per-film temporary assets: write the src path directly (e.g. `skill:assets/data/foo.json`); they do not go into a manifest.
+- **The engine does not parse `data`**: it reads the file verbatim as a string and caches it by src. Format meaning belongs to `scene.code` / kit (e.g. `JSON.parse(api.data(name))` — parse once in setup and cache it rather than every frame). So large assets (interpolation data, chart data, config, captions, LUTs) should live in data files, not in `scene.code`, which has a 50,000-character cap.
+- Only reference resources declared in the current scene via `api.img` / `api.video` / `api.data`; undeclared references raise `CODE_RESOURCE_MISSING` at compile time.
+
 Compilation is deterministic: the same storyboard and inputs produce the same `composition.json`, which `tt det` verifies. Progressive disclosure is part of the design too: `SKILL.md` routes; a recipe's `recipe.md` and `skeleton.storyboard.json` are read after the recipe is selected, code recipes then read one or two `ref-shots/`, and `references/` are consulted one page at a time.
 
 ## What it can do
@@ -84,8 +101,9 @@ Recipes cover explainers, stories, fast cuts, breaking news, data races, and rea
 | `illustrated-story` | Paper collage, cut-out lettering | `scene.code` | short stories, observations, essays |
 | `flash-cut` | Hard cuts, oversized type, one sentence per scene | `scene.code` | punchy opinions, conclusions, promo beats |
 | `flat-motion` | Saturated flat shapes, rounded characters and icons, elastic morphs | `scene.code` | product, brand, app-feature and light-explainer MG |
+| `medical-3d` | Real anatomical model (BodyParts3D), organ-focus cameras, free-form explanations | `scene.code` | anatomy, organ structure, function and medical explainers |
 | `crayon-guide` | Warm paper, crayon hatching, people and hand-drawn diagrams | `scene.code` | tutorials, cultural ideas, comparisons, kids' explainers |
-| `shadow-play` | Backlit screen, articulated silhouettes, scene-specific props | `scene.code` | fables, folk tales, historical vignettes |
+| `shadow-play` | Backlit screen, data-driven articulated puppets, cue-timed actions and placards | `scene.code` | fables, folk tales, historical vignettes |
 | `news-broadcast` | Fixed vertical news card: blue radial background, world map, flowing lines | `scene.params` | breaking-news cards, title / body / source |
 | `bar-race` | Dark vertical race chart, slanted title, animated year and reflection | `scene.params` | 2–18 entities racing from start values to end values |
 | `footage` | Full-frame real footage with short overlay lines | `scene.params` | Pexels or local footage montage |

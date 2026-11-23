@@ -3,7 +3,7 @@
  *
  * code 场景是可信作者输入（引擎本来就用 new Function 执行它），但编译层仍要拦两类事：
  *   1. 破坏确定性的墙钟/随机数与外部 IO —— 这些一旦进片，det 就失去意义；
- *   2. 引用本场没有声明的资源 —— api.img/api.video 拿到 null 只会静默少画一层。
+ *   2. 引用本场没有声明的资源 —— api.img/api.data/api.video 拿到 null 只会静默少一层。
  *
  * 扫描是词法级的，不追求完整语法分析：字符串里出现 `document.` 也会被拦，
  * 因为规则宁可误伤一行注释，也不放过一个真调用。
@@ -30,7 +30,7 @@ const LOOPS = [
   { name: 'for (;;', re: /\bfor\s*\(\s*;\s*;/g },
 ];
 
-const RESOURCE_REF = /api\.(img|video)\s*\(\s*(?:'([^']*)'|"([^"]*)")\s*\)/g;
+const RESOURCE_REF = /api\.(img|video|data)\s*\(\s*(?:'([^']*)'|"([^"]*)")\s*\)/g;
 
 function lineOf(text, index) {
   let line = 1;
@@ -82,7 +82,7 @@ function blankComments(code) {
   return out;
 }
 
-/** 资源声明既接受归一化后的对象，也接受名字字符串；只有 image/video 参与 api 查询。 */
+/** 资源声明既接受归一化后的对象，也接受名字字符串；只有 image/video/data 参与 api 查询。 */
 function declaredResources(resources) {
   const names = new Set();
   if (!Array.isArray(resources)) return names;
@@ -90,7 +90,7 @@ function declaredResources(resources) {
     if (typeof item === 'string') {
       if (item.trim()) names.add(item.trim());
     } else if (item && typeof item === 'object') {
-      if ((item.type === 'image' || item.type === 'video') && typeof item.name === 'string' && item.name.trim()) {
+      if ((item.type === 'image' || item.type === 'video' || item.type === 'data') && typeof item.name === 'string' && item.name.trim()) {
         names.add(item.name.trim());
       }
     }
@@ -117,7 +117,7 @@ export function scanSceneCode(code, { sceneId = '', resources = [] } = {}) {
     errors.push({
       code: 'CODE_FORBIDDEN_API',
       msg: `scene ${sceneId || '<unknown>'} 的 code 用了禁用 API "${item.name}"（第 ${lineOf(text, match.index)} 行）；` +
-        'code 必须确定性、同步且无外部 IO：墙钟/随机数用 api.seed + TT.rng，资源用 api.img/api.video 读取本场 resources',
+        'code 必须确定性、同步且无外部 IO：墙钟/随机数用 api.seed + TT.rng，资源用 api.img/api.data/api.video 读取本场 resources',
     });
   }
 
@@ -154,7 +154,7 @@ export function scanSceneCode(code, { sceneId = '', resources = [] } = {}) {
     errors.push({
       code: 'CODE_RESOURCE_MISSING',
       msg: `scene ${sceneId || '<unknown>'} 的 code 引用了资源 "${name}"，但它不在本场 resources 里` +
-        `（已声明：${[...known].join(' / ') || '无'}）；在 scene.resources 里补 { type: 'image' | 'video', name: '${name}', src }`,
+        `（已声明：${[...known].join(' / ') || '无'}）；在 scene.resources 里补 { type: 'image' | 'data' | 'video', name: '${name}', src }`,
     });
   }
 

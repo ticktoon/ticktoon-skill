@@ -27,7 +27,8 @@
 - 场景没有 `bg` 字段：背景由 `scene.code` / params 模板自己铺满整帧。`camera` 包住场景内容、不包字幕。
 - 场景只收 `id / narration / duration / camera / code / params / resources / note / transition / sfx`，**未知键直接报错**。`transition` 只写固定预设名，声明在两个 code 场边界的前一场；双帧视觉时间轴见 `references/transition.md`。
 - `scene.sfx` 是可选的场内音效事件：`[{ "name": "common-pop", "at": 0.65, "volume": 0.2 }]`。`name` 必须来自 `assets/sfx/manifest.json`，`at` 是相对场景起点的秒数，`volume` 可选且范围为 0–1；每场最多 6 个事件，只给明确动作配音。
-- `scene.resources` 的字体只写 manifest 键：`{ "type": "font", "name": "sans-400" }`，`src` 由编译期补齐；写 `src` 会报错。字体键从 `assets/fonts/manifest.json` 选，`desc` 是选型依据。本场用到 `TT.text` 却没声明任何 font 资源会报 `SCENE_FONTS_MISSING`。
+- `scene.resources` 共四种 `type`：`font` / `image` / `video` / `data`。只有 **font** 写 manifest 键（`{ "type": "font", "name": "sans-400" }`，`src` 由编译期补齐，手写 `src` 会报错，键从 `assets/fonts/manifest.json` 选，`desc` 是选型依据）。`image` / `video` / `data` 直接写 `src`（如 `skill:assets/data/foo.json`），不进 manifest。本场用到 `TT.text` 却没声明任何 font 资源会报 `SCENE_FONTS_MISSING`。
+- **data 资源**是通用文件容器：`{ "type": "data", "name": "foo", "src": "skill:assets/data/foo.json" }`，用 `api.data(name)` 读取。引擎只把文件读成原样字符串、按 src 缓存，不解析格式；解析在 `scene.code` / kit 里做（如 `JSON.parse`，建议 setup 阶段解析一次并缓存，不要每帧 parse）。大素材（插值数据、图表数据、配置、字幕、LUT）应走 data 外置，不要塞进 `scene.code`（上限 50000 字符，超限报 `SCENE_CODE_TOO_LONG`）。
 - `mode: "code"` 的 recipe：场景写 `scene.code`，不能写 `scene.params`；`mode: "params"` 的 recipe：场景写 `scene.params`，不能写 `scene.code` / `scene.resources`。两种内容互斥，`SCENE_CONTENT_CONFLICT` / `SCENE_CONTENT_MISSING` 会指出问题。
 - `scene.params` 的键与类型由 recipe 的 `template.params` 决定；必填缺失、类型不符、超出 `maxChars` / `maxItems` 都会在编译期报 `PARAM_*`。
 - `recipe` 与 `format` 由 recipe 与工程决定；需要另一套规范时换 recipe，不要手改平台源码。

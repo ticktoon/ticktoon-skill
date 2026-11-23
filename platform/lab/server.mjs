@@ -123,6 +123,7 @@ export async function startLab({ root, port = 5125, recipe: onlyRecipe = null, l
   const kitBundles = Object.entries(kitIndex).map(([id, entry]) => ({
     id,
     code: readFileSync(path.join(root, 'platform', 'kit', entry.file), 'utf-8'),
+    payload: (entry.payload || []).map((file) => readFileSync(path.join(root, 'platform', 'kit', file), 'utf-8')),
     provides: entry.provides || [],
     requires: entry.requires || [],
   }));
@@ -551,7 +552,7 @@ export async function startLab({ root, port = 5125, recipe: onlyRecipe = null, l
     started = await createStaticServer({ ...staticOptions, port });
   } catch (error) {
     if (error?.code !== 'EADDRINUSE' || port === 0) throw error;
-    log(`[code-lab] 端口 ${port} 被占用，改用随机端口`);
+    log(`[code-lab] 端口 ${port} 被占用：可能是旧的 lab 进程，它不会自动载入新增 recipe；本实例改用随机端口，请用下面打印的地址`);
     started = await createStaticServer({ ...staticOptions, port: 0 });
   }
   const { server, port: actualPort } = started;

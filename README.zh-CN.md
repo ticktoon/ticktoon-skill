@@ -71,6 +71,23 @@ ticktoon tick(t)                 同一条同步渲染路径
 
 recipe 只有两种模式，同一条 recipe 内不混用：`mode: "code"` 由场景写 `scene.code` 调用公共 kit；`mode: "params"` 由场景写 `scene.params`，画面交给 recipe 自带的 `template.js` 画定。字体不写进 recipe：字体库由 `assets/fonts/manifest.json` 定义，code 场在 `scene.resources` 里声明 `{"type":"font","name":"<manifest 键>"}`（`src` 由编译期补齐），params 模板把字体键写死在模板代码并在 `template.resources` 声明。颜色由 kit 自带默认值或 `scene.code` 直接写 hex，背景由 `scene.code` / 模板自己铺满。所有取值静态可追踪。
 
+### 资源（scene.resources）
+
+场景通过 `scene.resources` 声明外部素材，共四种 `type`：
+
+| type | 加载 | 读取 | src 来源 | 说明 |
+|---|---|---|---|---|
+| `image` | `new Image()` | `api.img(name)` | 直接写 src | 图片与 SVG（SVG 栅格化后当图用） |
+| `video` | 浏览器视频 | `api.video(name)` | 直接写 src | 可取 `start` 秒偏移 |
+| `font` | `FontFace` | `TT.text` 的 `fontKey` | **manifest 键**，编译期补 src | 内置资产，`assets/fonts/manifest.json` |
+| `data` | `fetch → text()` | `api.data(name)` | 直接写 src | 通用文件容器：JSON / 文本 / CSV 等 |
+
+关键边界：
+
+- **manifest 只服务内置资产**（font / bgm / sfx），它们用稳定语义键引用，换文件不改 storyboard。image / video / data 是某部片子的临时素材，src 直接写路径（如 `skill:assets/data/foo.json`），不进 manifest。
+- **引擎不解析 `data`**：只把文件原样读成字符串并按 src 缓存。格式含义由上层 `scene.code` / kit 决定（例如 `JSON.parse(api.data(name))`，建议在 setup 阶段解析一次并缓存，别每帧解析）。因此大素材（插值数据、图表数据、配置、字幕、LUT）应外置成 data 文件，不要塞进 `scene.code`——后者有 50000 字符上限。
+- 只调用 `api.img` / `api.video` / `api.data` 引用本场声明过的资源；未声明会在编译期报 `CODE_RESOURCE_MISSING`。
+
 编译是确定性的：同一份 storyboard 与相同输入产出同一份 `composition.json`，由 `tt det` 验证。渐进式披露也是设计的一部分：`SKILL.md` 只做路由，选好 recipe 后读它的 `recipe.md` 和 `skeleton.storyboard.json`；code 型再读一两个 `ref-shots/`，`references/` 按需一次读一篇。
 
 ## 能做什么
@@ -84,8 +101,9 @@ recipe 覆盖讲解、叙事、快闪、突发新闻与实拍。每条要么用�
 | `illustrated-story` | 纸张拼贴、剪报字 | `scene.code` | 小故事、观察随笔 |
 | `flash-cut` | 硬切、大字、一句一场 | `scene.code` | 观点、结论、促销节拍 |
 | `flat-motion` | 高饱和扁平色块、圆角人物与图标、弹性变形 | `scene.code` | 产品、品牌、应用功能与轻科普 MG |
+| `medical-3d` | 真实解剖模型（BodyParts3D）、器官聚焦镜头、自由图文讲解 | `scene.code` | 人体结构、器官功能与医学科普 |
 | `crayon-guide` | 暖米纸、蜡笔斜纹、人物与手绘图解 | `scene.code` | 教程、文化观点、对比、儿童科普 |
-| `shadow-play` | 透光幕布、关节剪影、随剧情变化的器物与场景 | `scene.code` | 寓言、民间故事、历史小段 |
+| `shadow-play` | 透光幕布、data 定妆皮偶、cue 驱动动作与红签黑签 | `scene.code` | 寓言、民间故事、历史小段 |
 | `news-broadcast` | 固定竖版新闻卡：蓝色径向底、世界地图、流动线 | `scene.params` | 突发快讯、标题 / 正文 / 来源 |
 | `footage` | 满幅真实素材 + 硬短句 | `scene.params` | Pexels 或本地实拍混剪 |
 

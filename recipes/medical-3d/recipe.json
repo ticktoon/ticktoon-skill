@@ -1,0 +1,67 @@
+{
+  "id": "medical-3d",
+  "abi": "1",
+  "name": "3D 医学",
+  "keywords": ["3D", "医学", "人体", "器官", "解剖", "医疗科普", "心脏", "肺", "脑"],
+  "mode": "code",
+  "when": [
+    "需要用三维人体、器官或组织结构解释医学与健康知识。",
+    "需要从全身视角推进到某个器官，结合镜头移动讲位置、结构、功能或疾病。",
+    "一侧展示 3D 模型，另一侧使用自由图文、流程、指标或对照讲解。"
+  ],
+  "notWhen": [
+    "只需要二维插画、医生人物或普通 MG 动效；使用 flat-motion。",
+    "需要真实手术、病例影像、CT / MRI 或患者隐私资料；本 recipe 不是医学影像播放器。",
+    "需要手术级解剖精度、医学诊断或治疗建议；低模只用于科普表达。",
+    "内容完全不需要三维空间、器官层级或镜头聚焦。"
+  ],
+  "rules": {
+    "safeMargin": 0.045,
+    "scale": {
+      "title": 1.5,
+      "label": 0.8,
+      "note": 0.55
+    },
+    "stroke": [2, 10],
+    "forbid": [
+      "把器官名称枚举当成剧情；先决定医学叙事，再选择需要展示的器官与镜头",
+      "用低模冒充手术级解剖、诊断结论或治疗建议",
+      "只旋转模型而不改变镜头与信息层级；核心讲解必须有全身到器官的聚焦关系",
+      "把右侧讲解区固定成一种卡片或纯文字模板；内容形式由医学关系决定",
+      "在初始化之后创建 Three 图层；api.three() 只能在 setup 调用，场景必须返回 draw(ctx, api)",
+      "在每帧 draw 里重建几何、材质或相机；3D 对象必须跨帧复用",
+      "用球体、圆柱等基础几何拼人体或器官；人体与器官只能来自 TT.anatomy",
+      "使用 TT.anatomy 却省略 BodyParts3D · CC BY 4.0 署名",
+      "使用未经确认的器官位置、比例或病理表现",
+      "在同一场景写 scene.params；本 recipe 只收 scene.code"
+    ]
+  },
+  "captions": {
+    "style": "plain",
+    "font": "JiangChengYuanTi",
+    "baseSize": 40,
+    "lineHeight": 1.25,
+    "top": 0.89,
+    "at": "bottom",
+    "band": false,
+    "maxWidth": 0.86,
+    "color": "#203B5A",
+    "stroke": "rgba(255,255,255,0.86)",
+    "shadow": "rgba(255,255,255,0.3)"
+  },
+  "audio": {
+    "mood": "soft",
+    "volume": 0.1,
+    "fadeIn": 0.8,
+    "fadeOut": 1.6,
+    "duck": {
+      "level": 0.04,
+      "edge": 0.15
+    }
+  },
+  "pacing": {
+    "leadIn": 0.35,
+    "hold": 0.8,
+    "minNarrationDuration": 5
+  }
+}

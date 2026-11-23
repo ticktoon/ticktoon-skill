@@ -74,8 +74,8 @@
     <h1>让 Agent 把故事画成视频。</h1>
     <p>每个示例都来自一份 storyboard。没有第二套编辑器，没有逐帧手调；Agent 选择配方、组织内容，Ticktoon 用同一条同步渲染链完成画面与声音。</p>
     <div class="stats">
-      <span><strong id="work-count">4</strong> 个完整示例</span>
-      <span><strong id="recipe-count">4</strong> 种创作配方</span>
+      <span><strong id="work-count">6</strong> 个完整示例</span>
+      <span><strong id="recipe-count">6</strong> 种创作配方</span>
       <span>原生 MP4 + storyboard 源文件</span>
     </div>
   </section>
@@ -86,6 +86,8 @@
     <button class="filter" data-filter="news-broadcast">突发新闻</button>
     <button class="filter" data-filter="flash-cut">快闪卡点</button>
     <button class="filter" data-filter="footage">实拍</button>
+    <button class="filter" data-filter="shadow-play">皮影戏</button>
+    <button class="filter" data-filter="flat-motion">扁平动效</button>
   </nav>
 
   <main id="grid" class="grid"></main>
@@ -144,6 +146,26 @@ const works = [
     video: 'footage/video.mp4',
     poster: 'footage/qa-sheet.png',
     storyboard: 'footage/storyboard.json',
+    orientation: 'landscape',
+  },
+  {
+    title: '后羿射日 · 皮影戏',
+    recipe: 'shadow-play',
+    duration: '01:00',
+    description: '皮影镂刻人物分幕演出上古神话：十日凌空、弯弓连射、甘霖复苏。',
+    video: 'shadow_play/video.mp4',
+    poster: 'shadow_play/qa-sheet.png',
+    storyboard: 'shadow_play/storyboard.json',
+    orientation: 'landscape',
+  },
+  {
+    title: '慢病管理健康科普',
+    recipe: 'flat-motion',
+    duration: '01:35',
+    description: '扁平图形与分步动效讲解高血压稳压健管服务，信息清晰易读。',
+    video: 'flat-motion/video.mp4',
+    poster: 'flat-motion/qa-sheet.png',
+    storyboard: 'flat-motion/storyboard.json',
     orientation: 'landscape',
   },
 ];

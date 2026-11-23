@@ -31,6 +31,42 @@
     return Number.isFinite(s) ? Math.round(s) : 0;
   };
 
+  // 皮影纸纹：双八度各向异性 value noise，x 快变、y 慢变形成纵向纸筋。
+  const paperTiles = globalThis.__ttBoardPaperTiles ||= new Map();
+  function paperNoise(x, y, fx, fy, seed) {
+    const X = x * fx, Y = y * fy, xi = Math.floor(X), yi = Math.floor(Y);
+    const tx = X - xi, ty = Y - yi, sx = tx * tx * (3 - 2 * tx), sy = ty * ty * (3 - 2 * ty);
+    const a = rnd(xi + yi * 257, seed), b = rnd(xi + 1 + yi * 257, seed);
+    const c = rnd(xi + (yi + 1) * 257, seed), d = rnd(xi + 1 + (yi + 1) * 257, seed);
+    return (a + (b - a) * sx) + ((c + (d - c) * sx) - (a + (b - a) * sx)) * sy;
+  }
+  function paperTile(ctx, seed) {
+    if (paperTiles.has(seed)) return paperTiles.get(seed);
+    const size = 512;
+    let tile;
+    if (typeof OffscreenCanvas !== 'undefined') tile = new OffscreenCanvas(size, size);
+    else if (ctx.canvas?.cloneNode) tile = ctx.canvas.cloneNode(false);
+    else return null;
+    tile.width = size; tile.height = size;
+    const g = tile.getContext('2d', { willReadFrequently: true });
+    if (!g) return null;
+    const image = g.createImageData(size, size);
+    for (let y = 0; y < size; y += 1) {
+      for (let x = 0; x < size; x += 1) {
+        const fine = paperNoise(x, y, 0.55, 0.035, seed + 3);
+        const fiber = paperNoise(x, y, 1.10, 0.080, seed + 11);
+        const n = fine * 0.68 + fiber * 0.32;
+        const i = (y * size + x) * 4;
+        image.data[i] = 86; image.data[i + 1] = 61; image.data[i + 2] = 37;
+        image.data[i + 3] = Math.round(16 + n * 34);
+      }
+    }
+    g.putImageData(image, 0, 0);
+    if (paperTiles.size >= 12) paperTiles.delete(paperTiles.keys().next().value);
+    paperTiles.set(seed, tile);
+    return tile;
+  }
+
   /**
    * 纹理尺度基准：一律按短边定量。
    * 按长边铺固定条数会在 9:16 与 1:1 之间把纹理拉成两套密度，看起来像换了张纸。
@@ -338,40 +374,57 @@
   }
 
   /**
-   * 皮影幕布背景：宣纸底 + 顶部暖灯晕 + 底部操纵区压暗。
-   * 四角木框由 stageFrame 在场景内容之后单独绘制。
+   * 皮影幕布：全幅低对比柔光、方向性皮纸纤维与四边暖褐暗角。
+   * 所有纹理默认绘制并由 seed 决定，帧间不变；seed 只换纹理，不再开关质感。
+   * 三色灯与明暗表演另用 TT.shadow.light / dim，四角木框由 stageFrame 绘制。
    */
   function stage(ctx, api, opts = {}) {
     const { W, H } = sizeOf(ctx, api);
     const seed = seedOf(opts);
-    const u = unitOf(W, H);
+    const v = opts.variant ?? 0;
+    const cx = [50, 42, 58, 50][v % 4] / 100;
+    const cy = [44, 40, 46, 38][v % 4] / 100;
+    const oil = opts.screen === 'oil';
 
-    // 幕布本体：比 wash 更亮，好透出灯影。
-    const g = ctx.createLinearGradient(0, 0, 0, H);
-    g.addColorStop(0, '#fbf4e2');
-    g.addColorStop(0.55, '#f7eed9');
-    g.addColorStop(1, '#efe3c9');
-    ctx.fillStyle = g;
+    // 先给整幅幕布同一层纸色，柔光只负责轻微起伏，不能形成可见光斑。
+    ctx.fillStyle = oil ? '#EFC583' : '#ECE2CE';
+    ctx.fillRect(0, 0, W, H);
+    const glow = ctx.createRadialGradient(W * cx, H * cy, 0, W * cx, H * cy, Math.hypot(W, H) * 0.82);
+    glow.addColorStop(0, oil ? 'rgba(255,240,207,0.52)' : 'rgba(252,249,241,0.52)');
+    glow.addColorStop(0.58, oil ? 'rgba(255,240,207,0.14)' : 'rgba(252,249,241,0.14)');
+    glow.addColorStop(1, oil ? 'rgba(255,240,207,0)' : 'rgba(252,249,241,0)');
+    ctx.fillStyle = glow;
     ctx.fillRect(0, 0, W, H);
 
-    ctx.save();
-    // 布的经线：等距竖纹，间距按短边定量。
-    const pitch = 9 * u;
-    ctx.strokeStyle = 'rgba(176,152,114,0.05)';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    for (let x = 0; x < W; x += pitch) { ctx.moveTo(x, 0); ctx.lineTo(x, H); }
-    ctx.stroke();
+    // 四边分别压暗，暗角属于幕布厚度，不与中心亮区围成一个椭圆。
+    const edge = Math.min(W, H) * 0.24;
+    const edgeColor = oil ? 'rgba(108,58,22,0.17)' : 'rgba(92,64,39,0.14)';
+    for (const [x0, y0, x1, y1, w, h] of [
+      [0, 0, edge, 0, edge, H], [W, 0, W - edge, 0, edge, H],
+      [0, 0, 0, edge, W, edge], [0, H, 0, H - edge, W, edge],
+    ]) {
+      const shade = ctx.createLinearGradient(x0, y0, x1, y1);
+      shade.addColorStop(0, edgeColor); shade.addColorStop(1, 'rgba(92,64,39,0)');
+      ctx.fillStyle = shade;
+      ctx.fillRect(x0 === W ? W - edge : x0, y0 === H ? H - edge : y0, w, h);
+    }
 
-    // 顶部暖灯晕：从上方垂下来的暖光，越往下越淡。
-    const lamp = ctx.createLinearGradient(0, 0, 0, H * 0.72);
-    lamp.addColorStop(0, 'rgba(255,206,130,0.26)');
-    lamp.addColorStop(0.45, 'rgba(255,206,130,0.09)');
-    lamp.addColorStop(1, 'rgba(255,206,130,0)');
-    ctx.fillStyle = lamp;
-    ctx.fillRect(0, 0, W, H * 0.72);
+    // 高频纵向纸筋：近看细密规则，远看只是柔和的纸面，不再叠加随机散线与云斑。
+    const tile = paperTile(ctx, seed);
+    if (tile) {
+      ctx.save();
+      ctx.globalCompositeOperation = 'multiply';
+      ctx.globalAlpha = 0.65;
+      const pattern = ctx.createPattern(tile, 'repeat');
+      if (pattern) { ctx.fillStyle = pattern; ctx.fillRect(0, 0, W, H); }
+      ctx.restore();
+    }
 
-    ctx.restore();
+    // 操纵区只比幕布略暗，保持皮片轮廓与操偶杆可读。
+    const floor = ctx.createLinearGradient(0, H * 0.84, 0, H);
+    floor.addColorStop(0, 'rgba(52,30,15,0)');
+    floor.addColorStop(1, 'rgba(52,30,15,0.08)');
+    ctx.fillStyle = floor; ctx.fillRect(0, H * 0.84, W, H * 0.16);
   }
 
   /**
@@ -492,9 +545,9 @@
     },
     {
       kind: 'stage',
-      desc: '皮影幕布背景：宣纸底 + 顶部暖灯晕 + 底部操纵区压暗；四角木框由 stageFrame 前景绘制',
+      desc: '皮影幕布底：全幅柔光 + 双八度连续纸筋 + 四边暖褐暗角；木框由 stageFrame 绘制',
       when: '皮影/灯影戏；主体是从背后打光的剪影时用它',
-      opts: 'opts.seed 换褶皱位置',
+      opts: 'opts.screen=white|oil、opts.variant 换灯位、opts.seed 换纤维；三色灯另用 TT.shadow.light / dim',
     },
     {
       kind: 'news',

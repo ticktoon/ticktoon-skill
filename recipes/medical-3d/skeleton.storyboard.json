@@ -1,0 +1,61 @@
+{
+  "recipe": "medical-3d",
+  "format": {
+    "w": 1920,
+    "h": 1080,
+    "fps": 30
+  },
+  "meta": {
+    "title": "未命名 3D 医学科普"
+  },
+  "scenes": [
+    {
+      "id": "s01",
+      "duration": 6,
+      "code": [
+        "const PAGE = '#F4F7FB';",
+        "const INK = '#203B5A';",
+        "const MUTED = '#65758A';",
+        "// 3D 舞台卡片：图层位置、相机宽高比、圆角裁剪都用同一组数字。",
+        "const STAGE = { x: W * 0.04, y: H * 0.085, w: W * 0.505, h: H * 0.83, r: 30 };",
+        "const layer = api.three({ rect: { x: STAGE.x, y: STAGE.y, width: STAGE.w, height: STAGE.h } });",
+        "const T = api.THREE;",
+        "const H0 = TT.anatomy.height;",
+        "// 人体与器官来自同一套解剖模型：只决定材质，不摆位置。",
+        "const shell = new T.MeshStandardMaterial({ color: '#A8D4EA', transparent: true, opacity: 0.17, roughness: 0.55, depthWrite: false });",
+        "const human = new T.Group();",
+        "human.add(TT.anatomy.mesh(T, 'body', shell));",
+        "human.add(TT.anatomy.mesh(T, 'airways', new T.MeshStandardMaterial({ color: '#63B9D1', roughness: 0.60 })));",
+        "human.add(TT.anatomy.mesh(T, 'heart', new T.MeshStandardMaterial({ color: '#E86A78', roughness: 0.55 })));",
+        "layer.scene.add(human);",
+        "layer.scene.add(new T.AmbientLight('#FFFFFF', 1.15));",
+        "const key = new T.DirectionalLight('#FFFFFF', 2.3); key.position.set(4, 7, 6); layer.scene.add(key);",
+        "const fill = new T.DirectionalLight('#A9C8FF', 0.75); fill.position.set(-5, 3, 2); layer.scene.add(fill);",
+        "// 机位按身高推算：fov 38 时可见高度 ≈ 0.689 × 距离。",
+        "layer.camera.position.set(H0 * 0.34, H0 * 0.54, H0 * 1.72);",
+        "",
+        "return (ctx, api) => {",
+        "  ctx.fillStyle = PAGE; ctx.fillRect(0, 0, W, H);",
+        "  ctx.save();",
+        "  ctx.shadowColor = 'rgba(32, 59, 90, 0.10)'; ctx.shadowBlur = 36; ctx.shadowOffsetY = 14;",
+        "  ctx.fillStyle = '#FFFFFF';",
+        "  ctx.beginPath(); ctx.roundRect(STAGE.x, STAGE.y, STAGE.w, STAGE.h, STAGE.r); ctx.fill();",
+        "  ctx.restore();",
+        "  human.rotation.y = api.t * 0.25;",
+        "  layer.camera.lookAt(0, H0 * 0.50, 0);",
+        "  ctx.save();",
+        "  ctx.beginPath(); ctx.roundRect(STAGE.x, STAGE.y, STAGE.w, STAGE.h, STAGE.r); ctx.clip();",
+        "  layer.draw(ctx);",
+        "  ctx.restore();",
+        "  TT.text(ctx, '器官与镜头示例', W * 0.60, H * 0.28, 62, { fontKey: 'sans-900', color: INK });",
+        "  TT.text(ctx, '在这里写结构、功能与医学讲解', W * 0.60, H * 0.40, 30, { fontKey: 'JiangChengYuanTi', color: MUTED });",
+        "  TT.text(ctx, '模型 BodyParts3D · © The Database Center for Life Science · CC BY 4.0', W * 0.60, H * 0.845, 18, { fontKey: 'JiangChengYuanTi', color: 'rgba(101,117,138,0.72)' });",
+        "};"
+      ],
+      "resources": [
+        { "type": "font", "name": "sans-900" },
+        { "type": "font", "name": "JiangChengYuanTi" }
+      ]
+    }
+  ]
+}

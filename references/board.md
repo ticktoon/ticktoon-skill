@@ -22,7 +22,7 @@
 | `cream` | 米色拼贴纸 | 中心暖亮、四边压深 + 短纤维与不均浅斑 | 手账/剪报/拼贴感，贴纸与便签混排 | 干净科技感内容别用，斑驳会显旧 |
 | `wash` | 宣纸 | 偏白微黄 + 长纤维 + 未化开的料点 | 水墨/国风/湿画法，墨色有浓淡层次 | 硬边几何图形别用，宣纸会把利落感吃掉 |
 | `crayon` | 暖米纸 | `#f2e8d5` + 45° 蜡笔细斜纹 + 四边毛糙 | 蜡笔绘本、儿童向，要"手工纸上画的"粗颗粒感 | 精细图表别用，斜纹会干扰细线 |
-| `stage` | 皮影幕布 | 宣纸底 + 顶部暖灯晕 + 底部操纵区压暗 + 四角木框 | 皮影/灯影戏，主体是背光剪影 | 主体不在中上部时灯晕会压住它；`opts.frame=false` 可去木框 |
+| `stage` | 皮影幕布 | 全幅柔光 + 双八度连续纸筋 + 四边暖褐暗角；`screen=white/oil` | 皮影/灯影戏，主体是背光皮偶 | 不要画聚焦光斑或叠第二层底色；冷光/红光用 `TT.shadow.light`，木框单独用 `stageFrame` |
 | `news` | 新闻黑底 | 近黑 + 中心微亮 + 上下窄光带 + 极细网格 | 资讯播报、数据快报，主体是高亮图形或大号标题 | 大段深色正文别用；`opts.grid=false` 可去网格 |
 
 ## 可选参数
@@ -32,7 +32,8 @@
 | `paper` | paper / crayon / news | 换底色（字符串，任意 CSS 颜色） |
 | `tray: false` | blackboard | 去掉粉笔槽与粉笔/板擦道具 |
 | `bleed: true` | wash | 四周加淡墨晕，湿画法的边界不该是干脆的直角 |
-| `frame: false` | stage | 去掉四角木框 |
+| `screen` | stage | `white` 白幕 / `oil` 油灯暖幕 |
+| `variant` | stage | 0–3，轻微改变柔光中心；默认 0 |
 | `grid: false` | news | 去掉极细网格 |
 | `tone` | 全部 | 整体色偏 `-1..1`，正暖负冷 |
 | `seed` | cream / crayon / stage | 扰动种子，换分布不换质感 |
@@ -48,6 +49,11 @@ TT.board.wash(ctx, api, { bleed: true, tone: -0.2 });
 
 // 换一张斑驳分布不同的拼贴纸
 TT.board.cream(ctx, api, { seed: 7 });
+
+// 皮影白幕：内容与灯光另画，最后单独加固定木框
+TT.board.stage(ctx, { W, H }, { screen: 'white', variant: 0, seed: 3 });
+// ...scene content...
+TT.board.stageFrame(ctx, { W, H });
 ```
 
 场景先选舞台、再写内容；同一片子里所有场景应使用同一种舞台（转场那一拍除外，见 `references/transition.md`）。舞台没有独立样片：在 `scene.code` 里直接调 `TT.board.<舞台>(ctx, api)`，用 `tt stills` 或预览核对即可。

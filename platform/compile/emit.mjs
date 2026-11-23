@@ -94,7 +94,7 @@ export function emitScene({ scene, recipe, format, catalog, kitIndex, kitDir, ca
     seenRes.add(res.src);
     resources.push(res);
   };
-  // code 场自己声明的资源（api.img/api.video 的查询名）。
+  // code 场自己声明的资源（api.img/api.data/api.video 的查询名）。
   for (const res of scene.resources || []) pushRes(res);
   if (template) {
     // params 模板自带的固定资源（例如新闻底图）。draw.js 用 g.api.img(name) 查询。

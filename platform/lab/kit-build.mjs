@@ -146,6 +146,7 @@ export function buildKitComposition({
     lines.push('/* Ticktoon kit lab — 固定 KIT 上下文，由实验台现场拼装 */');
     lines.push('const TT = {};');
     for (const kit of kits) {
+      for (const data of kit.payload || []) lines.push(data.trim());
       lines.push(`/* kit:${kit.id} */`);
       lines.push(kit.code.trim());
     }

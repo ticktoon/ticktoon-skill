@@ -1,0 +1,38 @@
+{
+  "version": 1,
+  "kind": "flag",
+  "tree": {
+    "tag": "g",
+    "attrs": {},
+    "children": [
+      {
+        "tag": "path",
+        "attrs": {
+          "d": "M0 0 L0 -520",
+          "stroke": "#1C130C",
+          "stroke-width": "9"
+        }
+      },
+      {
+        "tag": "path",
+        "attrs": {
+          "d": "M4 -510 C31.7 -531.7 141.3 -525 170 -500 C198.7 -475 203.7 -381.7 176 -360 C148.3 -338.3 32.7 -345 4 -370 C-24.7 -395 -23.7 -488.3 4 -510 Z",
+          "fill": "#C0381F",
+          "fill-opacity": "0.9",
+          "stroke": "#1C130C",
+          "stroke-width": "5"
+        },
+        "id": "flagCloth"
+      },
+      {
+        "tag": "path",
+        "attrs": {
+          "d": "M4 -370 L20 -340 L40 -366 L60 -338 L80 -364 L100 -336 L120 -362 L140 -334 L160 -360 L176 -340",
+          "fill": "none",
+          "stroke": "#1C130C",
+          "stroke-width": "4"
+        }
+      }
+    ]
+  }
+}
