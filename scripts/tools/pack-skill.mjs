@@ -15,8 +15,11 @@ if (dest.startsWith(ROOT + path.sep) || dest === ROOT) {
   process.exit(1);
 }
 
-const SKIP_NAMES = new Set(['node_modules', 'output', 'out', '.git', '.cc-tasks', 'dist-skill', 'ticktoon-skill-dist', 'ticktoon-dist', 'snapshots', 'showcase']);
-const filter = (src) => !SKIP_NAMES.has(path.basename(src));
+const SKIP_NAMES = new Set([
+  'node_modules', 'output', 'out', '.git', '.cc-tasks', '.claude', '.github', '.npmrc',
+  'dist-skill', 'ticktoon-skill-dist', 'ticktoon-dist', 'snapshots', 'showcase',
+]);
+const filter = (src) => !SKIP_NAMES.has(path.basename(src)) && !src.endsWith('.tgz');
 if (existsSync(dest)) rmSync(dest, { recursive: true, force: true });
 cpSync(ROOT, dest, { recursive: true, filter });
 

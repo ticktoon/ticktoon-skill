@@ -13,6 +13,7 @@
     <a href="https://developer.mozilla.org/en-US/docs/Web/API/WebCodecs_API"><img alt="Protocol v1.0" src="https://img.shields.io/badge/Protocol-v1.0-08A9E6?style=flat-square"></a>
     <a href="https://www.google.com/chrome/"><img alt="Chrome 120+" src="https://img.shields.io/badge/Chrome-120%2B-263238?style=flat-square&logo=googlechrome&logoColor=white"></a>
     <a href="LICENSE"><img alt="License: Apache-2.0" src="https://img.shields.io/badge/License-Apache_2.0-blue?style=flat-square"></a>
+    <a href="https://github.com/ticktoon/ticktoon-skill/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/ticktoon/ticktoon-skill?style=flat-square&label=release"></a>
     <a href="https://github.com/ticktoon/ticktoon-skill/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/ticktoon/ticktoon-skill?style=flat-square&logo=github&label=Stars"></a>
 </p>
 
@@ -56,27 +57,24 @@ Also included:
 
 Ticktoon Skill is not a standalone application. It is a creative capability invoked by agents such as WorkBuddy. Once installed, describe the subject, duration, and style in natural language; the agent selects a recipe, writes the storyboard, generates narration and visuals, and opens the reviewer.
 
-### 1. Install and check the environment
+### 1. Install
 
-Requirements: Node.js 18+ (22 LTS recommended), Chrome 120+, and an available WebGL2 environment.
+**WorkBuddy (recommended):** download `ticktoon-skill-dist.zip` from [Releases](https://github.com/ticktoon/ticktoon-skill/releases/latest), then import the zip in the skill manager. No git or npm steps. If your host expects a directory, unzip first and select the extracted folder. On first use WorkBuddy checks the environment and installs dependencies.
 
-You can send this directly in a WorkBuddy conversation:
+**Other agents:** unzip the release into the agent's skills directory (for Claude Code, `~/.claude/skills/ticktoon`). The installed root must contain [`SKILL.md`](SKILL.md); on first use, run `node scripts/doctor.mjs --install`.
 
-> Run pack for this repository, install the generated Skill distribution, and check the environment: https://github.com/ticktoon/ticktoon-skill
-
-Or package and install it manually:
+**From source (contributors):**
 
 ```bash
 git clone https://github.com/ticktoon/ticktoon-skill.git
 cd ticktoon-skill
+npm ci
 npm run pack
 ```
 
-By default, `pack` creates `ticktoon-skill-dist/` next to the source repository. It contains the Skill and npm dependency lockfiles, without development artifacts such as `.git`, `node_modules`, or `output`. Then choose local installation or import in WorkBuddy's skill management. **Select the `ticktoon-skill-dist` distribution directory, not the source repository**; its root should contain [`SKILL.md`](SKILL.md).
+Import the generated `ticktoon-skill-dist/` directory.
 
-After import, WorkBuddy automatically checks the environment and installs the required dependencies. There is no need to run `doctor --install` manually.
-
-Other agents should likewise install the distribution produced by `pack`. Place it in the agent's skills directory (for Claude Code, `~/.claude/skills/ticktoon`) and make sure the installed root contains `SKILL.md`.
+Requirements: Node.js 18+ (22 LTS recommended), Chrome 120+, and WebGL2. `doctor --install` reports missing pieces in plain language; WorkBuddy usually handles this automatically.
 
 ### 2. Start creating
 

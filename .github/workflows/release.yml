@@ -1,0 +1,41 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Build clean skill distribution
+        run: npm run pack
+
+      - name: Verify distribution
+        run: |
+          test -f ../ticktoon-skill-dist/SKILL.md
+          test ! -e ../ticktoon-skill-dist/.claude
+          test ! -e ../ticktoon-skill-dist/.npmrc
+          test ! -e ../ticktoon-skill-dist/.github
+          test ! -e ../ticktoon-skill-dist/node_modules
+
+      - name: Create zip
+        run: |
+          (cd ../ticktoon-skill-dist && zip -qr "$GITHUB_WORKSPACE/ticktoon-skill-dist.zip" .)
+          ls -lh "$GITHUB_WORKSPACE/ticktoon-skill-dist.zip"
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ticktoon-skill-dist.zip
+          generate_release_notes: true

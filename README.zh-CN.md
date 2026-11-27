@@ -13,6 +13,7 @@
     <a href="https://developer.mozilla.org/en-US/docs/Web/API/WebCodecs_API"><img alt="Protocol v1.0" src="https://img.shields.io/badge/Protocol-v1.0-08A9E6?style=flat-square"></a>
     <a href="https://www.google.com/chrome/"><img alt="Chrome 120+" src="https://img.shields.io/badge/Chrome-120%2B-263238?style=flat-square&logo=googlechrome&logoColor=white"></a>
     <a href="LICENSE"><img alt="License: Apache-2.0" src="https://img.shields.io/badge/License-Apache_2.0-blue?style=flat-square"></a>
+    <a href="https://github.com/ticktoon/ticktoon-skill/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/ticktoon/ticktoon-skill?style=flat-square&label=release"></a>
     <a href="https://github.com/ticktoon/ticktoon-skill/stargazers"><img alt="GitHub Stars" src="https://img.shields.io/github/stars/ticktoon/ticktoon-skill?style=flat-square&logo=github&label=Stars"></a>
 </p>
 
@@ -56,27 +57,24 @@ recipe 覆盖讲解、叙事、快闪、突发新闻、数据竞速与实拍。�
 
 Ticktoon Skill 不是独立应用，而是 WorkBuddy 等 Agent 调用的创作能力。安装后，只需用自然语言描述题材、时长和风格；Agent 会选择 recipe、编写 storyboard、生成旁白与画面，并打开审片器。
 
-### 1. 安装并检查环境
+### 1. 安装
 
-环境要求：Node.js 18+（建议 22 LTS）、Chrome 120+，以及可用的 WebGL2 环境。
+**WorkBuddy（推荐）**：从 [Releases](https://github.com/ticktoon/ticktoon-skill/releases/latest) 下载 `ticktoon-skill-dist.zip`，在技能管理中导入该 zip 即可，无需 git 或 npm。如果宿主要求目录，解压后选择解压出的文件夹。首次使用会自动检查环境并安装依赖。
 
-可以直接在 WorkBuddy 对话中发送：
+**其他 Agent**：解压 release，把目录放进 agent 的 skills 目录（Claude Code: `~/.claude/skills/ticktoon`）。安装后的根层必须包含 [`SKILL.md`](SKILL.md)；首次使用运行 `node scripts/doctor.mjs --install`。
 
-> 请为这个仓库执行 pack，安装生成的 Skill 分发包并完成环境检查：https://github.com/ticktoon/ticktoon-skill
-
-也可以手动打包并安装：
+**从源码安装（仅供开发）：**
 
 ```bash
 git clone https://github.com/ticktoon/ticktoon-skill.git
 cd ticktoon-skill
+npm ci
 npm run pack
 ```
 
-`pack` 默认在源码仓库旁生成 `ticktoon-skill-dist/`，其中包含 Skill 与 npm 依赖锁文件，不包含 `.git`、`node_modules`、`output` 等开发产物。随后在 WorkBuddy 的技能管理中选择本地安装或导入，**选中 `ticktoon-skill-dist` 分发目录，不要选择源码仓库**；该目录根层应包含 [`SKILL.md`](SKILL.md)。
+导入生成的 `ticktoon-skill-dist/` 目录。
 
-导入后，WorkBuddy 会自动检查环境并安装所需依赖，无需手动运行 `doctor --install`。
-
-其他 Agent 同样安装 `pack` 产出的分发包，可将其放进对应的 skills 目录（Claude Code 可放在 `~/.claude/skills/ticktoon`），并确保安装后的根层包含 `SKILL.md`。
+环境要求：Node.js 18+（建议 22 LTS）、Chrome 120+，以及可用的 WebGL2。`doctor --install` 会用明确提示报告缺失项；WorkBuddy 通常会代劳。
 
 ### 2. 开始创作
 
