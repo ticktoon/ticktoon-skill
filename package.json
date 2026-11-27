@@ -3,6 +3,17 @@
   "private": true,
   "version": "0.0.1",
   "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ticktoon/ticktoon-skill.git"
+  },
+  "homepage": "https://github.com/ticktoon/ticktoon-skill#readme",
+  "bugs": {
+    "url": "https://github.com/ticktoon/ticktoon-skill/issues"
+  },
+  "engines": {
+    "node": ">=18"
+  },
   "type": "module",
   "description": "Ticktoon Agent 创作入口：storyboard → composition 编译、只读预览与普通 MP4 直出",
   "scripts": {
