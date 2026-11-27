@@ -20,6 +20,7 @@ import { auditRecipe } from './project/audit.mjs';
 import { runFilmQuality } from './inspect/quality.mjs';
 import { runBaseline } from './inspect/baseline.mjs';
 import { fetchProjectAssets } from '../scripts/providers/asset-fetch.mjs';
+import { searchWebAssets, downloadWebAsset } from '../scripts/providers/web-assets.mjs';
 import { getActivePreview, getTaskPreview, stopTaskPreview } from '../scripts/lib/preview-lifecycle.mjs';
 import { acquireAnnotationWait, annotationWaitActive, releaseAnnotationWait } from '../scripts/lib/annotation-wait.mjs';
 import { acknowledgeAnnotationBatch, readAnnotationInbox } from '../scripts/lib/annotation-inbox.mjs';
@@ -88,6 +89,44 @@ function printReport(report) {
     for (const item of warnings) console.log(`  · [${item.code}] ${item.path ? item.path + ' — ' : ''}${item.msg}`);
   }
   console.log('');
+}
+
+async function cmdAssetsSearch() {
+  const query = rest[1];
+  try {
+    const items = await searchWebAssets({ query, provider: flagValue('provider', 'iconify'), prefix: flagValue('prefix'), limit: Number(flagValue('limit', 8)) });
+    if (json) console.log(JSON.stringify({ ok: true, query, items }, null, 2));
+    else {
+      console.log(`\n在线素材：${query}（${items.length} 条）`);
+      items.forEach((item, i) => console.log(`  ${String(i + 1).padStart(2)} ${item.id}\n     ${item.license || '逐素材核对'}${item.author ? ` · ${item.author}` : ''}`));
+      console.log('\n下载：tt assets download --id <id> --name <资源名> --project <用户工程> --provider iconify');
+    }
+  } catch (error) {
+    if (json) console.log(JSON.stringify({ ok: false, error: error.message }, null, 2));
+    else console.error(`✗ 在线素材搜索失败：${error.message}`);
+    process.exitCode = 1;
+  }
+}
+async function cmdAssetsDownload() {
+  const project = flagValue('project');
+  if (!project) {
+    console.error('✗ 下载必须显式指定 --project <用户工程>；不会默认写入 skill');
+    process.exitCode = 1; return;
+  }
+  try {
+    const result = await downloadWebAsset({ projectDir: path.resolve(project), provider: flagValue('provider', 'iconify'), id: flagValue('id'), name: flagValue('name') });
+    if (json) console.log(JSON.stringify(result, null, 2));
+    else {
+      console.log(`\n已下载 ${result.id} → ${result.file}（${result.bytes} bytes）`);
+      console.log(`授权：${result.license || '逐素材核对'}${result.author ? ` · ${result.author}` : ''}`);
+      console.log(`清单：${result.manifestPath}`);
+      console.log(`scene.resources 添加：${JSON.stringify(result.resource)}`);
+    }
+  } catch (error) {
+    if (json) console.log(JSON.stringify({ ok: false, error: error.message }, null, 2));
+    else console.error(`✗ 素材下载失败：${error.message}`);
+    process.exitCode = 1;
+  }
 }
 
 async function cmdAssetsFetch() {
@@ -277,6 +316,29 @@ async function cmdDet() {
 
 async function cmdQa() {
   const count = Number(flagValue('count', 24));
+  // params recipe 是固定模板，不抓帧；直接交给 preview。
+  let paramsRecipe = null;
+  const storyboardPath = path.join(dir, 'storyboard.json');
+  if (existsSync(storyboardPath)) {
+    try {
+      const storyboard = JSON.parse(readFileSync(storyboardPath, 'utf-8'));
+      const recipe = loadCatalog(ROOT).recipes.get(storyboard.recipe);
+      if (recipe?.mode === 'params') paramsRecipe = recipe;
+    } catch { /* 解析失败交给 build 报错 */ }
+  }
+  if (paramsRecipe) {
+    // 只编译校验参数与资源，不启动浏览器、不抓帧。
+    const built = await buildProject({ root: ROOT, dir, tts: null, write: false, receipts: false });
+    if (!built.ok) {
+      if (json) console.log(JSON.stringify(built.report, null, 2));
+      else printReport(built.report);
+      process.exit(1);
+    }
+    const skipped = { ok: true, skipped: true, reason: 'params-template', recipe: paramsRecipe.id };
+    if (json) console.log(JSON.stringify(skipped, null, 2));
+    else console.log(`\n  参数型配方 ${paramsRecipe.id} 使用固定模板：QA 已跳过（不抓帧）。直接运行 tt preview --dir ${dir}\n`);
+    process.exit(0);
+  }
   const result = await runFilmQuality({
     root: ROOT,
     dir,
@@ -290,6 +352,11 @@ async function cmdQa() {
     if (json) console.log(JSON.stringify(result.built.report, null, 2));
     else printReport(result.built.report);
     process.exit(1);
+  }
+  if (result.result?.skipped) {
+    if (json) console.log(JSON.stringify(result.result, null, 2));
+    else console.log(`\n  参数型配方使用固定模板：QA 已跳过（不抓帧）。直接运行 tt preview --dir ${dir}\n`);
+    process.exit(0);
   }
   const quality = result.result;
   if (json) {
@@ -695,7 +762,7 @@ async function cmdCi() {
       if (quality.built.ok) {
         const summary = quality.result.summary;
         add('qa', quality.result.ok,
-          `must ${summary.must} / should ${summary.should}`);
+          quality.result.skipped ? 'skipped (params template)' : `must ${summary.must} / should ${summary.should}`);
       } else {
         add('qa', false, '编译失败');
       }
@@ -751,13 +818,15 @@ function printConditions(label, items) {
 function cmdRecipeList() {
   const catalog = loadCatalog(ROOT);
   // 货架清单的唯一来源：recipes/ 目录扫描。SKILL.md 不复制这份表，新增 recipe 无需改文档。
-  const rows = [...catalog.recipes.values()].map((recipe) => ({
-    id: recipe.id,
-    name: recipe.name,
-    keywords: recipe.keywords || [],
-    when: recipe.when || [],
-    notWhen: recipe.notWhen || [],
-  }));
+  const rows = [...catalog.recipes.values()]
+    .filter((recipe) => recipe.listed !== false)
+    .map((recipe) => ({
+      id: recipe.id,
+      name: recipe.name,
+      keywords: recipe.keywords || [],
+      when: recipe.when || [],
+      notWhen: recipe.notWhen || [],
+    }));
   if (json) {
     console.log(JSON.stringify(rows, null, 2));
     return;
@@ -856,16 +925,19 @@ function usage() {
   tt build [--dir <工程>] [--tts <provider>]   编译出 out/composition.json + report.json
   tt assets fetch --project <工程> [--provider pexels] [--orientation landscape|portrait]
                                           检索、下载、署名并回写 job:media；无 key 或获取失败直接报错，不用内置素材替代
+  tt assets search <查询> [--provider iconify|commons] [--prefix game-icons] [--limit N]
+  tt assets download --id <素材id> --name <资源名> --project <用户工程> [--provider iconify|commons]
+                                          在线找图标/图片；仅下载选中项到用户工程并记录授权，不写入 skill
   tt stills <t…> [--dir <工程>]   指定时刻静帧 + 布局凭据；仅定点排障，不代替全片 QA
   tt probe --t <秒> [--dir <工程>] 该时刻全部凭据（kind/单元/label/bbox/安全框/字幕带）
-  tt qa [--count N] [--cols C]    轻量渲染校验（渲染异常/空墨迹）+ 12 格联系表，must=0
+  tt qa [--count N] [--cols C]    轻量渲染校验（渲染异常/空墨迹）+ 12 格联系表，must=0；params 配方自动跳过
   tt det [--twice] [--verify H]   确定性指纹
   tt export [--dir <工程>] [-o <文件.mp4>]  直接导出当前 composition；不重新 build / TTS / det
   tt preview [--port N]           首次以后台任务启动；复用时输出 ready 即返回
   tt lab [--port N] [--recipe <id>]   code recipe 镜头参考实验室：真实编译 + 引擎预览，可改代码重跑
   tt annotations [--wait] [--all] [--ack [id]]  读取圈注；--wait 作为后台任务全局等待下一批并带回结果及所属工程
   tt recipe list / show <id> / audit   recipe 货架（id/名称/关键词/when）/ 单条详情（mode+rules+template）/ 全量审计（骨架 + 示例）
-  tt ci [--deep] [--count N]      全量回归：audit + 逐条 det 两次；--deep 复用 tt qa 管线
+  tt ci [--deep] [--count N]      全量回归：audit + 逐条 det 两次；--deep 复用 tt qa 管线（params 自动跳过）
   tt ci --baseline [--write]       recipe 骨架 / 示例合成片的编译指纹与构建状态基线（新 recipe 自动纳入）；--write 刷新基线
   tt pack [目标目录]              打干净分发包（Skill + npm 依赖锁文件）
 
@@ -878,6 +950,8 @@ switch (command) {
   case 'build': await cmdBuild(); break;
   case 'assets':
     if (rest[0] === 'fetch') await cmdAssetsFetch();
+    else if (rest[0] === 'search') await cmdAssetsSearch();
+    else if (rest[0] === 'download') await cmdAssetsDownload();
     else usage();
     break;
   case 'stills': await cmdStills(); break;

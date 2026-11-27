@@ -8,7 +8,7 @@
   "mark":   { "file": "mark.js",   "provides": ["mark"], "requires": ["pen", "text"] },
   "transition": { "file": "transition.js", "provides": ["transition"] },
   "board":  { "file": "board.js",  "provides": ["board"] },
-  "shadow": { "file": "shadow.js", "provides": ["shadow"] },
+  "chronicle": { "file": "chronicle.js", "provides": ["chronicle"], "requires": ["text"] },
   "newsbg": { "file": "newsbg.js", "provides": ["newsBg"], "requires": ["num"] },
   "geom":   { "file": "geom.js",   "provides": ["geom"], "requires": ["ease", "num"] },
   "progress": { "file": "progress.js", "provides": ["progress"], "requires": ["fonts"] },

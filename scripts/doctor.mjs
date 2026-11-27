@@ -86,15 +86,15 @@ for (const [name] of runtimeDeps) {
 }
 const depsOk = missingDeps.length === 0;
 const depsDetail = depsOk
-  ? `ws / msedge-tts / ticktoon@1.0.2 ${installAttempted ? '已自动安装并验证' : '已安装'}`
+  ? `ws / msedge-tts / ticktoon@1.0.4 ${installAttempted ? '已自动安装并验证' : '已安装'}`
   : `缺少 ${missingDeps.join(' / ')}${installError ? `；${installError}` : ''}`;
 check(
   'deps',
   depsOk,
   depsDetail,
-  `cd "${ROOT}" && npm install（安装 ticktoon@1.0.2 / ws / msedge-tts；Chrome 直接使用本机安装，不下载浏览器）`,
+  `cd "${ROOT}" && npm install（安装 ticktoon@1.0.4 / ws / msedge-tts；Chrome 直接使用本机安装，不下载浏览器）`,
 );
-check('engine', existsSync(entryHtml), engineDetail(), `cd "${ROOT}" && npm install（安装 ticktoon@1.0.2）`);
+check('engine', existsSync(entryHtml), engineDetail(), `cd "${ROOT}" && npm install（安装 ticktoon@1.0.4）`);
 
 const hasDriver = !missingDeps.includes('ws');
 let chromeOk = false, chromeDetail = '';

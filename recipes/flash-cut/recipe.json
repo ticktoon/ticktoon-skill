@@ -19,7 +19,7 @@
     "每场只做一件事，靠节奏和硬切推进，不需要铺陈。"
   ],
   "notWhen": [
-    "需要解释机制、铺陈因果或连续旁白的长片；改用 whiteboard-explainer 或 illustrated-story。",
+    "需要解释机制、铺陈因果或连续旁白的长片；改用 whiteboard-explainer 或 crayon-guide。",
     "场景需要固定信息卡版式；改用 news-broadcast。",
     "需要真实素材叙事而不是大字/图形；改用 footage。"
   ],

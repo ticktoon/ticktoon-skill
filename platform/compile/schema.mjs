@@ -226,14 +226,51 @@ function normalizeSceneSfx(raw, bag, at, catalog) {
     bag.error('SCENE_SFX_TYPE', at, 'sfx 必须是 [{ name, at, volume? }] 数组');
     return [];
   }
-  if (raw.length > 6) {
-    bag.error('SCENE_SFX_TOO_MANY', at, `每场最多 6 个音效事件，收到 ${raw.length} 个；只给关键动作配音`);
+  if (raw.length > 12) {
+    bag.error('SCENE_SFX_TOO_MANY', at, `每场最多 12 个音效事件，收到 ${raw.length} 个；只给关键动作配音`);
   }
   const out = [];
   raw.forEach((cue, index) => {
     const path = `${at}[${index}]`;
     if (!isPlainObject(cue)) {
-      bag.error('SCENE_SFX_EVENT_TYPE', path, '音效事件必须是 { name, at, volume? } 对象');
+      bag.error('SCENE_SFX_EVENT_TYPE', path, '音效事件必须是 { name, at, volume? } 或 { type, cue, offset? } 对象');
+      return;
+    }
+    if (cue.type !== undefined) {
+      const allowed = ['type', 'at', 'cue', 'offset', 'gain', 'dur', 'dir', 'size', 'pan', 'keep'];
+      for (const key of Object.keys(cue)) {
+        if (!allowed.includes(key)) bag.error('SCENE_SFX_EVENT_UNKNOWN_KEY', `${path}.${key}`, `生成音效不认识键 "${key}"`);
+      }
+      if (typeof cue.type !== 'string' || !cue.type.trim()) {
+        bag.error('SCENE_SFX_NAME', `${path}.type`, '生成音效 type 必须是非空字符串');
+      }
+      if (cue.at === undefined && cue.cue === undefined) {
+        bag.error('SCENE_SFX_AT', `${path}.at`, '生成音效必须给 at 或 cue');
+      }
+      if (cue.at !== undefined && !(Number.isFinite(Number(cue.at)) && Number(cue.at) >= 0)) {
+        bag.error('SCENE_SFX_AT', `${path}.at`, 'at 必须是非负秒数');
+      }
+      if (cue.cue !== undefined && !(Number.isInteger(cue.cue) && cue.cue >= 0)) {
+        bag.error('SCENE_SFX_AT', `${path}.cue`, 'cue 必须是大于或等于 0 的序号');
+      }
+      if (cue.offset !== undefined && !Number.isFinite(Number(cue.offset))) {
+        bag.error('SCENE_SFX_AT', `${path}.offset`, 'offset 必须是秒数');
+      }
+      if (cue.gain !== undefined && !(Number.isFinite(Number(cue.gain)) && Number(cue.gain) >= 0 && Number(cue.gain) <= 3)) {
+        bag.error('SCENE_SFX_VOLUME', `${path}.gain`, 'gain 必须在 0–3 之间');
+      }
+      out.push({
+        type: String(cue.type).trim(),
+        ...(cue.at !== undefined ? { at: Number(cue.at) } : {}),
+        ...(cue.cue !== undefined ? { cue: cue.cue } : {}),
+        ...(cue.offset !== undefined ? { offset: Number(cue.offset) } : {}),
+        ...(cue.gain !== undefined ? { gain: Number(cue.gain) } : {}),
+        ...(cue.dur !== undefined ? { dur: Number(cue.dur) } : {}),
+        ...(cue.dir !== undefined ? { dir: Number(cue.dir) } : {}),
+        ...(cue.size !== undefined ? { size: Number(cue.size) } : {}),
+        ...(cue.pan !== undefined ? { pan: Number(cue.pan) } : {}),
+        ...(cue.keep !== undefined ? { keep: Boolean(cue.keep) } : {}),
+      });
       return;
     }
     for (const key of Object.keys(cue)) {

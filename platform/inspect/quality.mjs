@@ -58,6 +58,27 @@ export async function runFilmQuality({
     };
   }
 
+  // params recipe 使用固定模板，画面由 recipe 自己的 template.js 决定；
+  // 模板已在 audit / 日常预览中验证，不再抓帧做 QA。直接交给 preview。
+  if (built.recipe?.mode === 'params') {
+    return {
+      ok: true,
+      built,
+      sampled: null,
+      result: {
+        ok: true,
+        skipped: true,
+        reason: 'params-template',
+        summary: { must: 0, should: 0, nice: 0 },
+        issues: [],
+        checks: null,
+        coverage: null,
+        sheet: null,
+        sampling: null,
+      },
+    };
+  }
+
   const scanPicks = sampleTimes(built.planned, Math.max(1, count));
   const reviewPicks = reviewSampleTimes(built.planned, gridCount, scanPicks);
   const picks = uniquePicks([...reviewPicks, ...scanPicks]);

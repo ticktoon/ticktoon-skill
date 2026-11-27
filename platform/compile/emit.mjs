@@ -294,10 +294,10 @@ export function emitScene({ scene, recipe, format, catalog, kitIndex, kitDir, ca
   // 场间转场不在单场内绘制；编译器随后生成独立的双帧转场场。
   push('};');
 
-  const authoredSfxEvents = (scene.sfx || []).map((event) => ({
-    ...event,
-    at: Number(event.at.toFixed(3)),
-  }));
+  const authoredSfxEvents = (scene.sfx || []).map((event) => {
+    const at = event.at ?? ((scene.cues?.[event.cue]?.start ?? 0) + (event.offset ?? 0));
+    return { ...event, at: Number(at.toFixed(3)) };
+  });
   const templateSfxEvents = (track?.events || []).map((event) => ({
     ...event,
     at: Number(event.at.toFixed(3)),

@@ -18,7 +18,7 @@
   ],
   "notWhen": [
     "需要固定版式、换稿不换视觉的信息卡；改用 news-broadcast。",
-    "需要插画故事或实拍；改用 illustrated-story / footage。",
+    "需要插画故事或实拍；改用 crayon-guide / footage。",
     "需要快节奏大字连打；改用 flash-cut。"
   ],
   "rules": {

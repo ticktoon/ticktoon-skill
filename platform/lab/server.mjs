@@ -200,6 +200,7 @@ export async function startLab({ root, port = 5125, recipe: onlyRecipe = null, l
     try {
       const built = await buildProject({
         root, dir: entry.dir, file, tts, write: false, receipts: false,
+        audioDir: path.join(jobDir, 'audio'),
         captionOverride: captions ?? null,
       });
       if (!built.ok) {

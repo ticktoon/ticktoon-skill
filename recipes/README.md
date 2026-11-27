@@ -94,6 +94,7 @@ recipes/<id>/
 | `id` | string | 目录名与 `tt recipe list` 的 id；必须唯一 |
 | `abi` | `"1"` | recipe 契约版本；当前只支持 1 |
 | `name` | string | 中文名称，出现在 `tt recipe list` |
+| `listed` | boolean | 可选；设为 `false` 时仅退出 `tt recipe list` 货架，代码、骨架与直接开发入口仍保留；默认列出 |
 | `keywords` | string[] | 检索词；用于和用户第一句话做匹配 |
 | `when` | string[] | 适用条件；每条一个判断 |
 | `notWhen` | string[] | 不适用条件；每条一个判断，尽量给出替代 recipe |
@@ -134,7 +135,7 @@ recipes/<id>/
 - `auto`：`{ "mode": "auto", "from": "..." }`
 - `random`：`{ "mode": "random", "choices": [...] }`
 
-`forbid` 是给人和 Agent 的创作契约，编译器不会自动判违规；视觉是否越界靠 `tt qa`、`tt probe` 与 12 格联系表人审。
+`forbid` 是给人和 Agent 的创作契约，编译器不会自动判违规；视觉是否越界靠 `tt qa`、`tt probe` 与 12 格联系表人审（`params` 固定模板跳过 QA，直接 preview）。
 
 ### 4.4 captions
 
@@ -369,7 +370,7 @@ function draw(g, p) {
 |---|---|---|
 | `tt recipe audit` | 逐条：recipe 结构校验；params 编译骨架；code 编译骨架 + 合成全部 ref-shots | 不起浏览器、不判视觉质量 |
 | `tt ci` | 全货架快速回归 | 不导视频 |
-| `tt ci --deep` | 复用 `tt qa` 管线做深度检查 | 不做审美评分 |
+| `tt ci --deep` | 复用 `tt qa` 管线做深度检查（params 跳过） | 不做审美评分 |
 | `tt ci --baseline` | 记录每条 recipe 的编译指纹与构建状态 | 不存像素、不做图像回归 |
 | `tt lab --recipe <id>` | code 型镜头参考实验室：真实编译 + 引擎预览，可改代码重跑 | 不回写 `ref-shots/` |
 

@@ -1,0 +1,32 @@
+{
+  "recipe": "bar-race",
+  "format": { "w": 1080, "h": 1920, "fps": 30 },
+  "meta": { "title": "中国省份 GDP 竞速排行榜（2000→2023）" },
+  "scenes": [
+    {
+      "id": "s01",
+      "duration": 14,
+      "params": {
+        "title": "中国省份GDP竞速 2000→2023",
+        "source": "演示：两端为国家统计局数据，中间为视觉插值",
+        "startYear": 2000,
+        "endYear": 2023,
+        "items": [
+          { "label": "广东", "start": 10741, "end": 135673 },
+          { "label": "江苏", "start": 8554, "end": 128222 },
+          { "label": "山东", "start": 8543, "end": 92069 },
+          { "label": "浙江", "start": 6141, "end": 82553 },
+          { "label": "河南", "start": 5138, "end": 59132 },
+          { "label": "四川", "start": 4010, "end": 60133 },
+          { "label": "湖北", "start": 4276, "end": 55804 },
+          { "label": "福建", "start": 3920, "end": 54355 },
+          { "label": "湖南", "start": 3692, "end": 50013 },
+          { "label": "上海", "start": 4771, "end": 47219 },
+          { "label": "安徽", "start": 2902, "end": 47051 },
+          { "label": "河北", "start": 5044, "end": 43944 }
+        ],
+        "brand": "@WorkBuddy"
+      }
+    }
+  ]
+}

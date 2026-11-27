@@ -68,29 +68,29 @@ ticktoon CanvasCompositor.tick(t)
 |---|---|---|
 | `whiteboard-explainer` | `scene.code` | 暖白纸 / 马克笔红 |
 | `blackboard-lesson` | `scene.code` | 绿黑板 / 粉笔白 |
-| `illustrated-story` | `scene.code` | 米色纸 / 拼贴色 |
 | `flash-cut` | `scene.code` | 近黑底 / 橙与深蓝 |
 | `flat-motion` | `scene.code` | 群青 / 珊瑚 / 薄荷色块、圆角人物与图标、弹性变形 |
-| `medical-3d` | `scene.code` | BodyParts3D 真实解剖模型、器官定位与聚焦镜头 |
 | `crayon-guide` | `scene.code` | 暖米纸 / 蜡笔人物 / 手绘图解 |
-| `shadow-play` | `scene.code` | 全幅柔光幕布 / data 定妆皮偶 / cue 动作与签条 |
+| `paper-chronicle` | `scene.code` | 纸幕 / 仿古舆图 / 印章 / 文书 / 岔路推演 / 纸偶 / 门阙 / 年表 / 固定旁白 |
 | `news-broadcast` | `scene.params` | 径向深蓝 / 地图与网格 |
+| `bar-race` | `scene.params` | 深色纵向榜单 / 斜切标题 / 年份与倒影 |
 | `footage` | `scene.params` | 深棕黑 / 暖白压屏字 |
 
-内容形态取决于 `recipe.json` 的 `mode`（`code` 型写 `scene.code`，`params` 型写 `scene.params`）。新增 recipe 只需建目录并写 `recipe.json`（params 型再加 `template.js`），`tt recipe list / audit / ci --baseline` 都会自动纳入，不需要改任何索引文件。
+内容形态取决于 `recipe.json` 的 `mode`（`code` 型写 `scene.code`，`params` 型写 `scene.params`）。新增 recipe 只需建目录并写 `recipe.json`（params 型再加 `template.js`），`tt recipe list / audit / ci --baseline` 都会自动纳入，不需要改任何索引文件；开发中的 recipe 可设 `listed: false`，仅退出 `tt recipe list` 货架，不影响直接开发与审计。
 
 **公共 kit（`platform/kit/index.json`）**
 
-`ease`、`num`（含 `clamp01 / env / rng`）、`text`、`fonts`（`font`）、`chart`、`pen`、`mark`、`transition`、`board`、`geom`、`newsbg`（`newsBg`：新闻径向蓝底 + 地图 + 网格 + 种子流动线）、`progress`（全片章节进度）、`anatomy`（BodyParts3D 人体外壳与器官）、`shadow`（data 皮偶、动作、道具、蛇、签条与光场）。
+`ease`、`num`（含 `clamp01 / env / rng`）、`text`、`fonts`（`font`）、`chart`、`pen`、`mark`、`transition`、`board`、`geom`、`newsbg`（`newsBg`：新闻径向蓝底 + 地图 + 网格 + 种子流动线）、`progress`（全片章节进度）、`chronicle`（纸上剧场：舆图、文书、岔路推演、纸偶、门阙、旗幡）、`anatomy`（BodyParts3D 人体外壳与器官）。
 
 kit 可以带 `payload`：数据文件先于词法注入同一作用域，`anatomy.js` 里的 `__TT_ANATOMY` 由此而来。数据大、逻辑小的 kit 用它把 base64 挡在可读代码之外；payload 跟 `provides` 一起触发，不额外声明。
 
-字幕 kit 在 `platform/kit/captions/`：`core.js` 提供 `TT.captionKit`，`styles/*.js` 是七种可选样式。它随编译期选中的样式一起注入，不走 `index.json` 的命名空间机制。
+字幕 kit 在 `platform/kit/captions/`：`core.js` 提供 `TT.captionKit`，`styles/*.js` 是七种样式（含 `none`）。它随编译期选中的样式一起注入，不走 `index.json` 的命名空间机制。
 
-**params 模板（2）**
+**params 模板（3）**
 
 每条 params recipe 在目录下自带一个 `template.js`，顶层只导出 `function draw(g, p)`：
 
+- `bar-race/template.js`
 - `footage/template.js`
 - `news-broadcast/template.js`
 
@@ -316,6 +316,7 @@ sceneDur ──累加──► scene.start
 - 旁白：一场一个事件。
 - BGM：可按旁白区间切成相邻事件实现 ducking；无 duck 配置时用单事件 + 首尾淡入淡出。
 - SFX：params 场可使用 `template.defaultSfx` / `template.sfxTrack` / 循环音效；任意场景也可显式写 `scene.sfx` 时间事件，全部在编译期展开为绝对时间事件；运行时不产生声音。
+- 生成式音频：`recipe.audio.generator = score|bgm` 时，`platform/audio` 在 emit 后把场景、cue 与生成式 `{ type, at|cue, offset }` 事件交给公共 DSP，生成缓存 WAV 再进入 assemble。`score` 输出已混好配乐与音效的 accompaniment，`bgm` 输出 music bed + effects；这些音轨已含人声 duck，不经过静态 BGM duck。预设与默认乐谱见 `platform/audio/README.md`，不使用音频素材 manifest。
 - 引擎不做 LUFS、母带归一、侧链压缩；响度属导出后工序。
 
 ### 6.4 语音与素材
@@ -334,14 +335,14 @@ sceneDur ──累加──► scene.start
 |---|---|---|---|
 | `tt build` | storyboard | 六阶段编译通过，引擎协议校验通过 | 画面好不好 |
 | `tt stills` / `probe` | 指定时刻 | 真实 ink/text/caption 框、亮度、单元可见性 | 全片时间连续性 |
-| `tt qa` | 一次 build + 一次浏览器会话；约 24 个采样帧，联系表 12 格复用其中大部分采样点（首尾追加），单会话约 24–30 帧 | 渲染异常与空墨迹（`RENDER_PAGE_ERROR` / `QA_INK_EMPTY`）、12 格视觉证据 | 全片逐帧无缺陷；安全框、碰撞、审美好坏 |
+| `tt qa` | 仅 code 配方；params 固定模板跳过。一次 build + 一次浏览器会话；约 24 个采样帧，联系表 12 格复用其中大部分采样点（首尾追加），单会话约 24–30 帧 | 渲染异常与空墨迹（`RENDER_PAGE_ERROR` / `QA_INK_EMPTY`）、12 格视觉证据 | 全片逐帧无缺陷；安全框、碰撞、审美好坏 |
 | `tt det` | 编译产物 | 规范化 composition 的 SHA-256 指纹 | 像素一致、MP4 字节一致 |
 | `tt ci --baseline` | 10 条 recipe 的骨架 / 镜头参考合成片 | 编译指纹与构建状态回归；指纹变化提示人审后刷新 | 像素/视觉回归 |
-| `tt ci [--deep]` | 全货架 | 快速/深度全量回归；`--deep` 复用 `tt qa` 同一管线 | 真机联网、真实素材与导出验收 |
+| `tt ci [--deep]` | 全货架 | 快速/深度全量回归；`--deep` 复用 `tt qa` 同一管线（params 跳过） | 真机联网、真实素材与导出验收 |
 
 ### 7.1 采样口径
 
-`platform/inspect/sample.mjs` 一次浏览器会话渲染所有采样帧：
+以下采样只发生在 `code` 配方的 `tt qa`；`params` 固定模板跳过。`platform/inspect/sample.mjs` 一次浏览器会话渲染所有采样帧：
 
 - 时间维采样 `sampleTimes`：每场至少一帧；名额富余时优先分给长场；单帧位置固定在 55%，多帧在 18%–82% 内铺开。
 - 联系表 `reviewSampleTimes`：12 格；首内容场开场 6%、末内容场收尾 94%，其余从时间维候选点里均匀挑选，不另起一套渲染。
@@ -364,7 +365,7 @@ sceneDur ──累加──► scene.start
 
 ### 7.3 质量门与联系表
 
-`tt qa` 是**轻校验**，唯一硬门禁是 **must = 0**。must 只有两类：
+`tt qa` 只用于 `code` 配方；`params` 配方使用固定模板，由 audit 与日常预览保障，不抓帧。对 `code` 配方，它是**轻校验**，唯一硬门禁是 **must = 0**。must 只有两类：
 
 - 页内渲染异常 `RENDER_PAGE_ERROR`；
 - `QA_INK_EMPTY`：场景单元执行了却没有墨迹（字体没加载、资源丢失、颜色透明）。
@@ -388,8 +389,9 @@ sceneDur ──累加──► scene.start
 | `tt new <dir> --recipe <id>` | 建工程，复制 recipe 的 `skeleton.storyboard.json` 到 storyboard |
 | `tt build` | 编译，产出 `out/` 四件套 |
 | `tt assets fetch` | Pexels 检索/下载/署名/回写素材 |
+| `tt assets search / download` | Iconify / Commons 在线检索；仅下载选中项到用户工程并记录授权 |
 | `tt stills` / `tt probe` | 指定帧 / 单帧凭据 |
-| `tt qa` | 轻量质量管线：渲染异常 + 空墨迹 + 12 格联系表 |
+| `tt qa` | 轻量质量管线：渲染异常 + 空墨迹 + 12 格联系表；params 自动跳过 |
 | `tt det` | 编译指纹 |
 | `tt preview` | 只读预览 + 多帧画笔圈注；发送后写工程 `annotations/` 并关闭 |
 | `tt annotations [--all] [--ack [id]]` | 读取圈注批次：默认最新未处理批次；`--ack` 标记整批已处理 |
@@ -428,7 +430,7 @@ sceneDur ──累加──► scene.start
 | 可视化编辑器 | 不做；只读预览 + 圈注 |
 | 实拍精剪 / 多机位 / 口播剪辑 | 不支持 |
 | 资源内存 | 池按 `src` 去重且不淘汰，长片驻留 |
-| 质量门禁 | 只有 `tt qa` 的 `must` 阻断；`should` 与审美判断不阻断 |
+| 质量门禁 | `code` 配方只有 `tt qa` 的 `must` 阻断；`params` 配方跳过 QA；`should` 与审美判断不阻断 |
 
 ---
 

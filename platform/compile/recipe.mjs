@@ -18,7 +18,7 @@ import path from 'node:path';
 import { isPlainObject } from './diag.mjs';
 
 const DIMENSION_MODES = new Set(['fixed', 'enum', 'auto', 'random']);
-const RECIPE_KEYS = new Set(['id', 'abi', 'name', 'keywords', 'when', 'notWhen', 'mode', 'template', 'rules', 'captions', 'audio', 'pacing']);
+const RECIPE_KEYS = new Set(['id', 'abi', 'name', 'listed', 'keywords', 'when', 'notWhen', 'mode', 'template', 'rules', 'captions', 'audio', 'pacing']);
 const PACING_KEYS = new Set(['leadIn', 'hold', 'minNarrationDuration']);
 const RECIPE_MODES = new Set(['code', 'params']);
 const TEMPLATE_KEYS = new Set(['draw', 'params', 'resources', 'needs', 'defaultSfx', 'sfxTrack', 'inkless']);
@@ -28,7 +28,11 @@ const CAPTION_STYLE_KEYS = new Set([
   'background', 'accent', 'highlight', 'palette', 'avoid', 'maxWidth', 'maxHeight',
   'align', 'seed', 'rotation', 'tracking', 'padding', 'shadow', 'stroke',
 ]);
-const AUDIO_KEYS = new Set(['mood', 'volume', 'fadeIn', 'fadeOut', 'duck']);
+const AUDIO_KEYS = new Set([
+  'mood', 'volume', 'fadeIn', 'fadeOut', 'duck',
+  'generator', 'scorePreset', 'soundPreset', 'style', 'bpm', 'offset', 'seed',
+  'voiceRms', 'duckDb', 'gapDb', 'level',
+]);
 const DUCK_KEYS = new Set(['level', 'edge']);
 const RESOURCE_TYPES = new Set(['image', 'video', 'font']);
 const SFX_TRACK_KEYS = new Set(['type', 'textParam', 'cps', 'cpsParam', 'start', 'lineGap', 'every', 'linePrefix', 'sfx', 'loop']);
@@ -51,6 +55,10 @@ export function validateRecipe(recipe, manifest, recipeDir) {
   for (const key of Object.keys(recipe)) {
     if (RECIPE_KEYS.has(key)) continue;
     fail('RECIPE_UNKNOWN_KEY', key, `recipe 不认识字段 "${key}"`);
+  }
+
+  if (recipe.listed !== undefined && typeof recipe.listed !== 'boolean') {
+    fail('RECIPE_LISTED_INVALID', 'listed', `listed 必须是 boolean，收到 ${JSON.stringify(recipe.listed)}`);
   }
 
   if (!RECIPE_MODES.has(recipe.mode)) {
@@ -241,6 +249,22 @@ function validateAudio(audio, fail) {
   }
   if (audio.mood !== undefined && (typeof audio.mood !== 'string' || !audio.mood.trim())) {
     fail('RECIPE_AUDIO_MOOD_INVALID', 'audio.mood', 'mood 必须是非空字符串');
+  }
+  if (audio.generator !== undefined && !['score', 'bgm'].includes(audio.generator)) {
+    fail('RECIPE_AUDIO_GENERATOR_INVALID', 'audio.generator', 'generator 只能是 score / bgm');
+  }
+  for (const key of ['scorePreset', 'soundPreset', 'style', 'seed']) {
+    if (audio[key] !== undefined && (typeof audio[key] !== 'string' || !audio[key].trim())) {
+      fail('RECIPE_AUDIO_PRESET_INVALID', `audio.${key}`, `${key} 必须是非空字符串`);
+    }
+  }
+  for (const key of ['bpm', 'voiceRms', 'duckDb', 'gapDb', 'level', 'offset']) {
+    if (audio[key] !== undefined && !(isFiniteNumber(audio[key]) && audio[key] >= 0)) {
+      fail('RECIPE_AUDIO_NUMBER_INVALID', `audio.${key}`, `${key} 必须是非负数`);
+    }
+  }
+  if (audio.bpm !== undefined && audio.bpm <= 0) {
+    fail('RECIPE_AUDIO_NUMBER_INVALID', 'audio.bpm', 'bpm 必须大于 0');
   }
   for (const key of ['volume', 'fadeIn', 'fadeOut']) {
     if (audio[key] !== undefined && !(isFiniteNumber(audio[key]) && audio[key] >= 0)) {

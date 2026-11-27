@@ -16,7 +16,7 @@ const MIME = {
   '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.mjs': 'text/javascript',
   '.css': 'text/css', '.wasm': 'application/wasm', '.json': 'application/json',
   '.png': 'image/png', '.svg': 'image/svg+xml', '.webp': 'image/webp', '.gif': 'image/gif', '.jpg': 'image/jpeg',
-  '.mp4': 'video/mp4', '.mp3': 'audio/mpeg', '.ico': 'image/x-icon', '.txt': 'text/plain', '.ttf': 'font/ttf',
+  '.mp4': 'video/mp4', '.mp3': 'audio/mpeg', '.wav': 'audio/wav', '.ico': 'image/x-icon', '.txt': 'text/plain', '.ttf': 'font/ttf',
   '.otf': 'font/otf', '.woff': 'font/woff', '.woff2': 'font/woff2',
 };
 

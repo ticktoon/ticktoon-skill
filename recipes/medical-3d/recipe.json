@@ -2,6 +2,7 @@
   "id": "medical-3d",
   "abi": "1",
   "name": "3D 医学",
+  "listed": false,
   "keywords": ["3D", "医学", "人体", "器官", "解剖", "医疗科普", "心脏", "肺", "脑"],
   "mode": "code",
   "when": [

@@ -2,6 +2,7 @@
   "name": "ticktoon-skill",
   "private": true,
   "version": "0.0.1",
+  "license": "Apache-2.0",
   "type": "module",
   "description": "Ticktoon Agent 创作入口：storyboard → composition 编译、只读预览与普通 MP4 直出",
   "scripts": {
@@ -15,7 +16,7 @@
     "pack": "node scripts/tools/pack-skill.mjs"
   },
   "dependencies": {
-    "ticktoon": "1.0.2",
+    "ticktoon": "1.0.4",
     "msedge-tts": "^2.1.1",
     "ws": "^8.22.0"
   }

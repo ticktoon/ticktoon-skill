@@ -35,7 +35,7 @@ export function buildSrt(scenes) {
 /**
  * @returns {{ composition, events, bag }}
  */
-export function assemble({ scenes, audioScenes = scenes, resolved, format, bag }) {
+export function assemble({ scenes, audioScenes = scenes, resolved, generatedAudio = null, format, bag }) {
   const duration = round3(scenes.reduce((sum, s) => sum + s.duration, 0));
   if (scenes.length === 0) {
     bag.error('ASM_NO_SCENES', '', '没有场景');
@@ -65,7 +65,7 @@ export function assemble({ scenes, audioScenes = scenes, resolved, format, bag }
   // 单事件 + 静态电平在"全程有旁白"的片子里是对的；一旦有纯画面场，
   // 那几秒的 BGM 也被压着就浪费了。分段让 BGM 在呼吸处抬起来。
   // 相邻段各留 edge 的淡入淡出，交叉处电平相加 ≈ 目标值，不会爆。
-  if (resolved.bgm) {
+  if (resolved.bgm && !generatedAudio) {
     const duck = resolved.bgm.duck;
     const narrations = events.filter((event) => event.role === 'narration');
     const canDuck = duck && narrations.length > 0;
@@ -108,6 +108,9 @@ export function assemble({ scenes, audioScenes = scenes, resolved, format, bag }
       }
     }
   }
+
+  // 生成式音轨已包含配乐、音效与人声 duck，不能再走静态 BGM duck。
+  if (generatedAudio) events.push(...generatedAudio.events);
 
   // --- SFX：模板落地声 + 模板编译期展开的多次事件，运行时不再产生事件 ---
   const pushSfxEvent = (entry, at, length, { fadeIn = 0.005, fadeOut = 0.06, volume, where } = {}) => {

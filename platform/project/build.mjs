@@ -15,6 +15,7 @@ import { check } from '../compile/check.mjs';
 import { detHash, sceneHashes } from '../compile/det.mjs';
 import { Bag } from '../compile/diag.mjs';
 import { createVisualScenes } from '../compile/transition-scenes.mjs';
+import { generateProjectAudio } from '../audio/index.mjs';
 
 function readKitIndex(root) {
   const kitDir = path.join(root, 'platform', 'kit');
@@ -55,9 +56,9 @@ function summarize({ planned, resolved, composition }) {
 }
 
 /**
- * @param {{ root: string, dir: string, tts?: object|null, write?: boolean, captionOverride?: string|object|null }} options
+ * @param {{ root: string, dir: string, tts?: object|null, write?: boolean, audioDir?: string, captionOverride?: string|object|null }} options
  */
-export async function buildProject({ root, dir, file = null, tts = null, write = true, receipts = false, captionOverride = null }) {
+export async function buildProject({ root, dir, file = null, tts = null, write = true, audioDir = null, receipts = false, captionOverride = null }) {
   const started = Date.now();
   // file 覆盖：audit / ci 直接编译 recipe 的骨架或示例合成片，不要求它是工程 storyboard.json
   const storyboardPath = file || path.join(dir, 'storyboard.json');
@@ -134,10 +135,23 @@ export async function buildProject({ root, dir, file = null, tts = null, write =
     transitionKitCode: readFileSync(path.join(kitDir, kitIndex.transition.file), 'utf-8'),
     bag,
   });
+  let generatedAudio = null;
+  try {
+    generatedAudio = await generateProjectAudio({
+      recipe, planned, emitted, resolved,
+      audioDir: audioDir || (write ? path.join(outDir, 'audio') : path.join(root, 'output', 'audio')),
+    });
+    for (const msg of generatedAudio?.info?.warnings || []) {
+      bag.warn('nice', 'AUDIO_MIX', 'audio', msg);
+    }
+  } catch (error) {
+    bag.error('AUDIO_GENERATE_FAILED', 'audio', `生成音频失败：${error.message}`);
+  }
   const { composition, events } = assemble({
     scenes: visual.scenes,
     audioScenes,
     resolved,
+    generatedAudio,
     format: storyboard.format,
     bag,
   });
@@ -156,6 +170,7 @@ export async function buildProject({ root, dir, file = null, tts = null, write =
     // 指纹进 report：每次 build 都是一次回归比对，不用另外跑一遍
     det: { hash: detHash(composition), scenes: sceneHashes(composition) },
     engineChecked: engineCheck.checked,
+    audio: generatedAudio?.info || null,
     timings: { totalMs: Date.now() - started },
     warnings: bag.warnings,
     errors: bag.errors,

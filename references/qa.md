@@ -1,5 +1,7 @@
 # 交付前检查与 12 格联系表
 
+> `params` 配方（news-broadcast / bar-race / footage）使用固定模板，不跑 `tt qa`；build 后直接 `tt preview`。`tt qa` 对 params 工程会自动跳过；仍会做一次编译校验，参数/资源不合法时按 build 报错。
+
 ## 命令
 
 ```bash
@@ -8,8 +10,8 @@ node "$SKILL_DIR/platform/cli.mjs" det --twice --dir <dir>    # 编译指纹，�
 ```
 
 - `det` 比对的是规范化 `composition.json` 的 SHA-256，不是像素或 MP4 字节；带 `--tts` 时第一次会接 TTS、第二次强制不接，只有不带 `--tts` 才是严格同输入链。CI 内部两次都不接 TTS。
-- `qa` 一次 build + 一次浏览器会话采样约 24–30 帧，只判两类硬问题：`RENDER_PAGE_ERROR` 与 `QA_INK_EMPTY`。安全框、碰撞、文字互压、字幕带、对比度、停留、时间维都**不自动判定**，直接看联系表。
-- 拿不准成片什么样：看 `review/qa-sheet.png` 的 12 格联系表（`tt qa` 自动生成），不要另跑抽帧命令。`must=0` 且联系表无明显问题后直接进入 `tt preview`，交用户人工检查；不要再用 `stills` 重复确认构图、稳定帧或入场过程。**禁止 FFmpeg 抽帧，禁止为了核对画面先导出 MP4 再截图；只有用户指定时刻或需要布局凭据时才用 `tt stills`。**
+- `qa` 一次 build + 一次浏览器会话采样约 24–30 帧，只判两类硬问题：`RENDER_PAGE_ERROR` 与 `QA_INK_EMPTY`。安全框、碰撞、文字互压、字幕带、对比度、停留、时间维都**不自动判定**，直接看联系表。**只对 `code` 配方运行；`params` 配方使用固定模板，自动跳过。**
+- 拿不准成片什么样：看 `review/qa-sheet.png` 的 12 格联系表（`tt qa` 自动生成），不要另跑抽帧命令。`code` 配方在 `must=0` 且联系表无明显问题后直接进入 `tt preview`，交用户人工检查；不要再用 `stills` 重复确认构图、稳定帧或入场过程。**禁止 FFmpeg 抽帧，禁止为了核对画面先导出 MP4 再截图；只有用户指定时刻或需要布局凭据时才用 `tt stills`。**
 
 需要指定时刻的静帧时直接运行：
 
@@ -30,4 +32,4 @@ node "$SKILL_DIR/platform/cli.mjs" stills 5.6 --dir <dir>
 4. **推进**：相邻格之间有没有变化（主体增加、视角变化、停顿）。连续三格几乎一样，就要问这一场是否没有信息增量。
 5. **稳定**：字幕/注记是否总落在同一块区域。某格突然跳到别处或被画框截断，先查字幕样式和这一场的 `TT.text` / `TT.captionKit` 参数。
 
-联系表只是视觉证据，不是评分卡，也不能替代完整预览。发现问题回到 storyboard 改，改完重跑 `tt qa` 看新图。
+联系表只是视觉证据，不是评分卡，也不能替代完整预览。`code` 配方发现问题回到 storyboard 改，改完重跑 `tt qa` 看新图；`params` 配方直接改参数并 preview。

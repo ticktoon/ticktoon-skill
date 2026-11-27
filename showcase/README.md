@@ -8,7 +8,7 @@
 
 1. **Settings → Pages**。
 2. **Build and deployment → Deploy from a branch**。
-3. 选择 `main` 分支和 `/ (root)`，保存。
+3. 选择默认分支 `main` 和 `/ (root)`，保存。
 
 页面地址：
 
@@ -29,22 +29,22 @@ showcase/<example>/
 └── storyboard.json
 ```
 
-然后在 `index.html` 的 `works` 数组中增加一项：
+目录名统一用连字符（`break-news`、`flash-cut`），不要用下划线。然后在 `index.html` 的 `works` 数组中增加一项：
 
 ```js
 {
   title: '示例标题',
-  recipe: 'shadow-play',
+  recipe: 'paper-chronicle',
   duration: '00:45',
   description: '一句话说明画面与配方特点。',
-  video: 'shadow_play/video.mp4',
-  poster: 'shadow_play/qa-sheet.png',
-  storyboard: 'shadow_play/storyboard.json',
+  video: 'paper-chronicle/video.mp4',
+  poster: 'paper-chronicle/qa-sheet.png',
+  storyboard: 'paper-chronicle/storyboard.json',
   orientation: 'landscape',
 }
 ```
 
-需要新增配方筛选按钮时，复制一个 `.filter` 按钮，并把 `data-filter` 设为相同的 recipe id。视频源文件保留在原目录，页面不会移动或重编码它们。
+筛选按钮、示例数和配方数都由 `works` 自动生成；新配方只要在 `recipeLabels` 里补一个中文名即可。视频源文件保留在原目录，页面不会移动或重编码它们。
 
 建议：
 

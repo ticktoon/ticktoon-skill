@@ -1,4 +1,8 @@
 <div align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/ticktoon/ticktoon/main/assets/ticktoon_logo.png">
+    <img src="https://raw.githubusercontent.com/ticktoon/ticktoon/main/assets/ticktoon_logo_dark_text.png" alt="Ticktoon" width="640">
+  </picture>
 
 # Ticktoon Skill
 
@@ -8,27 +12,113 @@
     <a href="https://nodejs.org/"><img alt="Node.js 18+" src="https://img.shields.io/badge/Node.js-18%2B-339933?style=flat-square&logo=node.js&logoColor=white"></a>
     <a href="https://developer.mozilla.org/en-US/docs/Web/API/WebCodecs_API"><img alt="Protocol v1.0" src="https://img.shields.io/badge/Protocol-v1.0-08A9E6?style=flat-square"></a>
     <a href="https://www.google.com/chrome/"><img alt="Chrome 120+" src="https://img.shields.io/badge/Chrome-120%2B-263238?style=flat-square&logo=googlechrome&logoColor=white"></a>
+    <a href="LICENSE"><img alt="License: Apache-2.0" src="https://img.shields.io/badge/License-Apache_2.0-blue?style=flat-square"></a>
     <a href="https://github.com/ticktoon/ticktoon-skill/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/ticktoon/ticktoon-skill?style=flat-square&logo=github&label=Stars"></a>
 </p>
 
 <p><strong>English</strong> · <a href="README.zh-CN.md">简体中文</a></p>
 </div>
 
-**Ticktoon Skill is the authoring layer for [Ticktoon](https://github.com/ticktoon/ticktoon).**
-
-**[Watch the showcase](https://ticktoon.github.io/ticktoon-skill/showcase/)** — complete videos and their storyboard sources.
+**Ticktoon Skill is the agent authoring layer for [Ticktoon](https://github.com/ticktoon/ticktoon).**
 
 An LLM writes one `storyboard.json`. The platform compiles it into protocol v1.0 `composition.json`; the engine renders every frame synchronously with `tick(t)`; Chrome exports an ordinary MP4.
 
-The authoring model is deliberately narrow: one storyboard file, one compile chain, one synchronous render path. The storyboard is the only authored file; recipes provide the production rules, a params recipe carries its own fixed template, and the kit provides drawing vocabulary.
+## What it can do
 
-<!--
-Demo: drop a short GIF/WebP in assets/readme/ and uncomment.
+Recipes cover explainers, stories, fast cuts, breaking news, data races, and real footage. A recipe either carries content in a whole-frame `scene.code` or is a fixed template driven by `scene.params`. `tt recipe list` is the authoritative, always-current shelf; the table below is the set bundled with this repo.
 
-**Demo** — storyboard to preview to MP4:
+**[Watch the showcase](https://ticktoon.github.io/ticktoon-skill/showcase/)** — complete videos and their storyboard sources.
 
-![Ticktoon Skill demo](assets/readme/demo.gif)
--->
+| Recipe | Picture | Content path | Best for |
+|---|---|---|---|
+| `whiteboard-explainer` | Whiteboard / blackboard, strokes growing in | `scene.code` | mechanisms, science, step-by-step explanation |
+| `blackboard-lesson` | Green board and chalk, written at lesson pace | `scene.code` | derivations, lectures, classroom rhythm |
+| `flash-cut` | Hard cuts, oversized type, one sentence per scene | `scene.code` | punchy opinions, conclusions, promo beats |
+| `flat-motion` | Saturated flat shapes, rounded characters and icons, elastic morphs | `scene.code` | product, brand, app-feature and light-explainer MG |
+| `crayon-guide` | Warm paper, crayon hatching, people and hand-drawn diagrams | `scene.code` | tutorials, cultural ideas, comparisons, kids' explainers |
+| `paper-chronicle` | Paper stage, antique maps, routes, seals, documents, fork decisions, paper figures, gates and banners | `scene.code` | history, biographies, myths and event explanation without character art |
+| `news-broadcast` | Fixed vertical news card: blue radial background, world map, flowing lines | `scene.params` | breaking-news cards, title / body / source |
+| `bar-race` | Dark vertical race chart, slanted title, animated year and reflection | `scene.params` | 2–18 entities racing from start values to end values |
+| `footage` | Full-frame real footage with short overlay lines | `scene.params` | Pexels or local footage montage |
+
+Also included:
+
+- **Scene code with an injected kit** — `TT.text`, `TT.pen`, `TT.mark`, `TT.board`, `TT.geom`, `TT.chart`, `TT.newsBg`, `TT.chronicle`, `TT.anatomy`, and more. The compiler injects only the members each scene uses; transition boundaries separately receive `TT.transition` in a generated dual-frame scene.
+- **6 caption styles + `none`** — plain, perchar, karaoke, collage, vertical, tornpaper, with per-character timing and subject avoidance.
+- **Narration and sound** — selected internally: Volc TTS when its credentials are complete, otherwise zero-key Edge TTS; BGM/SFX with fades and voice ducking.
+- **Stock footage** — Pexels search, download, attribution, and caching. Missing keys or failed downloads stop explicitly; local videos need no Pexels key.
+- **Preview and review** — read-only preview, stills, and probe receipts; per-frame pen annotations in the preview page, with each batch handed to the agent for interpretation and revision. Rebuild and preview again for the next round.
+- **Quality gates** — `tt qa` performs only two light must-checks, `RENDER_PAGE_ERROR` and `QA_INK_EMPTY`, and produces a 12-cell contact sheet; `tt det` checks compile determinism. QA applies only to `code` recipes; fixed `params` templates skip frame sampling and go straight to preview.
+- **Direct MP4** — H.264 + AAC through WebCodecs and Mediabunny; no external FFmpeg executable.
+- **Formats** — 1920×1080@30 and 1080×1920@30.
+
+## Using Ticktoon in WorkBuddy
+
+Ticktoon Skill is not a standalone application. It is a creative capability invoked by agents such as WorkBuddy. Once installed, describe the subject, duration, and style in natural language; the agent selects a recipe, writes the storyboard, generates narration and visuals, and opens the reviewer.
+
+### 1. Install and check the environment
+
+Requirements: Node.js 18+ (22 LTS recommended), Chrome 120+, and an available WebGL2 environment.
+
+You can send this directly in a WorkBuddy conversation:
+
+> Run pack for this repository, install the generated Skill distribution, and check the environment: https://github.com/ticktoon/ticktoon-skill
+
+Or package and install it manually:
+
+```bash
+git clone https://github.com/ticktoon/ticktoon-skill.git
+cd ticktoon-skill
+npm run pack
+```
+
+By default, `pack` creates `ticktoon-skill-dist/` next to the source repository. It contains the Skill and npm dependency lockfiles, without development artifacts such as `.git`, `node_modules`, or `output`. Then choose local installation or import in WorkBuddy's skill management. **Select the `ticktoon-skill-dist` distribution directory, not the source repository**; its root should contain [`SKILL.md`](SKILL.md).
+
+After import, WorkBuddy automatically checks the environment and installs the required dependencies. There is no need to run `doctor --install` manually.
+
+Other agents should likewise install the distribution produced by `pack`. Place it in the agent's skills directory (for Claude Code, `~/.claude/skills/ticktoon`) and make sure the installed root contains `SKILL.md`.
+
+### 2. Start creating
+
+After installation, invoke the skill from the skill list or name it directly in the conversation:
+
+> Help me make a breaking-news video.
+
+> Use ticktoon-skill to make a 60-second whiteboard explainer about compound interest for viewers with no finance background.
+
+> Use paper-chronicle to make a 60–90-second episode titled “Why did Liu Bang release the convicts?”.
+
+Once the film is generated, WorkBuddy provides a preview URL. You can play it, inspect individual frames, or continue requesting revisions in the conversation. The screenshot below shows creation, annotation-driven fixes, and review connected in one workflow.
+
+![Ticktoon creation, annotation-driven revisions, and review in WorkBuddy](assets/readme/创作-审片.jpg)
+
+Narration is selected internally: Volc TTS when its credentials are complete, otherwise zero-key Edge TTS. Configure Volc TTS and Pexels with `node scripts/auth.mjs set <KEY> <value>`. Credentials are read only from environment variables or `~/.dh-video/credentials.json`, and are never written to a storyboard or project.
+
+## Architecture
+
+The runtime has four layers, deliberately small:
+
+| Layer | Lives in | Responsibility | The agent reads it |
+|---|---|---|---|
+| Operating contract | `SKILL.md` | routing, authoring loop, red lines, delivery checks | every task |
+| Recipe spec | `recipes/<id>/` | `recipe.json`, `recipe.md`, `skeleton.storyboard.json`; code recipes add `ref-shots/`, params recipes add `template.js` | one selected recipe |
+| Runtime reference | `references/` | API manual for `scene.code` and public kit | one page when needed |
+| Content | `<project>/storyboard.json` | this film's scenes, narration, captions, assets, code, params | **writes** |
+
+Below the authoring layers sit the implementation layers: `platform/kit/` (public kit and caption styles), the six-stage compiler in `platform/compile/`, the quality pipeline in `platform/inspect/`, and the Ticktoon engine.
+
+Two units carry everything:
+
+| Unit | Where | It owns | It does not own |
+|---|---|---|---|
+| **recipe** | `recipes/` | the rules for one kind of film: `mode`, `rules`, `captions`, `audio`; a params recipe also owns `template` (`draw / params / resources / needs / defaultSfx / sfxTrack / inkless`) | content, narrative, drawing |
+| **kit** | `platform/kit/` | reusable drawing vocabulary: text, pen, mark, board, geometry/camera, transition, captions, news background, chronicle, anatomy | composition, subject matter |
+
+A recipe has exactly one of two modes, never mixed within the same recipe. In `mode: "code"`, scenes write `scene.code` against the public kit. In `mode: "params"`, scenes write `scene.params`, and the recipe's own `template.js` draws the frame. Fonts are not owned by recipes: the font library lives in `assets/fonts/manifest.json`. Code scenes declare selected keys in `scene.resources` (`{"type":"font","name":"<manifest key>"}`), with `src` filled at compile time; params templates hardcode font keys and declare them in `template.resources`. Colors come from kit defaults or hex written directly in `scene.code`; backgrounds are painted by scene code or templates. All values are static and traceable.
+
+## Authoring workflow
+
+The authoring model is deliberately narrow: one storyboard, one compile chain, and one synchronous render path. The storyboard is the only authored file; recipes provide production rules, params recipes carry fixed templates, and the kit provides drawing vocabulary.
 
 ```text
 user request
@@ -49,28 +139,6 @@ ticktoon tick(t)                 one synchronous render path
    └─ WebCodecs + Mediabunny → MP4 (H.264 + AAC)
 ```
 
-## Architecture
-
-The runtime has four layers, deliberately small:
-
-| Layer | Lives in | Responsibility | The agent reads it |
-|---|---|---|---|
-| Operating contract | `SKILL.md` | routing, authoring loop, red lines, delivery checks | every task |
-| Recipe spec | `recipes/<id>/` | `recipe.json`, `recipe.md`, `skeleton.storyboard.json`; code recipes add `ref-shots/`, params recipes add `template.js` | one selected recipe |
-| Runtime reference | `references/` | API manual for `scene.code` and public kit | one page when needed |
-| Content | `<project>/storyboard.json` | this film's scenes, narration, captions, assets, code, params | **writes** |
-
-Below the authoring layers sit the implementation layers: `platform/kit/` (public kit and caption styles), the six-stage compiler in `platform/compile/`, the quality pipeline in `platform/inspect/`, and the Ticktoon engine.
-
-Two units carry everything:
-
-| Unit | Where | It owns | It does not own |
-|---|---|---|---|
-| **recipe** | `recipes/` | the rules for one kind of film: `mode`, `rules`, `captions`, `audio`; a params recipe also owns `template` (`draw / params / resources / needs / defaultSfx / sfxTrack / inkless`) | content, narrative, drawing |
-| **kit** | `platform/kit/` | reusable drawing vocabulary: text, pen, mark, board, camera, transition, captions, news background | composition, subject matter |
-
-A recipe is either `mode: "code"` (scenes write `scene.code` against the public kit) or `mode: "params"` (scenes write `scene.params`, and the recipe's own `template.js` draws a fixed full-frame layout). The two modes never mix inside one recipe. Fonts are not owned by recipes: the font library lives in `assets/fonts/manifest.json`, where every key carries a `desc`. Code scenes declare selected keys in `scene.resources` (`{"type":"font","name":"sans-400"}`); params templates hardcode keys and declare them in `template.resources`. The compiler fills `src` from the manifest. Colors come from kit defaults or hex written directly in code scenes; backgrounds are painted by code scenes or templates. It carries no sizes, line heights, layouts, or motion; those belong to code scenes or template-local metadata. All values are static and traceable.
-
 ### Resources (scene.resources)
 
 Scenes declare external assets through `scene.resources`, with four `type` values:
@@ -85,47 +153,10 @@ Scenes declare external assets through `scene.resources`, with four `type` value
 Key boundaries:
 
 - **Manifest serves built-in assets only** (font / bgm / sfx). They are referenced by stable semantic keys so swapping a file never changes the storyboard. `image` / `video` / `data` are per-film temporary assets: write the src path directly (e.g. `skill:assets/data/foo.json`); they do not go into a manifest.
-- **The engine does not parse `data`**: it reads the file verbatim as a string and caches it by src. Format meaning belongs to `scene.code` / kit (e.g. `JSON.parse(api.data(name))` — parse once in setup and cache it rather than every frame). So large assets (interpolation data, chart data, config, captions, LUTs) should live in data files, not in `scene.code`, which has a 50,000-character cap.
+- **The engine does not parse `data`**: it reads the file verbatim as a string and caches it by src. Format meaning belongs to `scene.code` / kit (e.g. `JSON.parse(api.data(name))` — parse once in setup and cache it rather than every frame). Large assets (interpolation data, chart data, config, captions, LUTs) should therefore live in data files, not in `scene.code`, which has a 50,000-character cap.
 - Only reference resources declared in the current scene via `api.img` / `api.video` / `api.data`; undeclared references raise `CODE_RESOURCE_MISSING` at compile time.
 
-Compilation is deterministic: the same storyboard and inputs produce the same `composition.json`, which `tt det` verifies. Progressive disclosure is part of the design too: `SKILL.md` routes; a recipe's `recipe.md` and `skeleton.storyboard.json` are read after the recipe is selected, code recipes then read one or two `ref-shots/`, and `references/` are consulted one page at a time.
-
-## What it can do
-
-Recipes cover explainers, stories, fast cuts, breaking news, data races, and real footage. A recipe either carries content in a whole-frame `scene.code` or is a fixed template driven by `scene.params`. `tt recipe list` is the authoritative, always-current shelf; the table below is the set bundled with this repo.
-
-| Recipe | Picture | Content path | Best for |
-|---|---|---|---|
-| `whiteboard-explainer` | Whiteboard / blackboard, strokes growing in | `scene.code` | mechanisms, science, step-by-step explanation |
-| `blackboard-lesson` | Green board and chalk, written at lesson pace | `scene.code` | derivations, lectures, classroom rhythm |
-| `illustrated-story` | Paper collage, cut-out lettering | `scene.code` | short stories, observations, essays |
-| `flash-cut` | Hard cuts, oversized type, one sentence per scene | `scene.code` | punchy opinions, conclusions, promo beats |
-| `flat-motion` | Saturated flat shapes, rounded characters and icons, elastic morphs | `scene.code` | product, brand, app-feature and light-explainer MG |
-| `medical-3d` | Real anatomical model (BodyParts3D), organ-focus cameras, free-form explanations | `scene.code` | anatomy, organ structure, function and medical explainers |
-| `crayon-guide` | Warm paper, crayon hatching, people and hand-drawn diagrams | `scene.code` | tutorials, cultural ideas, comparisons, kids' explainers |
-| `shadow-play` | Backlit screen, data-driven articulated puppets, cue-timed actions and placards | `scene.code` | fables, folk tales, historical vignettes |
-| `news-broadcast` | Fixed vertical news card: blue radial background, world map, flowing lines | `scene.params` | breaking-news cards, title / body / source |
-| `bar-race` | Dark vertical race chart, slanted title, animated year and reflection | `scene.params` | 2–18 entities racing from start values to end values |
-| `footage` | Full-frame real footage with short overlay lines | `scene.params` | Pexels or local footage montage |
-
-Also included:
-
-- **Scene code with an injected kit** — `TT.text`, `TT.pen`, `TT.mark`, `TT.board`, `TT.geom`, `TT.chart`, `TT.newsBg`, and more. The compiler injects only the members each scene uses; transition boundaries separately receive `TT.transition` in a generated dual-frame scene.
-- **6 caption styles + `none`** — plain, perchar, karaoke, collage, vertical, tornpaper, with per-character timing and subject avoidance.
-- **Narration and sound** — zero-key edge-tts by default, optional Volc TTS, BGM/SFX with ducking and fades.
-- **Stock footage** — Pexels search, download, attribution, and caching. Missing keys or failed downloads stop explicitly; local videos need no Pexels key.
-- **Preview and review** — read-only preview, stills, probe receipts, and per-frame pen annotations. Sending immediately hands the batch to the agent; after revision and rebuild, a fresh preview starts the next round.
-- **Quality gates** — `tt qa` with render-error and empty-ink must-checks plus a 12-cell contact sheet; `tt det` for compile determinism.
-- **Direct MP4** — H.264 + AAC through WebCodecs and Mediabunny; no external FFmpeg executable.
-- **Formats** — 1920×1080@30 and 1080×1920@30.
-
-<!--
-Case images: put screenshots or GIFs in assets/readme/, then uncomment and adjust this section.
-
-![Whiteboard explainer](assets/readme/whiteboard-explainer.png)
-![Crayon guide](assets/readme/crayon-guide.png)
-![News broadcast](assets/readme/news-broadcast.png)
--->
+Compilation is deterministic: the same storyboard and inputs produce the same `composition.json`, which `tt det` verifies. Progressive disclosure is part of the design too: `SKILL.md` only routes; after selecting a recipe, the agent reads its `recipe.md` and `skeleton.storyboard.json`, followed by one or two `ref-shots/` for code recipes. Consult `references/` one page at a time, as needed.
 
 ## Dual-frame transitions: real boundary compositing
 
@@ -134,16 +165,21 @@ A transition is not an exit overlay on scene A followed by an entrance from blac
 The storyboard only selects a fixed preset on the outgoing scene:
 
 ```json
-{ "id": "s01", "duration": 4, "transition": "push-up", "code": "/* complete scene A */" }
+{
+  "id": "s01",
+  "duration": 4,
+  "transition": "push-up",
+  "code": "/* complete scene A */"
+}
 ```
 
 The 10 fixed presets cover crossfade, left/up wipes and pushes, zoom, glitch, and iris, plus the GL Transitions–inspired `squares-wire` and `morph`. Direction is part of the complete preset name rather than a separate knob; there are no in/out, center, or duration parameters. Pattern transitions still use deterministic Canvas paths and slices, without WebGL or pixel readback. Dual-frame transitions apply to `scene.code` boundaries. Text already painted into a scene is simply part of the whole frame—there is no special caption compositor.
 
 The visual timeline is `(A-D/2) + T(D) + (B-D/2)`, so total duration is unchanged. Narration, SFX, BGM, and SRT retain the original A/B logical timeline rather than following the generated visual nodes. See the [transition protocol](references/transition.md).
 
-## QA: one browser session, captured frames, receipts, and contact sheet
+## QA: one browser session for frames, receipts, and the contact sheet
 
-`tt qa` is not a loop of screenshots. It builds once, opens a single local Chrome session over CDP, samples 24–30 frames across the film, and asks the engine's own capture path for each frame:
+`tt qa` applies only to `code` recipes. `params` recipes use fixed templates, skip QA, and go straight to `tt preview`. For code recipes, `tt qa` is not a loop of screenshots. It builds once, opens a single local Chrome session over CDP, samples 24–30 frames across the film, and asks the engine's own capture path for each frame:
 
 ```text
 pause → seek(t) → await video.settle(t) → synchronous tick(t) redraw → PNG
@@ -157,57 +193,39 @@ Sampling is scene-aware: every scene gets at least one frame; a single frame sit
 
 The machine gate is deliberately light: `RENDER_PAGE_ERROR` and `QA_INK_EMPTY` (a scene unit executed but left no visible ink). Safe areas, collisions, text overlap, caption bands, contrast, and hold time are not scored—the contact sheet and a human / agent judge those. Reports contain only issues that actually fired; demoted checks are not kept around.
 
-**Why it is fast** (local measurement, 27-frame flash-cut, including build):
+**Comparison of two QA approaches** (local measurement, 27-frame flash-cut; Ticktoon data includes build):
 
-| | Old Playwright path | Now |
+| Item | Playwright screenshot approach | Ticktoon Canvas approach |
 |---|---|---|
 | Browser start | 2.57s | 0.51s |
-| Per-frame wait | 2 RAF + 140ms fixed sleep | engine `video.settle(t)` |
-| Fixed wait, 27 frames | 4.2–4.7s | 0 |
-| Full `tt qa` | — | 4.1s |
+| Frame-readiness check | 2 RAF + 140ms fixed sleep | engine `video.settle(t)` |
+| Fixed wait, 27 frames | 4.2–4.7s | 0 (no fixed wait) |
+| Full QA | — | `tt qa` 4.1s |
 | npm dependency | playwright + core: ~4.1MB download / ~18.7MB on disk, Node ≥20 | reuses existing `ws`, Node ≥18 |
 
-At 60–120Hz the old path's fixed waits alone were 4.2–4.7s—comparable to the current whole QA run. In the earlier 9-recipe `tt ci --deep` benchmark, browser startup alone saved about 18s; the full run was 42.2s locally. QA, stills, snapshot, and render share the same local-Chrome CDP driver, so there is no extra automation framework layer to install.
+At 60–120Hz, the Playwright screenshot approach needs 4.2–4.7s for fixed waits alone, comparable to the Ticktoon Canvas approach's entire 4.1s QA run. In a full `tt ci --deep` measurement, the Ticktoon Canvas approach saved about 18s on browser startup alone; the full local run took 42.2s. QA, stills, snapshot, and render share the same local-Chrome CDP driver, with no extra automation framework layer to install.
 
-## Live preview and annotations: from review to revision
+## Live preview and annotation-driven revisions: mark issues directly for the agent
 
-`tt preview --dir my-video` starts or reuses one global persistent preview server. Switching projects retargets the existing server without opening another port or viewer. The page watches composition changes and refreshes itself. Annotations are saved, and exports are requested through chat without stopping the server.
+`tt preview --dir my-video` starts or reuses one global persistent preview server, with WorkBuddy or another host opening its built-in page; it does not launch an additional external Chrome window. Switching projects retargets the existing server without opening another port or reviewer. After editing the storyboard, run `tt build` again and the page refreshes automatically. Annotations are saved to disk; exports are requested through chat while the preview server remains running.
 
 When something looks wrong, draw on the frame and leave a note in the bottom annotation dock:
 
 1. Click **画笔圈注** (pen annotation); the preview pauses at the current frame, and you can circle or mark the problem area with the pen.
 2. Write the description and click **完成圈注** (finish annotation). It enters the in-page send list. You can jump to another timestamp, add more, or remove a draft.
 3. Click **发送圈注** (send annotations). The whole batch is POSTed to the local preview server and written to `<project>/annotations/<batch>/`. Each item carries the description, time, matching scene clip, and three PNGs: the original frame, the ink-only layer, and the composed annotated frame.
-4. Sending shows a two-second translucent notice and saves the batch. When the user asks for revisions, the agent acknowledges the count and per-item summary, then reads and fixes the images; the preview refreshes after the rebuild. `tt annotations` can also read the latest unhandled batch at any time.
+4. Sending shows a two-second translucent notice at the top of the page. When revisions are requested in the conversation, the agent first acknowledges the batch count and per-item summaries, then reads the images and makes the fixes; the preview refreshes after the rebuild. `tt annotations` can also read the latest unhandled batch. The agent opens `annotatedFrame` to inspect the annotation and uses `desc` / `t` / `clip` to locate the scene to revise.
 5. Edit `storyboard.json` → `tt build` → `tt preview` again. When done, `tt annotations --dir my-video --ack <batch-id>` marks the batch handled.
 
-The loop is closed: the agent no longer has to guess which frame or scene unit the user means. The annotation and screenshot are the locating evidence. `annotations/` holds user input, is not written to `out/`, and survives rebuilds. The single source of truth stays the storyboard; no second runtime or visual editor is introduced.
+![Annotate frames and send a batch in the Ticktoon reviewer](assets/readme/审片-圈注.jpg)
+
+The review–annotate–revise loop is closed: the agent no longer has to guess which frame or element the user means from chat alone. The annotation and screenshot are the locating evidence. `annotations/` holds user input, is not written to `out/`, and survives rebuilds. The entire loop still changes only the storyboard; no second runtime or visual editor is introduced.
 
 > The preview uses real TTS tracks from the first build and plays picture, narration, and BGM together. Export reads the same composition without rebuilding audio.
 
-## How to use
+## Manual operation and debugging (CLI)
 
-Requirements: Node.js 18+ (22 LTS recommended), Chrome 120+, and a Chrome-compatible WebGL2 environment.
-
-```bash
-git clone https://github.com/ticktoon/ticktoon-skill
-cd ticktoon-skill
-node scripts/doctor.mjs --install
-```
-
-`doctor --install` checks Node, the Ticktoon engine artifacts, npm dependencies, Chrome, WebGL2, and optional TTS/asset providers. The engine is loaded from the npm package `ticktoon@1.0.2` under `node_modules/ticktoon/dist`; no sibling engine checkout or copied `ticktoon-dist` is required. It runs npm install only when `ticktoon`, `ws`, or `msedge-tts` is missing, then continues the checks in the same command; existing dependencies leave npm untouched. The skill drives the locally installed Chrome (≥120) directly over CDP and does not download its own browser. On a headless server, set `DH_VIDEO_WEBGL=swiftshader`. When `chrome-headless-shell` is selected without an explicit WebGL setting, SwiftShader is enabled automatically to avoid WebCodecs texture-readback failures on some Windows systems.
-
-Narration providers are selected internally: Volc TTS when its credentials are complete, otherwise zero-key Edge TTS. No provider flag is needed in the authoring workflow. Optional Volc TTS and Pexels upgrades are configured with `node scripts/auth.mjs set <KEY> <value>`; credentials are read from environment variables or `~/.dh-video/credentials.json` and never stored in a storyboard or project.
-
-### From an agent
-
-Place this repository, or the clean distribution produced by `tt pack`, in your agent's skills directory (for Claude Code, something like `~/.claude/skills/ticktoon`), with [`SKILL.md`](SKILL.md) at its root. The agent selects a recipe from `recipes/`, reads its `recipe.md` and skeleton, then writes and compiles a storyboard. Code recipes also read `ref-shots/`.
-
-Example request:
-
-> Make a 30-second whiteboard explainer on compound interest. Keep it to one narration track and use the default perchar captions.
-
-### From the CLI
+When working without an agent, or troubleshooting compilation, preview, QA, or export independently, run the commands below manually. Day-to-day creation in WorkBuddy does not require running them one by one.
 
 ```bash
 node platform/cli.mjs new my-video --recipe whiteboard-explainer   # scaffold a project
@@ -220,7 +238,7 @@ node platform/cli.mjs det --twice --dir my-video                    # compile-de
 node platform/cli.mjs export --dir my-video                       # export current composition directly, no rebuild
 ```
 
-`tt` refers to `node platform/cli.mjs` (or `npm run tt --`). `storyboard.json` is the only file you write. Everything under `out/` is a build product; do not hand-edit it. Run `build` again after changes and the preview refreshes automatically. Export MP4 only when it is explicitly wanted, with no second preview-confirmation gate. If the storyboard is unchanged and narration already exists, render directly; rebuilds reuse cached TTS for identical text and voices. Rendering defaults to 1× output, with `--render-scale 2` available for supersampling.
+`tt` refers to `node platform/cli.mjs` (or `npm run tt --`). `storyboard.json` is the only file you write. Everything under `out/` is a build product; do not hand-edit it. Run `build` again after changes and the preview refreshes automatically. Export MP4 only when explicitly needed, with no second preview-confirmation gate. Preview and export share the same composition and audio tracks; when the storyboard is unchanged, run `tt export` directly and do not rebuild the audio. Rendering defaults to 1× output, with `--render-scale 2` available for supersampling.
 
 Useful commands:
 
@@ -229,7 +247,7 @@ Useful commands:
 | `tt recipe list / show <id> / audit` | list recipes, inspect one contract (mode / template), audit all skeletons and ref-shot sets |
 | `tt annotations [--wait] [--all] [--ack [id]]` | read annotation batches; `--wait` waits for the next batch, `--ack` marks it handled |
 | `tt lab [--recipe <id>] [--port N]` | launch the ref-shot and Kit labs with real builds and engine previews; edit and rerun without writing back |
-| `tt ci [--deep]` | full regression: audit + double-build determinism; `--deep` runs QA for every recipe |
+| `tt ci [--deep]` | full regression: audit + double-build determinism; `--deep` runs QA for every code recipe (params recipes skip it) |
 | `tt ci --baseline [--write]` | compare skeleton / ref-shot-set compile fingerprints; refresh the baseline after review |
 | `tt pack [dir]` | build a clean distribution (Skill + engine dist) |
 
@@ -277,6 +295,7 @@ ticktoon-skill/
 ├── scripts/                     # render, doctor, auth, snapshot, pack
 ├── assets/                      # fonts, BGM, SFX, demo media, README images
 ├── docs/                        # human/developer docs (not runtime input)
+├── showcase/                    # GitHub Pages demo; excluded from `tt pack`
 └── output/                      # build products (gitignored)
 ```
 
@@ -292,4 +311,4 @@ ticktoon-skill/
 
 ## License
 
-The Ticktoon engine is Apache-2.0. The Skill's code, fonts, music, stock media, and migrated material need a separate license and attribution review before public release; see the engine's [`NOTICE`](https://github.com/ticktoon/ticktoon/blob/main/NOTICE).
+Ticktoon Skill is licensed under the [Apache License 2.0](LICENSE). The Ticktoon engine is also Apache-2.0.

@@ -7,7 +7,7 @@ description: 用 Ticktoon 生成整幅场景化短视频。recipe 给一类成�
 
 唯一产物是 protocol v1.0 `composition.json`（`scenes[]` + `audio[]`）。
 
-下文 `SKILL_DIR` 指本文件所在目录。脚本用绝对路径调用，cwd 保持在用户工程目录。首次使用或环境异常运行 `node "$SKILL_DIR/scripts/doctor.mjs" --install`：它会检查全部环境，只在缺少 ticktoon / ws / msedge-tts 时自动执行 npm install（引擎固定使用 npm 包 `ticktoon@1.0.2`），然后继续检查，不要拆成 doctor → 手动安装 → 重跑 doctor。Chrome 通过 CDP 直接驱动本机安装，不下载浏览器。
+下文 `SKILL_DIR` 指本文件所在目录。脚本用绝对路径调用，cwd 保持在用户工程目录。首次使用或环境异常运行 `node "$SKILL_DIR/scripts/doctor.mjs" --install`：它会检查全部环境，只在缺少 ticktoon / ws / msedge-tts 时自动执行 npm install（引擎固定使用 npm 包 `ticktoon@1.0.4`），然后继续检查，不要拆成 doctor → 手动安装 → 重跑 doctor。Chrome 通过 CDP 直接驱动本机安装，不下载浏览器。
 
 ## 结构
 
@@ -33,7 +33,7 @@ recipe 有两种模式，由 `tt recipe show <id>` 的 `mode` 标明：
 
 | 用户第一句话 | 怎么走 |
 |---|---|
-| **带视觉词或题材**（白板 / 黑板 / 新闻 / 实拍 / 蜡笔 / 皮影 / 快闪…） | 与 `tt recipe list` 的 `keywords`、`when` 匹配最贴的 recipe，并用 `notWhen` 排除明显不合适的；选中后再读该 recipe 的 recipe.md / skeleton，code 型再读 ref-shots；recipe 只给规范，不给内容 |
+| **带视觉词或题材**（白板 / 黑板 / 新闻 / 实拍 / 蜡笔 / 纸上剧场 / 快闪…） | 与 `tt recipe list` 的 `keywords`、`when` 匹配最贴的 recipe，并用 `notWhen` 排除明显不合适的；选中后再读该 recipe 的 recipe.md / skeleton，code 型再读 ref-shots；recipe 只给规范，不给内容 |
 | **没带视觉词** | 从 `tt recipe list` 里**主动推荐 2–3 个视觉让用户选**，不静默兜底 |
 | 想换题材 | 只改 storyboard 文本与 `scene.code`，平台与 kit 一行不动 |
 | 需要固定版式（新闻卡 / 实拍压字 / 图解 / 剪影…） | 选 `mode: "params"` 的 recipe；只填 `scene.params` 的文本、素材、姿态，不含题材枚举 |
@@ -81,12 +81,12 @@ recipes/<id>/
 node "$SKILL_DIR/platform/cli.mjs" new <dir> --recipe <id>   # 1. 建工程，skeleton 预填；<id> 从 tt recipe list 选
 # 2. 改 <dir>/storyboard.json —— 这是你唯一要写的文件
 node "$SKILL_DIR/platform/cli.mjs" build --dir <dir>          # 3. 编译并自动生成真实音轨；provider 由内部按环境选择
-node "$SKILL_DIR/platform/cli.mjs" qa --dir <dir>             # 4. 全片采样 + 12 格联系表；must=0 并实际读图
+node "$SKILL_DIR/platform/cli.mjs" qa --dir <dir>             # 4. 仅 code 配方：采样 + 12 格联系表；params 固定模板直接跳到第 5 步
 node "$SKILL_DIR/platform/cli.mjs" preview --dir <dir> --port 5123  # 5. 首次以后台任务启动；复用时输出 ready 即返回
 node "$SKILL_DIR/platform/cli.mjs" annotations --wait              # 6. 同时启动唯一的全局圈注等待任务，圈注到达后继续修改；导出时关闭
 ```
 
-创作、检查与预览走 `platform/cli.mjs`（下称 `tt`），`tt` 命令支持 `--json`。**默认创作终点是 Preview Studio，不是 MP4。** 最初的“制作 / 生成视频”请求不等于授权导出 MP4，也不等于允许跳过预览。QA `must=0` 且联系表没有明显问题后，直接打开 Preview Studio；不要为了再次确认构图、稳定帧或入场透明度追加 `stills`，不要继续做无实际缺陷支撑的反复检查。
+创作、检查与预览走 `platform/cli.mjs`（下称 `tt`），`tt` 命令支持 `--json`。**默认创作终点是 Preview Studio，不是 MP4。** 最初的“制作 / 生成视频”请求不等于授权导出 MP4，也不等于允许跳过预览。**`code` 配方在 QA `must=0` 且联系表没有明显问题后，直接打开 Preview Studio；`params` 配方使用固定模板，build 后直接 preview，不跑 QA。** 不要为了再次确认构图、稳定帧或入场透明度追加 `stills`，不要继续做无实际缺陷支撑的反复检查。
 
 预览服务全局单例，自动复用、切换工程和刷新 composition。右上角「下载 board JSON」直接保存当前 composition 的原始 UTF-8 JSON 文件，用于分析或交付，不经过剪贴板。
 
@@ -100,7 +100,7 @@ node "$SKILL_DIR/platform/cli.mjs" export --dir <dir>
 
 **本机普通 Chrome 可用时，不要设置 `TICKTOON_CHROME_PATH` / `CHROME_PATH` 指向 Playwright 的 `chrome-headless-shell`；省略这两个变量，让启动器使用普通 Chrome 和本机 GPU。** headless shell 会默认走 SwiftShader，导出明显更慢；只有普通 Chrome 不可用或用户明确指定时才使用它。
 
-**全片视觉检查默认只跑 `tt qa` 并读取 `review/qa-sheet.png`；人工快速验收用 `tt preview`，不要自造时间点运行 `tt stills` 来代替 QA。** `stills` 会同时输出**指定时刻的完整 PNG 静帧和布局凭据（receipts）**，只用于用户指定时刻或定点排障，不是标准创作步骤。**禁止 FFmpeg 抽帧、截图、转码验证，禁止先导出 MP4 再检查画面；`tt export` 只负责导出，不提供抽帧参数。**
+**全片视觉检查只对 `code` 配方跑 `tt qa` 并读取 `review/qa-sheet.png`；`params` 配方是固定模板，不跑 `tt qa`，build 后直接 `tt preview`（`tt qa` 对 params 工程会自动跳过并提示）。人工快速验收用 `tt preview`，不要自造时间点运行 `tt stills` 来代替 QA。** `stills` 会同时输出**指定时刻的完整 PNG 静帧和布局凭据（receipts）**，只用于用户指定时刻或定点排障，不是标准创作步骤。**禁止 FFmpeg 抽帧、截图、转码验证，禁止先导出 MP4 再检查画面；`tt export` 只负责导出，不提供抽帧参数。**
 
 
 ## 核心契约
@@ -112,11 +112,11 @@ node "$SKILL_DIR/platform/cli.mjs" export --dir <dir>
 ## 导出前自检（仅用户明确要求导出时）
 
 ```bash
-node "$SKILL_DIR/platform/cli.mjs" qa --dir <dir>             # 全片质量：must 必须 0，同时产出 12 格联系表
+node "$SKILL_DIR/platform/cli.mjs" qa --dir <dir>             # 仅 code 配方：must 必须 0，同时产出 12 格联系表
 node "$SKILL_DIR/platform/cli.mjs" det --twice --dir <dir>    # 编译指纹，两次必须一致
 ```
 
-`qa`/`det` 的语义与 12 格联系表读法见 `references/qa.md`。
+`params` 配方使用固定模板，跳过 `qa`；直接 preview / export。`qa`/`det` 的语义与 12 格联系表读法见 `references/qa.md`。
 
 ## recipe 契约
 
@@ -138,6 +138,7 @@ kit 是场景内可复用的绘制词法。命名空间、成员与依赖以 `pl
 
 - `mode: "params"` 的 recipe 只换 `scene.params` 里的少量动态字段，参数契约、排版与声音约束以 `recipe.json` / `recipe.md` 为准；旁白与字幕不是必有的，由该 recipe 的 `audio` / `captions` 决定。
 - 实拍素材的检索、缓存与凭证链见 `references/pexels.md`。`footage` 的 `src` 为 `pexels:` 查询时必须先运行 `tt assets fetch`，无 key 直接报错；本地视频不需要 key。
+- 按需图标与图片使用 `tt assets search / download`，见 `references/web-assets.md`。下载必须指定用户工程并记录授权；skill 只保留极小的 lab demo，不预置完整素材库。
 
 ## 红线
 

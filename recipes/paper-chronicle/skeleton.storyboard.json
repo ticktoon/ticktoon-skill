@@ -1,0 +1,77 @@
+{
+  "recipe": "paper-chronicle",
+  "format": {
+    "w": 1920,
+    "h": 1080,
+    "fps": 30
+  },
+  "meta": {
+    "title": "未命名纸上剧场"
+  },
+  "scenes": [
+    {
+      "id": "s01",
+      "narration": "在这里交代主人公从哪里出发，要前往哪里，以及途中发生了什么。",
+      "sfx": [
+        { "type": "whoosh", "cue": 0, "offset": 0.1 },
+        { "type": "step", "cue": 0, "offset": 0.8, "gain": 0.4 }
+      ],
+      "resources": [
+        { "type": "font", "name": "sans-900" },
+        { "type": "font", "name": "sans-400" },
+        { "type": "data", "name": "map", "src": "skill:recipes/paper-chronicle/data/central-plains.json" }
+      ],
+      "code": [
+        "const T = api.t; const C = TT.chronicle; const MAP = C.readData(api.data('map'));",
+        "const cue = api.cues[0]; const at = (dt = 0) => cue.start + dt;",
+        "TT.board.stage(ctx, { W, H }, { seed: 3, variant: 0, screen: 'white' });",
+        "const frame = C.map(ctx, MAP, { t: T, at: 0.25, x: 150, y: 135, w: 1620, h: 665, style: 'antique' });",
+        "C.place(ctx, { t: T, at: at(0.2), frame, point: MAP.places.peixian.point, name: '沛县' });",
+        "C.place(ctx, { t: T, at: at(0.6), frame, point: MAP.places.lishan.point, name: '骊山' });",
+        "const route = C.route(ctx, { t: T, at: at(0.5), duration: 2.4, frame, points: MAP.routes.toFengxi, color: 'red' });",
+        "if (route) C.seal(ctx, { t: T, at: at(0.4), x: route.x, y: route.y - 48, text: '刘', radius: 42, active: true });",
+        "C.systemCaption(ctx, api.cues.find((c) => T >= c.start && T < c.end), { t: T, W, H });",
+        "TT.board.stageFrame(ctx, { W, H });"
+      ]
+    },
+    {
+      "id": "s02",
+      "narration": "在这里引用史料或解释上一幕的意义，不要让原文冒充人物对白。",
+      "sfx": [
+        { "type": "wood", "cue": 0, "offset": 0.4 }
+      ],
+      "resources": [
+        { "type": "font", "name": "sans-900" },
+        { "type": "font", "name": "sans-400" }
+      ],
+      "code": [
+        "const T = api.t; const C = TT.chronicle;",
+        "const cue = api.cues[0]; const at = (dt = 0) => cue.start + dt;",
+        "TT.board.stage(ctx, { W, H }, { seed: 3, variant: 0, screen: 'white' });",
+        "C.document(ctx, { t: T, at: 0.3, x: 330, y: 190, w: 1260, h: 555, title: '史册 · 原文', seal: '史', lines: ['在这里写第一行原文或事件摘要。', '在这里写第二行解释。'] });",
+        "C.systemCaption(ctx, api.cues.find((c) => T >= c.start && T < c.end), { t: T, W, H });",
+        "TT.board.stageFrame(ctx, { W, H });"
+      ]
+    },
+    {
+      "id": "s03",
+      "narration": "在这里写出关键抉择：两条岔路各自通向什么后果，人物最终选了哪一条。",
+      "sfx": [
+        { "type": "drum", "cue": 0, "offset": 0.5, "gain": 0.4 }
+      ],
+      "resources": [
+        { "type": "font", "name": "sans-900" },
+        { "type": "font", "name": "sans-400" }
+      ],
+      "code": [
+        "const T = api.t; const C = TT.chronicle;",
+        "const cue = api.cues[0]; const at = (dt = 0) => cue.start + dt;",
+        "TT.board.stage(ctx, { W, H }, { seed: 3, variant: 0, screen: 'white' });",
+        "const B = C.fork(ctx, { t: T, at: 0.3, x: 170, y: 130, w: 1580, h: 690, from: [0.06, 0.68], fork: [0.42, 0.55], hubLabel: '此处', selected: -1, branches: [{ label: '选择一', note: '对应的后果', to: [0.86, 0.24] }, { label: '选择二', note: '对应的后果', to: [0.86, 0.78], color: 'red' }] });",
+        "if (B) C.seal(ctx, { t: T, at: at(0.3), x: B.fork.x, y: B.fork.y - 6, text: '主', radius: 44 });",
+        "C.systemCaption(ctx, api.cues.find((c) => T >= c.start && T < c.end), { t: T, W, H });",
+        "TT.board.stageFrame(ctx, { W, H });"
+      ]
+    }
+  ]
+}

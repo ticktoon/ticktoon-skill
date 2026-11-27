@@ -1,0 +1,101 @@
+{
+  "id": "paper-chronicle",
+  "abi": "1",
+  "name": "纸上剧场",
+  "keywords": [
+    "纸上剧场",
+    "说史",
+    "舆图",
+    "历史故事",
+    "古籍",
+    "文书",
+    "年表",
+    "地图推演",
+    "人物传记",
+    "民间故事",
+    "神话传说",
+    "历史科普"
+  ],
+  "mode": "code",
+  "when": [
+    "历史故事、人物传记、民间传说和神话，需要清楚交代人物、地点、事件与依据。",
+    "适合地图路线、人物符号、古籍文书、年表、岔路推演和人物关系变化，不依赖复杂角色动画。",
+    "需要围绕一个问题，用图示和固定底部文字讲清困境、选择、证据、后果与意义。"
+  ],
+  "notWhen": [
+    "需要真实人物表演、细腻面部表情、复杂打斗或写实拍法。",
+    "主要目标是品牌广告、纯数据图表或现代信息版式。",
+    "只需要把参考镜头依次换文案；本配方要求按故事重新组织结构。"
+  ],
+  "rules": {
+    "safeMargin": 0.055,
+    "scale": {
+      "title": 1,
+      "speaker": 0.62,
+      "dialogue": 0.58,
+      "narration": 0.58
+    },
+    "stroke": [2, 7],
+    "board": {
+      "mode": "fixed",
+      "value": "stage"
+    },
+    "story": {
+      "question": "全片只回答一个核心问题，片头必须提出问题或反常现象",
+      "arc": ["背景与困境", "选择或冲突", "证据或关键细节", "后果与反转", "意义收束"],
+      "density": "每个 cue 必须提供新事实、新关系或新解释，不得把同一句话拆成多个信息节拍",
+      "length": "通常 60–90 秒、6–10 场，按内容增减；片头和结尾通常各约 4–5 秒",
+      "refShots": "参考镜头是能力样例，不是整片目录；禁止按文件顺序机械拼片"
+    },
+    "composition": {
+      "default": "one-main-argument-with-supporting-detail",
+      "heroHeight": "主图示占舞台 55–75%，辅以必要标注和少量素材",
+      "floor": "底部固定文字区不被内容占用",
+      "scene": "空间连续",
+      "cue": "每次视觉变化必须与当前解说的新信息对应",
+      "continuity": "相邻场复用同一组地图与物件锚点，不逐场微调位置"
+    },
+    "assets": {
+      "planning": "写场景前列出本片图标、头像和地图需求；素材能显著提升理解时主动使用",
+      "coreIcons": "优先查 icons/manifest.json 的 59 个核心图标",
+      "online": "特殊素材用 tt assets search / download 按需进入用户工程",
+      "fallback": "没有素材时使用代码图形，但不得因省略素材而删掉关键叙事信息"
+    },
+    "resources": {
+      "allow": ["font", "data", "image"],
+      "dataUse": "api.data(name) 读取结构化数据，api.img(name) 读取按需图片，src 跨幕复用",
+      "assetPolicy": "skill 只带代码、小型示例和约 97KB 核心图标；大型素材只在用户项目中按需保存"
+    },
+    "forbid": [
+      "在同一场景写 scene.params；本 recipe 只收 scene.code",
+      "按参考镜头文件顺序生成固定六场，或把参考镜头当整片模板",
+      "只罗列地图、文书和年表而没有核心问题、冲突、后果",
+      "用左右卡片做选项对比或前后对照，把抉择和身份变化做成科普表格",
+      "把一句话拆成多个 cue 凑信息密度，或让长段画面静止无变化",
+      "画面动作与旁白含义相反，例如放人时聚合、尚未到达就走完全程",
+      "把示意舆图冒充精确历史地图",
+      "每幕重新摆放同一组地图、文书或符号，造成转场抖动",
+      "使用公共 captions 或叠加第二种底部字幕",
+      "把无角色的系统旁白写成角色对白条，或给旁白硬塞角色名",
+      "使用 Math.random、墙钟时间、逐帧 fetch/parse 或每帧重建静态 Path2D"
+    ]
+  },
+  "captions": {
+    "style": "none"
+  },
+  "pacing": {
+    "leadIn": 0.7,
+    "hold": 1.0,
+    "minNarrationDuration": 5.5
+  },
+  "audio": {
+    "generator": "score",
+    "scorePreset": "chronicle",
+    "soundPreset": "chronicle",
+    "bpm": 84,
+    "seed": "paper-chronicle",
+    "voiceRms": 0.07,
+    "duckDb": 8,
+    "gapDb": 11
+  }
+}

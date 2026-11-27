@@ -74,21 +74,13 @@
     <h1>让 Agent 把故事画成视频。</h1>
     <p>每个示例都来自一份 storyboard。没有第二套编辑器，没有逐帧手调；Agent 选择配方、组织内容，Ticktoon 用同一条同步渲染链完成画面与声音。</p>
     <div class="stats">
-      <span><strong id="work-count">6</strong> 个完整示例</span>
-      <span><strong id="recipe-count">6</strong> 种创作配方</span>
+      <span><strong id="work-count">0</strong> 个完整示例</span>
+      <span><strong id="recipe-count">0</strong> 种创作配方</span>
       <span>原生 MP4 + storyboard 源文件</span>
     </div>
   </section>
 
-  <nav class="filters" aria-label="按配方筛选">
-    <button class="filter active" data-filter="all">全部</button>
-    <button class="filter" data-filter="whiteboard-explainer">白板手写</button>
-    <button class="filter" data-filter="news-broadcast">突发新闻</button>
-    <button class="filter" data-filter="flash-cut">快闪卡点</button>
-    <button class="filter" data-filter="footage">实拍</button>
-    <button class="filter" data-filter="shadow-play">皮影戏</button>
-    <button class="filter" data-filter="flat-motion">扁平动效</button>
-  </nav>
+  <nav class="filters" aria-label="按配方筛选"></nav>
 
   <main id="grid" class="grid"></main>
 
@@ -109,9 +101,19 @@
 <script>
 const works = [
   {
+    title: '纸上剧场 · 丰西泽之夜',
+    recipe: 'paper-chronicle',
+    duration: '01:28',
+    description: '纸幕、舆图、纸偶与印章讲清刘邦放徒：困境、抉择、证据、后果与意义。',
+    video: 'paper-chronicle/video.mp4',
+    poster: 'paper-chronicle/qa-sheet.png',
+    storyboard: 'paper-chronicle/storyboard.json',
+    orientation: 'landscape',
+  },
+  {
     title: '白板上的知识推导',
     recipe: 'whiteboard-explainer',
-    duration: '00:42',
+    duration: '00:30',
     description: '马克笔迹、步骤图解与旁白同步，让抽象机制逐笔长出来。',
     video: 'whiteboard/video.mp4',
     poster: 'whiteboard/qa-sheet.png',
@@ -121,41 +123,31 @@ const works = [
   {
     title: '突发新闻信息卡',
     recipe: 'news-broadcast',
-    duration: '00:10',
+    duration: '00:11',
     description: '竖屏新闻版式、打字机正文与紧张节奏，换稿不换视觉。',
-    video: 'break_news/video.mp4',
-    poster: 'break_news/qa-sheet.png',
-    storyboard: 'break_news/storyboard.json',
+    video: 'break-news/video.mp4',
+    poster: 'break-news/qa-sheet.png',
+    storyboard: 'break-news/storyboard.json',
     orientation: 'portrait',
   },
   {
     title: '快闪文字与图形节奏',
     recipe: 'flash-cut',
-    duration: '00:20',
+    duration: '00:15',
     description: '硬切、满幅大字、图片遮罩和连续构图，用短句推进节奏。',
-    video: 'flash_cut/video.mp4',
-    poster: 'flash_cut/qa-sheet.png',
-    storyboard: 'flash_cut/storyboard.json',
+    video: 'flash-cut/video.mp4',
+    poster: 'flash-cut/qa-sheet.png',
+    storyboard: 'flash-cut/storyboard.json',
     orientation: 'landscape',
   },
   {
     title: 'Pexels 实拍拼接',
     recipe: 'footage',
-    duration: '00:08',
+    duration: '00:29',
     description: '真实素材、压屏短句、逐字字幕和全片章节进度。',
     video: 'footage/video.mp4',
     poster: 'footage/qa-sheet.png',
     storyboard: 'footage/storyboard.json',
-    orientation: 'landscape',
-  },
-  {
-    title: '后羿射日 · 皮影戏',
-    recipe: 'shadow-play',
-    duration: '01:00',
-    description: '皮影镂刻人物分幕演出上古神话：十日凌空、弯弓连射、甘霖复苏。',
-    video: 'shadow_play/video.mp4',
-    poster: 'shadow_play/qa-sheet.png',
-    storyboard: 'shadow_play/storyboard.json',
     orientation: 'landscape',
   },
   {
@@ -168,13 +160,42 @@ const works = [
     storyboard: 'flat-motion/storyboard.json',
     orientation: 'landscape',
   },
+  {
+    title: '中国省份 GDP 竞速榜',
+    recipe: 'bar-race',
+    duration: '00:14',
+    description: '2000→2023 省份 GDP 条形竞速：名次交替、数值滚动，趋势一眼可见。',
+    video: 'bar-race/video.mp4',
+    poster: 'bar-race/qa-sheet.png',
+    storyboard: 'bar-race/storyboard.json',
+    orientation: 'portrait',
+  },
 ];
 
+const recipeLabels = {
+  'paper-chronicle': '纸上剧场',
+  'whiteboard-explainer': '白板手写',
+  'news-broadcast': '突发新闻',
+  'flash-cut': '快闪卡点',
+  'footage': '实拍',
+  'flat-motion': '扁平动效',
+  'bar-race': '竞速排行榜',
+};
+
 const grid = document.getElementById('grid');
+const filterBar = document.querySelector('.filters');
 const dialog = document.getElementById('dialog');
 const player = document.getElementById('player');
 const dialogTitle = document.getElementById('dialog-title');
 const download = document.getElementById('download');
+
+const recipes = [...new Set(works.map((work) => work.recipe))];
+document.getElementById('work-count').textContent = String(works.length);
+document.getElementById('recipe-count').textContent = String(recipes.length);
+filterBar.innerHTML = [
+  '<button class="filter active" data-filter="all" aria-pressed="true">全部</button>',
+  ...recipes.map((recipe) => `<button class="filter" data-filter="${recipe}" aria-pressed="false">${recipeLabels[recipe] || recipe}</button>`),
+].join('');
 
 grid.innerHTML = works.map((work, index) => `
   <article class="card" data-recipe="${work.recipe}">
@@ -192,11 +213,15 @@ grid.innerHTML = works.map((work, index) => `
   </article>
 `).join('');
 
-document.querySelectorAll('.filter').forEach((button) => {
+filterBar.querySelectorAll('.filter').forEach((button) => {
   button.addEventListener('click', () => {
-    document.querySelectorAll('.filter').forEach((item) => item.classList.toggle('active', item === button));
+    filterBar.querySelectorAll('.filter').forEach((item) => {
+      const active = item === button;
+      item.classList.toggle('active', active);
+      item.setAttribute('aria-pressed', String(active));
+    });
     const filter = button.dataset.filter;
-    document.querySelectorAll('.card').forEach((card) => {
+    grid.querySelectorAll('.card').forEach((card) => {
       card.classList.toggle('hidden', filter !== 'all' && card.dataset.recipe !== filter);
     });
   });
@@ -206,7 +231,7 @@ grid.addEventListener('click', (event) => {
   const button = event.target.closest('.poster');
   if (!button) return;
   const work = works[Number(button.dataset.index)];
-  dialogTitle.textContent = `${work.title} · ${work.recipe}`;
+  dialogTitle.textContent = `${work.title} · ${recipeLabels[work.recipe] || work.recipe}`;
   player.src = work.video;
   player.poster = work.poster;
   download.href = work.video;

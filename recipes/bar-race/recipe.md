@@ -55,7 +55,8 @@ BGM 固定由 `audio.mood = "tense"` 选择 `紧张脉冲弦乐.mp3`，音量 `0
 ## 交付前
 
 - `tt recipe show bar-race --json` 检查参数契约。
-- 编译 skeleton，确认 2–18 项均不越界；至少看开始、中段换位、最终排名三类帧。
-- `tt stills` 生成原生 PNG 帧并检查标题、最长实体名、最大数值、年份、倒影、标尺和品牌区。
-- `tt qa`、`tt det`；QA 的 `must` 必须为 0，确定性检查两次一致。
+- 编译 skeleton，确认 2–18 项均不越界。
+- `tt build` 后直接 `tt preview`；params 模板固定，不跑 `tt qa`。
+- 只有怀疑标题、最长实体名、最大数值或倒影溢出时，才用 `tt stills` 定点确认；不要批量抽帧。
+- `tt det` 可选；确定性检查两次一致。
 - 不导出 MP4，除非用户明确要求。

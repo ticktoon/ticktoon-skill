@@ -31,7 +31,7 @@
     return Number.isFinite(s) ? Math.round(s) : 0;
   };
 
-  // 皮影纸纹：双八度各向异性 value noise，x 快变、y 慢变形成纵向纸筋。
+  // 舞台纸纹：双八度各向异性 value noise，x 快变、y 慢变形成纵向纸筋。
   const paperTiles = globalThis.__ttBoardPaperTiles ||= new Map();
   function paperNoise(x, y, fx, fy, seed) {
     const X = x * fx, Y = y * fy, xi = Math.floor(X), yi = Math.floor(Y);
@@ -374,9 +374,9 @@
   }
 
   /**
-   * 皮影幕布：全幅低对比柔光、方向性皮纸纤维与四边暖褐暗角。
+   * 纸幕舞台：全幅低对比柔光、方向性纸纤维与四边暖褐暗角。
    * 所有纹理默认绘制并由 seed 决定，帧间不变；seed 只换纹理，不再开关质感。
-   * 三色灯与明暗表演另用 TT.shadow.light / dim，四角木框由 stageFrame 绘制。
+   * 舞台灯光由调用方另行处理，四角木框由 stageFrame 绘制。
    */
   function stage(ctx, api, opts = {}) {
     const { W, H } = sizeOf(ctx, api);
@@ -420,7 +420,7 @@
       ctx.restore();
     }
 
-    // 操纵区只比幕布略暗，保持皮片轮廓与操偶杆可读。
+    // 舞台下沿略暗，保持主体轮廓与底部文字区可读。
     const floor = ctx.createLinearGradient(0, H * 0.84, 0, H);
     floor.addColorStop(0, 'rgba(52,30,15,0)');
     floor.addColorStop(1, 'rgba(52,30,15,0.08)');
@@ -428,8 +428,8 @@
   }
 
   /**
-   * 皮影固定前景：只画四角木框，其余区域保持完全透明。
-   * 必须在所有场景内容之后调用，保证框角不会被山体或建筑覆盖。
+   * 固定前景：只画四角木框，其余区域保持完全透明。
+   * 必须在所有场景内容之后调用，保证框角不会被场景内容覆盖。
    */
   function stageFrame(ctx, api) {
     const { W, H } = sizeOf(ctx, api);
@@ -545,9 +545,9 @@
     },
     {
       kind: 'stage',
-      desc: '皮影幕布底：全幅柔光 + 双八度连续纸筋 + 四边暖褐暗角；木框由 stageFrame 绘制',
-      when: '皮影/灯影戏；主体是从背后打光的剪影时用它',
-      opts: 'opts.screen=white|oil、opts.variant 换灯位、opts.seed 换纤维；三色灯另用 TT.shadow.light / dim',
+      desc: '纸幕舞台：全幅柔光 + 双八度连续纸筋 + 四边暖褐暗角；木框由 stageFrame 绘制',
+      when: '历史、故事和纸上演示；主体是地图、文书、剪影或符号时用它',
+      opts: 'opts.screen=white|oil、opts.variant 换灯位、opts.seed 换纤维；局部灯光由调用方绘制',
     },
     {
       kind: 'news',

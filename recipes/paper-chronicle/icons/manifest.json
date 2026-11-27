@@ -1,0 +1,542 @@
+{
+  "version": 1,
+  "name": "历史叙事核心图标组",
+  "source": "Game-icons.net / Iconify API",
+  "author": "Lorc、Delapouite 与 Game-icons 贡献者",
+  "license": "CC BY 3.0",
+  "licenseUrl": "https://github.com/game-icons/icons/blob/master/license.txt",
+  "items": [
+    {
+      "name": "scroll",
+      "label": "书卷",
+      "category": "文书",
+      "id": "game-icons:scroll-unfurled",
+      "file": "assets/scroll.svg",
+      "bytes": 1917,
+      "sourceUrl": "https://api.iconify.design/game-icons/scroll-unfurled.svg"
+    },
+    {
+      "name": "quill",
+      "label": "书笔",
+      "category": "文书",
+      "id": "game-icons:scroll-quill",
+      "file": "assets/quill.svg",
+      "bytes": 2111,
+      "sourceUrl": "https://api.iconify.design/game-icons/scroll-quill.svg"
+    },
+    {
+      "name": "book",
+      "label": "打开的书",
+      "category": "文书",
+      "id": "game-icons:open-book",
+      "file": "assets/book.svg",
+      "bytes": 1174,
+      "sourceUrl": "https://api.iconify.design/game-icons/open-book.svg"
+    },
+    {
+      "name": "archive",
+      "label": "档案研究",
+      "category": "文书",
+      "id": "game-icons:archive-research",
+      "file": "assets/archive.svg",
+      "bytes": 1186,
+      "sourceUrl": "https://api.iconify.design/game-icons/archive-research.svg"
+    },
+    {
+      "name": "seal",
+      "label": "封印",
+      "category": "文书",
+      "id": "game-icons:wax-seal",
+      "file": "assets/seal.svg",
+      "bytes": 2103,
+      "sourceUrl": "https://api.iconify.design/game-icons/wax-seal.svg"
+    },
+    {
+      "name": "map",
+      "label": "地图",
+      "category": "文书",
+      "id": "game-icons:treasure-map",
+      "file": "assets/map.svg",
+      "bytes": 2157,
+      "sourceUrl": "https://api.iconify.design/game-icons/treasure-map.svg"
+    },
+    {
+      "name": "compass",
+      "label": "罗盘",
+      "category": "文书",
+      "id": "game-icons:compass",
+      "file": "assets/compass.svg",
+      "bytes": 1494,
+      "sourceUrl": "https://api.iconify.design/game-icons/compass.svg"
+    },
+    {
+      "name": "marker",
+      "label": "地点",
+      "category": "文书",
+      "id": "game-icons:position-marker",
+      "file": "assets/marker.svg",
+      "bytes": 439,
+      "sourceUrl": "https://api.iconify.design/game-icons/position-marker.svg"
+    },
+    {
+      "name": "castle",
+      "label": "城池",
+      "category": "地理",
+      "id": "game-icons:castle",
+      "file": "assets/castle.svg",
+      "bytes": 902,
+      "sourceUrl": "https://api.iconify.design/game-icons/castle.svg"
+    },
+    {
+      "name": "gate",
+      "label": "城门",
+      "category": "地理",
+      "id": "game-icons:medieval-gate",
+      "file": "assets/gate.svg",
+      "bytes": 1339,
+      "sourceUrl": "https://api.iconify.design/game-icons/medieval-gate.svg"
+    },
+    {
+      "name": "mountains",
+      "label": "山地",
+      "category": "地理",
+      "id": "game-icons:mountains",
+      "file": "assets/mountains.svg",
+      "bytes": 1306,
+      "sourceUrl": "https://api.iconify.design/game-icons/mountains.svg"
+    },
+    {
+      "name": "river",
+      "label": "河流",
+      "category": "地理",
+      "id": "game-icons:river",
+      "file": "assets/river.svg",
+      "bytes": 1565,
+      "sourceUrl": "https://api.iconify.design/game-icons/river.svg"
+    },
+    {
+      "name": "bridge",
+      "label": "桥梁",
+      "category": "地理",
+      "id": "game-icons:bridge",
+      "file": "assets/bridge.svg",
+      "bytes": 415,
+      "sourceUrl": "https://api.iconify.design/game-icons/bridge.svg"
+    },
+    {
+      "name": "road",
+      "label": "山路",
+      "category": "地理",
+      "id": "game-icons:mountain-road",
+      "file": "assets/road.svg",
+      "bytes": 559,
+      "sourceUrl": "https://api.iconify.design/game-icons/mountain-road.svg"
+    },
+    {
+      "name": "pagoda",
+      "label": "塔",
+      "category": "地理",
+      "id": "game-icons:pagoda",
+      "file": "assets/pagoda.svg",
+      "bytes": 1620,
+      "sourceUrl": "https://api.iconify.design/game-icons/pagoda.svg"
+    },
+    {
+      "name": "village",
+      "label": "村落",
+      "category": "地理",
+      "id": "game-icons:medieval-village-01",
+      "file": "assets/village.svg",
+      "bytes": 763,
+      "sourceUrl": "https://api.iconify.design/game-icons/medieval-village-01.svg"
+    },
+    {
+      "name": "swords",
+      "label": "交锋",
+      "category": "军事",
+      "id": "game-icons:sword-clash",
+      "file": "assets/swords.svg",
+      "bytes": 1344,
+      "sourceUrl": "https://api.iconify.design/game-icons/sword-clash.svg"
+    },
+    {
+      "name": "sword",
+      "label": "挥剑",
+      "category": "军事",
+      "id": "game-icons:sword-brandish",
+      "file": "assets/sword.svg",
+      "bytes": 1340,
+      "sourceUrl": "https://api.iconify.design/game-icons/sword-brandish.svg"
+    },
+    {
+      "name": "bow",
+      "label": "弓箭",
+      "category": "军事",
+      "id": "game-icons:bow-arrow",
+      "file": "assets/bow.svg",
+      "bytes": 875,
+      "sourceUrl": "https://api.iconify.design/game-icons/bow-arrow.svg"
+    },
+    {
+      "name": "shield",
+      "label": "盾",
+      "category": "军事",
+      "id": "game-icons:shield",
+      "file": "assets/shield.svg",
+      "bytes": 215,
+      "sourceUrl": "https://api.iconify.design/game-icons/shield.svg"
+    },
+    {
+      "name": "banner",
+      "label": "旗帜",
+      "category": "军事",
+      "id": "game-icons:vertical-banner",
+      "file": "assets/banner.svg",
+      "bytes": 708,
+      "sourceUrl": "https://api.iconify.design/game-icons/vertical-banner.svg"
+    },
+    {
+      "name": "horse",
+      "label": "马",
+      "category": "军事",
+      "id": "game-icons:horse-head",
+      "file": "assets/horse.svg",
+      "bytes": 1694,
+      "sourceUrl": "https://api.iconify.design/game-icons/horse-head.svg"
+    },
+    {
+      "name": "cavalry",
+      "label": "骑兵",
+      "category": "军事",
+      "id": "game-icons:cavalry",
+      "file": "assets/cavalry.svg",
+      "bytes": 5550,
+      "sourceUrl": "https://api.iconify.design/game-icons/cavalry.svg"
+    },
+    {
+      "name": "siege",
+      "label": "攻城",
+      "category": "军事",
+      "id": "game-icons:siege-tower",
+      "file": "assets/siege.svg",
+      "bytes": 1329,
+      "sourceUrl": "https://api.iconify.design/game-icons/siege-tower.svg"
+    },
+    {
+      "name": "sun",
+      "label": "太阳",
+      "category": "神话",
+      "id": "game-icons:sun",
+      "file": "assets/sun.svg",
+      "bytes": 1984,
+      "sourceUrl": "https://api.iconify.design/game-icons/sun.svg"
+    },
+    {
+      "name": "moon",
+      "label": "月亮",
+      "category": "神话",
+      "id": "game-icons:moon",
+      "file": "assets/moon.svg",
+      "bytes": 577,
+      "sourceUrl": "https://api.iconify.design/game-icons/moon.svg"
+    },
+    {
+      "name": "flame",
+      "label": "火焰",
+      "category": "神话",
+      "id": "game-icons:flame",
+      "file": "assets/flame.svg",
+      "bytes": 795,
+      "sourceUrl": "https://api.iconify.design/game-icons/flame.svg"
+    },
+    {
+      "name": "wind",
+      "label": "风",
+      "category": "神话",
+      "id": "game-icons:windy-stripes",
+      "file": "assets/wind.svg",
+      "bytes": 793,
+      "sourceUrl": "https://api.iconify.design/game-icons/windy-stripes.svg"
+    },
+    {
+      "name": "dragon",
+      "label": "龙",
+      "category": "神话",
+      "id": "game-icons:dragon-head",
+      "file": "assets/dragon.svg",
+      "bytes": 2854,
+      "sourceUrl": "https://api.iconify.design/game-icons/dragon-head.svg"
+    },
+    {
+      "name": "snake",
+      "label": "蛇",
+      "category": "神话",
+      "id": "game-icons:snake",
+      "file": "assets/snake.svg",
+      "bytes": 1106,
+      "sourceUrl": "https://api.iconify.design/game-icons/snake.svg"
+    },
+    {
+      "name": "wing",
+      "label": "羽翼",
+      "category": "神话",
+      "id": "game-icons:feathered-wing",
+      "file": "assets/wing.svg",
+      "bytes": 636,
+      "sourceUrl": "https://api.iconify.design/game-icons/feathered-wing.svg"
+    },
+    {
+      "name": "lotus",
+      "label": "莲花",
+      "category": "神话",
+      "id": "game-icons:lotus-flower",
+      "file": "assets/lotus.svg",
+      "bytes": 2049,
+      "sourceUrl": "https://api.iconify.design/game-icons/lotus-flower.svg"
+    },
+    {
+      "name": "manacles",
+      "label": "枷锁",
+      "category": "军事",
+      "id": "game-icons:manacles",
+      "file": "assets/manacles.svg",
+      "bytes": 5380,
+      "sourceUrl": "https://api.iconify.design/game-icons/manacles.svg"
+    },
+    {
+      "name": "torch",
+      "label": "火把",
+      "category": "器物",
+      "id": "game-icons:torch",
+      "file": "assets/torch.svg",
+      "bytes": 928,
+      "sourceUrl": "https://api.iconify.design/game-icons/torch.svg"
+    },
+    {
+      "name": "lantern",
+      "label": "灯笼",
+      "category": "器物",
+      "id": "game-icons:asian-lantern",
+      "file": "assets/lantern.svg",
+      "bytes": 1066,
+      "sourceUrl": "https://api.iconify.design/game-icons/asian-lantern.svg"
+    },
+    {
+      "name": "token",
+      "label": "令牌",
+      "category": "文书",
+      "id": "game-icons:token",
+      "file": "assets/token.svg",
+      "bytes": 742,
+      "sourceUrl": "https://api.iconify.design/game-icons/token.svg"
+    },
+    {
+      "name": "edict",
+      "label": "诏书",
+      "category": "文书",
+      "id": "game-icons:tied-scroll",
+      "file": "assets/edict.svg",
+      "bytes": 2593,
+      "sourceUrl": "https://api.iconify.design/game-icons/tied-scroll.svg"
+    },
+    {
+      "name": "ding",
+      "label": "鼎",
+      "category": "礼制",
+      "id": "game-icons:cauldron",
+      "file": "assets/ding.svg",
+      "bytes": 1901,
+      "sourceUrl": "https://api.iconify.design/game-icons/cauldron.svg"
+    },
+    {
+      "name": "coins",
+      "label": "钱币",
+      "category": "礼制",
+      "id": "game-icons:coins",
+      "file": "assets/coins.svg",
+      "bytes": 6752,
+      "sourceUrl": "https://api.iconify.design/game-icons/coins.svg"
+    },
+    {
+      "name": "granary",
+      "label": "粮仓",
+      "category": "民生",
+      "id": "game-icons:granary",
+      "file": "assets/granary.svg",
+      "bytes": 1740,
+      "sourceUrl": "https://api.iconify.design/game-icons/granary.svg"
+    },
+    {
+      "name": "wheat",
+      "label": "麦",
+      "category": "民生",
+      "id": "game-icons:wheat",
+      "file": "assets/wheat.svg",
+      "bytes": 2978,
+      "sourceUrl": "https://api.iconify.design/game-icons/wheat.svg"
+    },
+    {
+      "name": "ox",
+      "label": "牛",
+      "category": "民生",
+      "id": "game-icons:cow",
+      "file": "assets/ox.svg",
+      "bytes": 2327,
+      "sourceUrl": "https://api.iconify.design/game-icons/cow.svg"
+    },
+    {
+      "name": "gong",
+      "label": "锣",
+      "category": "礼制",
+      "id": "game-icons:gong",
+      "file": "assets/gong.svg",
+      "bytes": 795,
+      "sourceUrl": "https://api.iconify.design/game-icons/gong.svg"
+    },
+    {
+      "name": "bell",
+      "label": "钟",
+      "category": "礼制",
+      "id": "game-icons:ringing-bell",
+      "file": "assets/bell.svg",
+      "bytes": 2190,
+      "sourceUrl": "https://api.iconify.design/game-icons/ringing-bell.svg"
+    },
+    {
+      "name": "tent",
+      "label": "营帐",
+      "category": "军事",
+      "id": "game-icons:barracks-tent",
+      "file": "assets/tent.svg",
+      "bytes": 310,
+      "sourceUrl": "https://api.iconify.design/game-icons/barracks-tent.svg"
+    },
+    {
+      "name": "chariot",
+      "label": "战车",
+      "category": "军事",
+      "id": "game-icons:chariot",
+      "file": "assets/chariot.svg",
+      "bytes": 2016,
+      "sourceUrl": "https://api.iconify.design/game-icons/chariot.svg"
+    },
+    {
+      "name": "warship",
+      "label": "战船",
+      "category": "军事",
+      "id": "game-icons:galley",
+      "file": "assets/warship.svg",
+      "bytes": 1048,
+      "sourceUrl": "https://api.iconify.design/game-icons/galley.svg"
+    },
+    {
+      "name": "drum",
+      "label": "鼓",
+      "category": "军事",
+      "id": "game-icons:drum",
+      "file": "assets/drum.svg",
+      "bytes": 3452,
+      "sourceUrl": "https://api.iconify.design/game-icons/drum.svg"
+    },
+    {
+      "name": "horn",
+      "label": "号角",
+      "category": "军事",
+      "id": "game-icons:hunting-horn",
+      "file": "assets/horn.svg",
+      "bytes": 1150,
+      "sourceUrl": "https://api.iconify.design/game-icons/hunting-horn.svg"
+    },
+    {
+      "name": "spear",
+      "label": "长矛",
+      "category": "军事",
+      "id": "game-icons:barbed-spear",
+      "file": "assets/spear.svg",
+      "bytes": 1024,
+      "sourceUrl": "https://api.iconify.design/game-icons/barbed-spear.svg"
+    },
+    {
+      "name": "arrows",
+      "label": "箭",
+      "category": "军事",
+      "id": "game-icons:arrow-flights",
+      "file": "assets/arrows.svg",
+      "bytes": 1140,
+      "sourceUrl": "https://api.iconify.design/game-icons/arrow-flights.svg"
+    },
+    {
+      "name": "axe",
+      "label": "战斧",
+      "category": "军事",
+      "id": "game-icons:battle-axe",
+      "file": "assets/axe.svg",
+      "bytes": 1224,
+      "sourceUrl": "https://api.iconify.design/game-icons/battle-axe.svg"
+    },
+    {
+      "name": "wall",
+      "label": "城墙",
+      "category": "军事",
+      "id": "game-icons:stone-wall",
+      "file": "assets/wall.svg",
+      "bytes": 1091,
+      "sourceUrl": "https://api.iconify.design/game-icons/stone-wall.svg"
+    },
+    {
+      "name": "willow",
+      "label": "柳树",
+      "category": "地理",
+      "id": "game-icons:willow-tree",
+      "file": "assets/willow.svg",
+      "bytes": 1565,
+      "sourceUrl": "https://api.iconify.design/game-icons/willow-tree.svg"
+    },
+    {
+      "name": "cloud",
+      "label": "云",
+      "category": "天象",
+      "id": "game-icons:fluffy-cloud",
+      "file": "assets/cloud.svg",
+      "bytes": 2024,
+      "sourceUrl": "https://api.iconify.design/game-icons/fluffy-cloud.svg"
+    },
+    {
+      "name": "lightning",
+      "label": "雷电",
+      "category": "天象",
+      "id": "game-icons:lightning-storm",
+      "file": "assets/lightning.svg",
+      "bytes": 893,
+      "sourceUrl": "https://api.iconify.design/game-icons/lightning-storm.svg"
+    },
+    {
+      "name": "turtle",
+      "label": "龟",
+      "category": "神话",
+      "id": "game-icons:turtle",
+      "file": "assets/turtle.svg",
+      "bytes": 1710,
+      "sourceUrl": "https://api.iconify.design/game-icons/turtle.svg"
+    },
+    {
+      "name": "tiger",
+      "label": "虎",
+      "category": "神话",
+      "id": "game-icons:tiger",
+      "file": "assets/tiger.svg",
+      "bytes": 4424,
+      "sourceUrl": "https://api.iconify.design/game-icons/tiger.svg"
+    },
+    {
+      "name": "deer",
+      "label": "鹿",
+      "category": "神话",
+      "id": "game-icons:deer",
+      "file": "assets/deer.svg",
+      "bytes": 1631,
+      "sourceUrl": "https://api.iconify.design/game-icons/deer.svg"
+    }
+  ],
+  "totalBytes": 44899
+}

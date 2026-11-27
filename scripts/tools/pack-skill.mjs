@@ -1,6 +1,6 @@
 /**
  * 打干净分发包：Skill + package.json/package-lock.json → ../ticktoon-skill-dist/。
- * 引擎由 npm ticktoon@1.0.2 提供，不再复制 dist 或 node_modules。
+ * 引擎由 npm ticktoon@1.0.4 提供，不再复制 dist 或 node_modules。
  */
 import { cpSync, existsSync, rmSync } from 'node:fs';
 import path from 'node:path';
@@ -26,5 +26,5 @@ try {
   sizeMB = `${out.split(/\s/)[0]} MB`;
 } catch { /* du 不可用时跳过体积报告 */ }
 console.log(`[pack] 干净分发包 → ${dest}${sizeMB ? `（${sizeMB}）` : ''}`);
-console.log('[pack] 引擎通过 package-lock.json 固定为 ticktoon@1.0.2；未复制 dist 或 node_modules');
+console.log('[pack] 引擎通过 package-lock.json 固定为 ticktoon@1.0.4；未复制 dist 或 node_modules');
 console.log('[pack] 安装后在目标机器运行: node scripts/doctor.mjs --install（缺包时安装全部 dependencies）');

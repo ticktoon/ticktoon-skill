@@ -8,7 +8,7 @@
 - 两个可运行范例：
   - `recipes/whiteboard-explainer/ref-shots/el-nino.js`：机制剖面，演示 `TT.geom` 相机、`TT.board`、`TT.pen`、分段落笔。
   - `recipes/whiteboard-explainer/ref-shots/compound-interest.js`：图表构图，演示坐标轴、刻度、曲线、翻倍阶梯与标注。
-- 拼贴的创作纲要/物理规范：`recipes/illustrated-story/recipe.md`，自带一组 `ref-shots/`；镜头参考文件头格式统一见 `SKILL.md`。
+- 蜡笔绘本的创作纲要/物理规范：`recipes/crayon-guide/recipe.md`，自带一组 `ref-shots/`；镜头参考文件头格式统一见 `SKILL.md`。
 
 ---
 
